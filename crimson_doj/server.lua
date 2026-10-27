@@ -169,7 +169,7 @@ local services=assert(CrimsonServices,'server_extras.lua must load before server
  ready=function()return ready end,
 })
 local function run(a,action,payload)
- if ({paymentStatus=true,bankAccount=true,offerInvoice=true,fine=true,jail=true,release=true,bodycamStart=true,bodycamStop=true,playRecording=true,deleteRecording=true})[action] then return services[action](a,payload) end
+ if ({paymentStatus=true,businessFinance=true,bankAccount=true,offerInvoice=true,fine=true,jail=true,release=true,bodycamStart=true,bodycamStop=true,playRecording=true,deleteRecording=true})[action] then return services[action](a,payload) end
  if action=='bootstrap' then
   if Config.RequireDuty and not a.p.job.onduty then
    return {citizenid=a.p.citizenid,name=actorName(a.p),job=a.p.job.name,label=a.policy.label,department=a.department,grade=a.grade,canWrite=a.write,canManage=a.manage,onduty=false,modules=moduleList(a),counts={},recent={},threat='green',integrations=Config.Integrations}

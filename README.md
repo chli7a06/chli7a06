@@ -1,6 +1,6 @@
-# Crimson MDT 3.0.1 beta — Qbox
+# Crimson MDT 3.0.2 beta — Qbox
 
-[Download complete pack](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_qbox_pack_3.0.1.zip) · [Crimson resource only](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_3.0.1.zip)
+[Download complete pack](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_qbox_pack_3.0.2.zip) · [Crimson resource only](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_3.0.2.zip)
 
 [التركيب بالدارجة](INSTALL_AR.md) · [English setup, permissions and limits](INSTALL_CRIMSON.md) · [Feature status](crimson_doj/FEATURES.md)
 
@@ -12,4 +12,6 @@ The companion pack contains official Renewed-Banking, qbx_prison, screencapture 
 
 Prior downloadable versions remain under downloads; the initial DOJ-only version remains on main. Runtime recordings are private server files and must be backed up together with the database.
 
-Personal citizen bank balance: current online / saved offline, visible only to Police/DOJ managers. [Small update for an existing v3 install](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_bank_balance_3.0.1.zip).
+Personal citizen bank balance: current online / saved offline, visible only to Police/DOJ managers. [Small update for an existing v3 install](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_business_bank_3.0.2.zip).
+
+DOJ managers can inspect company balances/history from Businesses → Bank account. [Details](BUSINESS_FINANCE.md).

@@ -125,6 +125,33 @@ function CrimsonServices(h)
   if not ok then error(result,0) end
   return result
  end
+ function api.businessFinance(a,payload)
+  if a.department~='doj' or not a.manage then reject('DOJ management permission required') end
+  local job=clean(payload.job,80,true)
+  local configured=false
+  for _,name in ipairs(Config.BusinessJobs)do if name==job then configured=true break end end
+  if not configured then reject('Business is not in the configured registry') end
+  requireBank()
+  local value=exports['Renewed-Banking']:getAccountMoney(job)
+  local balance=value~=false and tonumber(value) or nil
+  local available=balance~=nil and balance==balance and balance~=math.huge and balance~=-math.huge
+  local transactions={}
+  if available then
+   local rows=exports['Renewed-Banking']:getAccountTransactions(job)
+   if type(rows)=='table' then
+    for _,row in ipairs(rows)do
+     if #transactions>=100 then break end
+     if type(row)=='table' then
+      local amount=tonumber(row.amount)
+      if not amount or amount~=amount or amount==math.huge or amount==-math.huge then amount=nil end
+      transactions[#transactions+1]={id=clean(row.trans_id or '',160,false) or '',title=clean(row.title or '',300,false) or '',amount=amount,type=clean(row.trans_type or '',40,false) or '',message=clean(row.message or '',1000,false) or '',issuer=clean(row.issuer or '',160,false) or '',receiver=clean(row.receiver or '',160,false) or '',time=tonumber(row.time)}
+     end
+    end
+   end
+  end
+  h.log(a,'business_bank_read',nil)
+  return {account=job,available=available,balance=available and balance or nil,transactions=transactions}
+ end
  function api.bankAccount(a)
   if not a.manage then reject('Management permission required') end
   requireBank()

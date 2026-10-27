@@ -122,4 +122,19 @@ local beforeDebit,beforeCredit=debitCalls,creditCalls
 check(api.resolvePayment(1,'paid','Verified both external accounts')==true,'console metadata reconciliation')
 check(debitCalls==beforeDebit and creditCalls==beforeCredit,'reconciliation never moves money')
 deny(function()api.resolvePayment(1,'refunded','Repeat')end,'resolved payment cannot be overwritten')
+
+accounts.mechanic=1234
+exportsTable['Renewed-Banking'].getAccountTransactions=function()return {{trans_id='TX1',title='Service',amount=200,trans_type='deposit',message='Payment',issuer='CIV',receiver='mechanic',time=12345,auth='PRIVATE'}}end
+local company=api.businessFinance(legalActor,{job='mechanic'})
+check(company.available and company.balance==1234 and company.account=='mechanic','DOJ manager sees configured business bank balance')
+check(company.transactions[1].amount==200 and company.transactions[1].auth==nil,'company transactions expose only selected public fields')
+accounts.mechanic=0;check(api.businessFinance(legalActor,{job='mechanic'}).balance==0,'zero company balance is valid')
+accounts.mechanic=nil;company=api.businessFinance(legalActor,{job='mechanic'});check(not company.available and company.balance==nil,'missing company account is not shown as zero')
+deny(function()api.businessFinance(actor('doj',false),{job='mechanic'})end,'ordinary DOJ cannot inspect company money')
+deny(function()api.businessFinance(actor('police',true),{job='mechanic'})end,'police cannot use DOJ company financial inspection')
+deny(function()api.businessFinance(business,{job='mechanic'})end,'business cannot inspect other accounts through registry endpoint')
+deny(function()api.businessFinance(legalActor,{job='unlisted-account'})end,'arbitrary account enumeration denied')
+exportsTable['Renewed-Banking'].getAccountTransactions=function()local t={}for i=1,105 do t[i]={amount=i}end return t end
+accounts.mechanic=1;check(#api.businessFinance(legalActor,{job='mechanic'}).transactions==100,'company transaction history bounded to 100')
+
 print('PASS '..checks..' service checks for consent payments, failures, prison and recordings')
