@@ -11,3 +11,7 @@ Department-aware Police / DOJ / EMS / Business workflow: scoped records and citi
 The working initial DOJ-only release remains on [main](https://github.com/chli7a06/chli7a06/tree/main). Back up both resource and database before testing this preview; the one-time migration copies old Crimson DOJ records without deleting their table.
 
 Local checks: 62 server assertions with mocked Qbox/MySQL, 42 DOM interaction checks, Lua/JavaScript syntax. These do not replace live server acceptance tests.
+
+## Mission Row configuration
+
+The current preview ZIP enables Mission Row cameras and a one-radio ox_inventory kit for DOJ/Police/Sheriff. [Setup and exact locations](MISSION_ROW.md). [Download config.lua](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/config.lua).

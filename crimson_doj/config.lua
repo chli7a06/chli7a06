@@ -14,10 +14,40 @@ Config.Jobs = {
 }
 Config.BusinessJobs = { 'mechanic', 'burgershot' }
 -- Server-defined integrations. Never accept resource/event names from NUI.
--- These are deliberately disabled until matched to your installed resources.
-Config.Integrations = { jail=false, banking=false, bodycam=false, inventory=false, cameras=false }
-Config.Cameras = {} -- { label='Mission Row', x=..., y=..., z=..., rx=..., ry=..., rz=..., fov=60 }
-Config.Armory = {} -- Inventory distribution is disabled until a provider is configured.
+-- Mission Row cameras and ox_inventory armory are enabled below.
+-- Mission Row starter setup. Adjust positions if your server uses a different MLO.
+Config.Integrations = {
+ jail = false,
+ banking = false,
+ bodycam = false,
+ inventory = 'ox_inventory',
+ cameras = true,
+}
+Config.Cameras = {
+ {
+  label = 'Mission Row entrance',
+  jobs = { doj=true, police=true, sheriff=true },
+  x=440.0, y=-981.0, z=35.0,
+  rx=-20.0, ry=0.0, rz=90.0, fov=60.0,
+ },
+}
+-- Collection requires on-duty status, write permission, grade 1+ and proximity.
+-- Item 'radio' must exist in your ox_inventory items configuration.
+Config.Armory = {}
+for _, job in ipairs({ 'doj', 'police', 'sheriff' }) do
+ Config.Armory[job] = {
+  coords = { x=450.0, y=-980.0, z=30.0 },
+  radius = 3.0,
+  kits = {
+   {
+    label = 'Radio kit',
+    grade = 1,
+    cooldown = 1800,
+    items = { { name='radio', count=1 } },
+   },
+  },
+ }
+end
 Config.PenalCode = {
  -- Supply YOUR RP laws: { code='T01', title='...', fine=0, months=0, category='Traffic' }
 }
