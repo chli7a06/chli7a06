@@ -1,11 +1,13 @@
-# Crimson DOJ — independent Qbox version
+# Crimson MDT 2.0 — multi-department preview
 
-[Download crimson_doj.zip](https://github.com/chli7a06/chli7a06/raw/refs/heads/main/crimson_doj.zip)
+[Download preview ZIP](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/crimson_doj.zip)
 
-Newly authored Lua server/client and NUI; no encrypted XR-MDT files, entitlement dependency or QB compatibility bridge. Only the supplied Crimson logo is reused.
+Independent Qbox implementation with freshly written server/client, UI and SQL. The only reused asset is the supplied Crimson logo. No XR-MDT escrow files, entitlement or QB compatibility bridge are required.
 
-Includes DOJ authorization, citizen search, cases, warrants, documents and audit history. This initial independent implementation does not reproduce every XR-MDT feature. See [installation, permissions, tests and limitations](INSTALL_CRIMSON.md).
+Department-aware Police / DOJ / EMS / Business workflow: scoped records and citizen profiles, cases/warrants/incidents, patient reports, documents/private notes/archive, Qbox staff membership management, vehicle search/flags, weapon register, business licenses, company catalogs and computed invoices, manual dispatch, opt-in unit GPS, audit, and configurable native cameras/ox_inventory armory.
 
-The source is in [crimson_doj](crimson_doj). Requires qbx_core, ox_lib and oxmysql. No map upload is needed. Not yet validated in a live FiveM/Qbox/MySQL server.
+**This is a preview, not full XR-MDT feature parity.** Payment/banking, jail/fines, actual bodycam capture, physical document/signature workflows, and automatic dispatch still need implementation/integration. No live FiveM/Qbox/MySQL validation was available. See the [feature comparison](crimson_doj/FEATURES.md) and [installation, permissions, migration, tests and limits](INSTALL_CRIMSON.md).
 
-The old archive in repository history was the escrow-dependent adaptation. The current archive replaces it with the independent implementation.
+The working initial DOJ-only release remains on [main](https://github.com/chli7a06/chli7a06/tree/main). Back up both resource and database before testing this preview; the one-time migration copies old Crimson DOJ records without deleting their table.
+
+Local checks: 62 server assertions with mocked Qbox/MySQL, 42 DOM interaction checks, Lua/JavaScript syntax. These do not replace live server acceptance tests.

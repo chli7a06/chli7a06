@@ -1,0 +1,8 @@
+{
+  "name": "crimson-mdt-validation",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {"test":"node run.cjs"},
+  "engines": {"node":">=24"},
+  "devDependencies": {"fengari-node-cli":"0.1.0","jsdom":"30.1.3","luaparse":"0.3.1"}
+}

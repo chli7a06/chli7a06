@@ -1,1 +1,3 @@
-Run from repository root using a Lua 5.3+ interpreter: lua tests/server.test.lua. This mocks Qbox and MySQL; it does not validate live SQL or FiveM. Development validation also parsed Lua with luaparse and checked web/app.js with node --check. DOM interaction checks ran in jsdom; Chromium did not finish.
+Run from repository root with Node.js 24+: npm ci --prefix tests; npm test --prefix tests.
+Tests use fengari (Lua VM), luaparse and jsdom. Qbox, MySQL, FiveM native calls and NUI fetches are mocked. The runner verifies both execution exit status and explicit current-run completion summaries, since the Lua CLI can report Lua assertion failures without a useful exit code.
+No production dependencies or npm install are required for the resource itself.
