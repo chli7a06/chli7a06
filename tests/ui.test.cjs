@@ -34,9 +34,14 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
  const w=dom.window,d=w.document,$=s=>d.querySelector(s);
  async function wait(fn,label){for(let i=0;i<100;i++){if(fn())return;await sleep(15);}throw Error('Timed out '+label);}
  await wait(()=>typeof w.nui==='function','app load');
+ check($('#tablet').hidden,'tablet hidden before opening');
+ check(w.getComputedStyle(d.documentElement).backgroundColor==='rgba(0, 0, 0, 0)','HTML canvas transparent');
+ check(w.getComputedStyle(d.body).backgroundColor==='rgba(0, 0, 0, 0)','body canvas transparent');
+ check(w.getComputedStyle(d.documentElement).getPropertyValue('color-scheme')==='normal','root dark canvas disabled');
  async function open(data){bootstrap=data;w.postMessage({action:'open',data},'*');await wait(()=>!$('#tablet').hidden&&$('#heading').textContent==='Dashboard','tablet');await sleep(60);}
  async function nav(key){const b=$(`[data-view="${key}"]`);check(!!b,'navigation '+key);b.click();await sleep(60);}
  await open(base);
+ w.postMessage({action:'camera'},'*');await sleep(20);check($('#tablet').hidden,'camera view hides tablet');w.postMessage({action:'cameraEnd'},'*');await sleep(20);check(!$('#tablet').hidden,'camera exit restores tablet');
  check($('#name').textContent==='Test Judge','operator identity');check($('#content').textContent.includes('Active department records'),'dashboard stats');check(!$('#content').textContent.includes('undefined'),'no undefined labels');
  await nav('citizens');$('input').value='Test';$('form.toolbar').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await sleep(60);
  check($('#content').textContent.includes('Test Citizen'),'citizen search');[...d.querySelectorAll('#content button')].find(x=>x.textContent==='Open profile').click();await sleep(60);
@@ -57,6 +62,6 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
  check(!$('[data-view="roster"]'),'business has no units');check(!$('[data-view="medical"]'),'business has no medical module');await nav('invoice');check($('#subtitle').textContent.includes('payment integration not configured'),'billing limitation visible');
  await open({...base,onduty:false});check($('#content').textContent.includes('You are off duty'),'off duty access screen');await nav('case');check($('#content').textContent.includes('Clock in first'),'off duty records blocked in UI');
  $('#duty').click();await sleep(70);check(calls.some(x=>x.action==='duty'&&x.payload.enabled===true),'duty toggle callback');
- $('#close').click();await sleep(30);check($('#tablet').hidden,'tablet closes');
+ $('#close').click();await sleep(30);check($('#tablet').hidden,'tablet closes');check(w.getComputedStyle(d.documentElement).backgroundColor==='rgba(0, 0, 0, 0)','canvas transparent after closing');
  check(errors.length===0,'zero DOM runtime exceptions: '+errors.join('; '));dom.window.close();process.stdout.write(`PASS ${passed} UI checks across DOJ, EMS, Business, safe rendering, forms and duty\n`);process.exit(0);
 })().catch(e=>{process.stderr.write(e.stack+'\n');process.exit(1);});

@@ -10,8 +10,12 @@ Department-aware Police / DOJ / EMS / Business workflow: scoped records and citi
 
 The working initial DOJ-only release remains on [main](https://github.com/chli7a06/chli7a06/tree/main). Back up both resource and database before testing this preview; the one-time migration copies old Crimson DOJ records without deleting their table.
 
-Local checks: 62 server assertions with mocked Qbox/MySQL, 42 DOM interaction checks, Lua/JavaScript syntax. These do not replace live server acceptance tests.
+Local checks: 62 server assertions with mocked Qbox/MySQL, 49 DOM interaction checks, Lua/JavaScript syntax. These do not replace live server acceptance tests.
 
 ## Mission Row configuration
 
 The current preview ZIP enables Mission Row cameras and a one-radio ox_inventory kit for DOJ/Police/Sheriff. [Setup and exact locations](MISSION_ROW.md). [Download config.lua](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/config.lua).
+
+## 2.0.1 screen transparency fix
+
+Removed document-level dark color scheme and explicitly kept HTML/body transparent while the tablet is hidden. Form controls retain their own dark styling. Added `/mdtclose` (F8: `mdtclose`) to release this resource's NUI focus and owned camera even if the page cannot respond. Resource stop also runs the same cleanup. Added 7 transparency/camera-message DOM assertions and 14 client lifecycle assertions with mocked FiveM natives. All local checks pass; a Chromium screenshot attempt timed out, and actual FiveM/CEF transparency must still be confirmed in-game.

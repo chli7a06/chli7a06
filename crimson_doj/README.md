@@ -61,7 +61,7 @@ Lists/audits page 30 records; citizen search returns at most 40 matches; citizen
 ## Verified here
 - Lua/JavaScript syntax.
 - 62 server checks using mocked Qbox/MySQL: authorization, department/company partitioning, private notes, input checks, stale edits, hierarchy restrictions, GPS consent, camera allowlists, armory location/cooldown, transactional legacy migration setup, and internal error filtering.
-- 42 jsdom interaction checks: DOJ/EMS/Business navigation, counts, citizen search/profile, safe text rendering, create/edit dialog, archive filtering, employee form, roster, audit, integration states, duty and closing.
+- 49 jsdom interaction checks: DOJ/EMS/Business navigation, counts, citizen search/profile, safe text rendering, create/edit dialog, archive filtering, employee form, roster, audit, integration states, duty and closing.
 - Native Qbox export signatures were checked against upstream qbx_core commit 58b345e2b53be98928c3e4ee44b100613ac9257f.
 - No live FiveM/Qbox/MySQL was available here. SQL execution, native camera/GPS/armory behavior, group changes and persistence in your server remain unverified. DOM tests are not a real CEF visual test.
 
@@ -69,3 +69,7 @@ Development tests (outside the resource): Node.js 24+, `npm ci --prefix tests`, 
 
 ## Live acceptance checks
 Test first on a backed-up staging server: unauthorized job denial; off-duty denial; DOJ/Police shared legal access; EMS medical isolation; separate company isolation; private-note isolation; citizen searches; create/edit/archive/reload/restart persistence; legacy record counts/IDs; concurrent edits; staff rank hierarchy; GPS opt-in/out; configured camera permissions; armory location, grade, capacity and cooldown. Inspect F8 and server console. Do not assume the local mocked checks cover these native behaviors.
+
+## 2.0.1 screen transparency fix
+
+Removed document-level dark color scheme and explicitly kept HTML/body transparent while the tablet is hidden. Form controls retain their own dark styling. Added `/mdtclose` (F8: `mdtclose`) to release this resource's NUI focus and owned camera even if the page cannot respond. Resource stop also runs the same cleanup. Added 7 transparency/camera-message DOM assertions and 14 client lifecycle assertions with mocked FiveM natives. All local checks pass; a Chromium screenshot attempt timed out, and actual FiveM/CEF transparency must still be confirmed in-game.

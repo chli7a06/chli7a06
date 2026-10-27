@@ -5,4 +5,6 @@ let run=spawnSync(process.execPath,['--check','crimson_doj/web/app.js'],{cwd:roo
 console.log('PASS Lua and JavaScript syntax');
 run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/server.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});
 assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS 62 authorization/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim().split('\n').at(-1));
-run=spawnSync(process.execPath,['tests/ui.test.cjs'],{cwd:root,encoding:'utf8',timeout:20000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS 42 UI checks/);console.log(run.stdout.trim());
+run=spawnSync(process.execPath,['tests/ui.test.cjs'],{cwd:root,encoding:'utf8',timeout:20000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS 49 UI checks/);console.log(run.stdout.trim());
+
+run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/client.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS 14 client/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim());

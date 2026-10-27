@@ -7,6 +7,7 @@ local function close()
     stopCamera()
     opened = false
     SetNuiFocus(false, false)
+    SetNuiFocusKeepInput(false)
     SendNUIMessage({ action = 'close' })
 end
 RegisterCommand(Config.Command, function()
@@ -21,6 +22,8 @@ RegisterCommand(Config.Command, function()
     SendNUIMessage({ action = 'open', data = result.data })
 end, false)
 RegisterKeyMapping(Config.Command, 'Open Crimson DOJ', 'keyboard', Config.Key)
+-- Always available recovery, even when the browser UI cannot respond.
+RegisterCommand('mdtclose', function() close() end, false)
 RegisterNUICallback('close', function(_, cb) close() cb({ ok = true }) end)
 RegisterNUICallback('request', function(data, cb)
     if not opened then cb({ ok = false, error = 'Tablet closed' }) return end
@@ -28,7 +31,7 @@ RegisterNUICallback('request', function(data, cb)
     cb(ok and result or { ok = false, error = 'Server unavailable' })
 end)
 AddEventHandler('onResourceStop', function(resource)
-    if resource == GetCurrentResourceName() then stopCamera() SetNuiFocus(false, false) end
+    if resource == GetCurrentResourceName() then close() end
 end)
 
 RegisterNUICallback('waypoint', function(data, cb)
