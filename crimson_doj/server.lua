@@ -51,6 +51,23 @@ local function publicPerson(row)
  local c=decode(row.charinfo)
  return {citizenid=row.citizenid,firstname=c.firstname or '',lastname=c.lastname or '',birthdate=c.birthdate or '',nationality=c.nationality or ''}
 end
+local function citizenBank(a,cid)
+ if not a.manage or (a.department~='doj' and a.department~='police') then return nil end
+ local online=exports.qbx_core:GetPlayerByCitizenId(cid)
+ local value,source
+ if online then
+  value=online.PlayerData.money and online.PlayerData.money.bank
+  source='live'
+ else
+  local saved=MySQL.single.await('SELECT money FROM players WHERE citizenid=? LIMIT 1',{cid})
+  local money=saved and (type(saved.money)=='table' and saved.money or decode(saved.money))
+  value=money and money.bank
+  source='saved'
+ end
+ local balance=tonumber(value)
+ local available=balance~=nil and balance==balance and balance~=math.huge and balance~=-math.huge
+ return {available=available,balance=available and balance or nil,source=source}
+end
 local function actorName(p)
  return ((p.charinfo and p.charinfo.firstname or '')..' '..(p.charinfo and p.charinfo.lastname or ''))
 end
@@ -187,7 +204,9 @@ local function run(a,action,payload)
   log(a,'profile_read',nil)
   local rows=MySQL.query.await("SELECT * FROM crimson_mdt_entries WHERE scope=? AND subject=? AND kind<>'note' ORDER BY id DESC LIMIT 200",{a.scope,cid})
   local out={} for _,item in ipairs(rows) do if visible(a,item.kind) then out[#out+1]=unpackRow(item) end end
-  return {person=publicPerson(row),records=out}
+  local financial=citizenBank(a,cid)
+  if financial then log(a,'citizen_bank_read',nil) end
+  return {person=publicPerson(row),records=out,financial=financial}
  elseif action=='list' then
   return listing(a,payload.kind,clean(payload.query or '',80,false) or '',integer(payload.page or 1,1,100000) or 1,nil,payload.archived==true)
  elseif action=='create' or action=='update' then

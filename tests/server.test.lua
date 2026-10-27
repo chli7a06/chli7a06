@@ -1,6 +1,7 @@
 local saved={}
 local readPrinted
 local printSnapshot,heldDocument
+local onlineBank,bankSnapshot
 local serviceCallbacks={}
 local callback,player,sourceNumber,passed= nil,nil,0,0
 local queries,inserts,updates,groupChanges={},0,0,0
@@ -16,7 +17,7 @@ local function user(job,grade,duty,cid)
  player={PlayerData={citizenid=cid or 'STAFF',charinfo={firstname='Test',lastname='Staff'},job={name=job,grade={level=grade},onduty=duty}}}
 end
 local jobs={doj={grades={[0]={name='Assistant'},[1]={name='Lawyer'},[2]={name='Prosecutor'},[3]={name='Judge'}}},police={grades={[0]={name='Cadet'},[1]={name='Officer'},[2]={name='Sergeant'},[3]={name='Chief'}}}}
-exports={qbx_core={GetPlayer=function(_,id)return saved[id] or player end,GetJobs=function()return jobs end,GetPlayerByCitizenId=function()return nil end,
+exports={qbx_core={GetPlayer=function(_,id)return saved[id] or player end,GetJobs=function()return jobs end,GetPlayerByCitizenId=function()return onlineBank end,
 SetJobDuty=function(_,_,enabled)player.PlayerData.job.onduty=enabled end,
 AddPlayerToJob=function()groupChanges=groupChanges+1 return true end,RemovePlayerFromJob=function()groupChanges=groupChanges+1 return true end}}
 GetGameTimer=function()return 100000 end
@@ -49,6 +50,7 @@ end},scalar={await=function(sql,args)
 end},single={await=function(sql,args)
  queries[#queries+1]={sql=sql,args=args}
  if sql:find('FROM crimson_mdt_prints')then if args[1]==42 and args[2]=='test-print-ticket' then return {snapshot=printSnapshot,created_at='2026-10-27'} end return nil end
+ if sql:find('SELECT money FROM players')then return {money=bankSnapshot} end
  if sql:find('FROM players')then return {citizenid='CITIZEN',charinfo='{}'}end
  if sql:find("kind='product'")then return selectedProduct end
  return selectedRow
@@ -123,6 +125,28 @@ heldDocument={name='radio',metadata={print_id=42,print_ticket='test-print-ticket
 heldDocument={name='crimson_document',metadata={print_id=42,print_ticket='forged'}};check(not readPrinted(20003,1).ok,'forged document ticket rejected')
 check(not readPrinted(20004,-1).ok,'invalid document slot rejected')
 user('ambulance',3,true);denied('printDocument',{id=8,printer=1},'printer job allowlist enforced')
+
+
+user('doj',3,true);bankSnapshot={bank=875}
+local profile=request('profile',{citizenid='CITIZEN'})
+check(profile.ok and profile.data.financial.balance==875 and profile.data.financial.source=='saved','manager sees saved personal bank balance')
+onlineBank={PlayerData={money={bank=923}}}
+profile=request('profile',{citizenid='CITIZEN'})
+check(profile.data.financial.balance==923 and profile.data.financial.source=='live','online bank value takes precedence over saved balance')
+onlineBank={PlayerData={money={}}};profile=request('profile',{citizenid='CITIZEN'})
+check(not profile.data.financial.available and profile.data.financial.balance==nil,'missing live balance not shown as zero')
+onlineBank=nil;bankSnapshot={bank=0};profile=request('profile',{citizenid='CITIZEN'})
+check(profile.data.financial.available and profile.data.financial.balance==0,'zero bank balance remains valid')
+bankSnapshot={bank='invalid'};profile=request('profile',{citizenid='CITIZEN'})
+check(not profile.data.financial.available,'invalid saved money is unavailable')
+user('doj',0,true);local start=#queries;profile=request('profile',{citizenid='CITIZEN'})
+check(profile.ok and profile.data.financial==nil,'ordinary DOJ cannot read bank balance')
+local moneyRead=false for i=start+1,#queries do if queries[i].sql:find('SELECT money')then moneyRead=true end end
+check(not moneyRead,'unauthorized role never queries money data')
+user('ambulance',3,true);profile=request('profile',{citizenid='CITIZEN'})
+check(profile.ok and profile.data.financial==nil,'EMS manager cannot read personal bank balance')
+user('mechanic',3,true);profile=request('profile',{citizenid='CITIZEN'})
+check(profile.ok and profile.data.financial==nil,'business manager cannot read personal bank balance')
 
 local oldQuery=MySQL.query.await;MySQL.query.await=function()error('SENSITIVE SQL DETAILS')end;r=request('search',{query='Test'});check(not r.ok and not r.error:find('SENSITIVE'),'internal database errors not leaked');MySQL.query.await=oldQuery
 legacy=1;migrated=0;initializer();check(migrationArgs and #migrationArgs==2,'migration is transactional');check(migrationArgs[1].query:find('SELECT id,')~=nil,'migration preserves record IDs');check(not migrationArgs[1].query:find('DELETE'),'migration does not delete old table')

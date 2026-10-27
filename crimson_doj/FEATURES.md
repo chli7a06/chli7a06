@@ -3,6 +3,7 @@
 | Feature | Implemented | Setup / remaining limits |
 |---|---|---|
 | Police/DOJ/EMS/Business | Department UI, scoped records, staff/jobs, reports | Configure real jobs/grades; not exact XR-MDT parity |
+| Citizen personal bank | Current online / saved offline read-only balance | DOJ/Police managers only; unavailable data is not shown as zero |
 | Printer | World interaction, immutable item copy, possession-checked reader | Register crimson_document; adjust printer position |
 | Invoice payment | Recipient consent, native Qbox debit, Renewed job credit | Import/install Renewed-Banking; ambiguous outcomes need reconciliation |
 | Job finances | Provider balance/history, payment journal | No generic manual society withdrawal/deposit UI |
