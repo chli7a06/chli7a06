@@ -1,4 +1,5 @@
 local ready, rates, locks, unitStatus, kitCooldown, unitGPS = false, {}, {}, {}, {}, {}
+local printCooldown = {}
 local definition = {
  case={police=true,doj=true,subject=true},
  warrant={police=true,doj=true,subject=true,management=true},
@@ -87,6 +88,10 @@ local function listing(a,kind,q,page,subject,archived)
 end
 local function allowedDetails(a,kind,payload,old)
  local details={}
+ if old then
+  local previous=decode(old.details)
+  for _,key in ipairs({'payment','finePayment','paidAmount','paymentReason'})do details[key]=previous[key] end
+ end
  local fields={
  case={'evidence','charges'}, warrant={'reason','expires'},incident={'charges','evidence'},medical={'diagnosis','treatment','allergies'},
  document={'category'},vehicle_flag={'reason'},weapon={'serial','model'},business_license={'licenseType','expires'},business_note={},
@@ -101,6 +106,7 @@ local function allowedDetails(a,kind,payload,old)
   end
  end
  if details.expires and details.expires~='' and not details.expires:match('^%d%d%d%d%-%d%d%-%d%d$') then reject('Expiry must use YYYY-MM-DD') end
+ if kind=='recording' and old and decode(old.details).storage=='local' then return decode(old.details) end
  if kind=='recording' and details.url and details.url~='' and not details.url:match('^https://') then reject('Recording URL must use HTTPS') end
  if kind=='product' then
   details.price=integer(input.price,0,1000000)
@@ -115,6 +121,7 @@ local function allowedDetails(a,kind,payload,old)
   if not product then reject('Catalog item unavailable') end
   local price=decode(product.details).price
   if not integer(price,0,1000000) then reject('Invalid catalog price') end
+  if Config.Payments and price*quantity>Config.Payments.maxAmount then reject('Invoice total exceeds the configured payment limit') end
   details={productId=productId,product=product.title,quantity=quantity,price=price,total=price*quantity,payment='unpaid'}
  end
  if kind=='dispatch' then
@@ -140,7 +147,12 @@ local function employeeRows(a)
  end
  return rows
 end
+local services=assert(CrimsonServices,'server_extras.lua must load before server.lua')({
+ identity=identity,reject=reject,clean=clean,integer=integer,decode=decode,person=person,log=log,
+ ready=function()return ready end,
+})
 local function run(a,action,payload)
+ if ({paymentStatus=true,bankAccount=true,offerInvoice=true,fine=true,jail=true,release=true,bodycamStart=true,bodycamStop=true,playRecording=true,deleteRecording=true})[action] then return services[action](a,payload) end
  if action=='bootstrap' then
   if Config.RequireDuty and not a.p.job.onduty then
    return {citizenid=a.p.citizenid,name=actorName(a.p),job=a.p.job.name,label=a.policy.label,department=a.department,grade=a.grade,canWrite=a.write,canManage=a.manage,onduty=false,modules=moduleList(a),counts={},recent={},threat='green',integrations=Config.Integrations}
@@ -289,6 +301,39 @@ local function run(a,action,payload)
  elseif action=='penalcode' then
   if a.department~='police' and a.department~='doj' then reject('Legal module required') end
   return Config.PenalCode
+ elseif action=='printDocument' then
+  local settings=Config.Printing
+  if not settings or not settings.enabled or GetResourceState('ox_inventory')~='started' then reject('Document printing requires ox_inventory and the document item') end
+  if not a.write or not visible(a,'document') then reject('Document printing permission required') end
+  local id=integer(payload.id,1,2147483647)
+  local printerId=integer(payload.printer,1,#Config.Printers)
+  local printer=printerId and Config.Printers[printerId]
+  if not printer or not printer.jobs or not printer.jobs[a.p.job.name] then reject('Printer access denied') end
+  local ped=GetPlayerPed(a.source)
+  if not ped or ped==0 then reject('Player position unavailable') end
+  local pos=GetEntityCoords(ped)
+  local c=printer.coords
+  if ((pos.x-c.x)^2+(pos.y-c.y)^2+(pos.z-c.z)^2)^0.5>(printer.radius or 2) then reject('You must be next to your department printer') end
+  if printCooldown[a.p.citizenid] and os.time()-printCooldown[a.p.citizenid]<(settings.cooldown or 5) then reject('Wait before printing another copy') end
+  local row=id and MySQL.single.await("SELECT * FROM crimson_mdt_entries WHERE id=? AND scope=? AND kind='document'",{id,a.scope})
+  if not row then reject('Document not found') end
+  local ticket=MySQL.scalar.await('SELECT UUID()')
+  if type(ticket)~='string' then reject('Could not issue document copy') end
+  local snapshot={title=row.title,body=row.body,category=decode(row.details).category or '',recordId=row.id,version=row.version,author=row.owner,issuedBy=a.p.citizenid,issuerName=actorName(a.p),department=a.policy.label}
+  local printId=MySQL.insert.await('INSERT INTO crimson_mdt_prints(ticket,record_id,snapshot,issued_by) VALUES(?,?,?,?)',{ticket,row.id,json.encode(snapshot),a.p.citizenid})
+  local holder=exports.qbx_core:GetPlayer(a.source)
+  if not holder or holder.PlayerData.citizenid~=a.p.citizenid then
+   MySQL.query.await('DELETE FROM crimson_mdt_prints WHERE id=? AND ticket=?',{printId,ticket})
+   reject('Printing player disconnected or changed character')
+  end
+  local ok=exports.ox_inventory:AddItem(a.source,settings.item,1,{print_id=printId,print_ticket=ticket,label=row.title,description='Official Crimson document · '..a.policy.label})
+  if not ok then
+   MySQL.query.await('DELETE FROM crimson_mdt_prints WHERE id=? AND ticket=?',{printId,ticket})
+   reject('Inventory rejected the document. Check capacity and register crimson_document first.')
+  end
+  printCooldown[a.p.citizenid]=os.time()
+  log(a,'document_print',row.id)
+  return {id=printId}
  elseif action=='equipment' then
   if a.department=='business' then reject('Equipment access denied') end
   local cameras={}
@@ -304,7 +349,7 @@ local function run(a,action,payload)
     if a.grade>=(k.grade or 0) then kits[#kits+1]={label=k.label,grade=k.grade or 0,id=index} end
    end
   end
-  return {integrations=Config.Integrations,cameras=cameras,kits=kits}
+  return {integrations=services.integrationStatus(),cameras=cameras,kits=kits}
  elseif action=='camera' then
   if a.department=='business' or not Config.Integrations.cameras then reject('Camera provider disabled') end
   local id=integer(payload.id,1,#Config.Cameras)
@@ -372,10 +417,13 @@ MySQL.ready(function()
    }),'Legacy migration failed. Restore backup; do not delete the source table.')
   end
  end)
+ if ok and services.initialize then
+  ok,err=pcall(services.initialize)
+ end
  ready=ok
  if not ok then print('[crimson_doj] Initialization failed: '..tostring(err)) end
 end)
-AddEventHandler('playerDropped',function() rates[source]=nil locks[source]=nil unitStatus[source]=nil unitGPS[source]=nil end)
+AddEventHandler('playerDropped',function() rates[source]=nil rates['read:'..source]=nil locks[source]=nil unitStatus[source]=nil unitGPS[source]=nil end)
 lib.callback.register('crimson_doj:request',function(source,action,payload)
  local a=identity(source,action=='duty' or action=='bootstrap')
  if not a then return fail('Access denied. Check job, grade and duty.') end
@@ -398,3 +446,60 @@ lib.callback.register('crimson_doj:request',function(source,action,payload)
  end
  return {ok=true,data=result}
 end)
+
+-- Printed copies are transferable. Reading requires current server-verified possession;
+-- it does not grant access to the source record or department MDT.
+lib.callback.register('crimson_doj:readPrinted',function(source,slot)
+ if not ready or not Config.Printing or not Config.Printing.enabled or GetResourceState('ox_inventory')~='started' then return fail('Document reader unavailable') end
+ slot=integer(slot,1,1000)
+ if not slot then return fail('Invalid inventory slot') end
+ local key='read:'..source
+ local now=GetGameTimer()
+ if rates[key] and now-rates[key]<750 then return fail('Please wait before reading again') end
+ rates[key]=now
+ local ok,result=pcall(function()
+  local item=exports.ox_inventory:GetSlot(source,slot)
+  if not item or item.name~=Config.Printing.item or type(item.metadata)~='table' then reject('Document is not in your inventory') end
+  local id=integer(item.metadata.print_id,1,9007199254740991)
+  local ticket=clean(item.metadata.print_ticket,64,true)
+  if not id or not ticket then reject('Invalid document copy') end
+  local copy=MySQL.single.await('SELECT snapshot,created_at FROM crimson_mdt_prints WHERE id=? AND ticket=?',{id,ticket})
+  if not copy then reject('Document copy not found') end
+  local data=decode(copy.snapshot)
+  data.printId=id data.printedAt=copy.created_at
+  return data
+ end)
+ if not ok then return fail(tostring(result):match('CRIMSON_VALIDATION:(.*)') or 'Could not read the document') end
+ return {ok=true,data=result}
+end)
+
+-- Console-only installation report; prints no credentials or citizen data.
+RegisterCommand('crimsoncheck',function(source)
+ if source~=0 then return end
+ print('[Crimson check] database='..(ready and 'ready' or 'not ready'))
+ for _,resource in ipairs({'qbx_core','ox_lib','oxmysql','ox_inventory','ox_target','Renewed-Banking','qbx_prison','screencapture'})do
+  print('[Crimson check] '..resource..'='..GetResourceState(resource))
+ end
+ if GetResourceState('ox_inventory')=='started' then
+  local ok,item=pcall(function()return exports.ox_inventory:Items(Config.Printing.item)end)
+  print('[Crimson check] '..Config.Printing.item..' item='..(ok and item and 'registered' or 'MISSING'))
+ end
+ local jobs=exports.qbx_core:GetJobs()
+ for name,policy in pairs(Config.Jobs)do
+  local job=jobs[name]
+  local management=false
+  if job then for grade in pairs(job.grades)do if tonumber(grade) and tonumber(grade)>=policy.manage then management=true end end end
+  print('[Crimson check] job '..name..'='..(not job and 'MISSING' or management and 'configured' or 'no management grade; adjust config'))
+ end
+end,true)
+
+-- Use only after checking the external account balances/transactions.
+RegisterCommand('crimsonresolve',function(source,args)
+ if source~=0 then return end
+ if not ready then print('[Crimson] Database not ready') return end
+ local id=tonumber(args[1])
+ local outcome=args[2]
+ local note=table.concat(args,' ',3)
+ local ok,result=pcall(services.resolvePayment,id,outcome,note)
+ print(ok and '[Crimson] Payment metadata resolved; no money was moved' or '[Crimson] '..tostring(result))
+end,true)

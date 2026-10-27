@@ -12,7 +12,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{
  const errors=[];const console=new VirtualConsole();console.on('jsdomError',e=>errors.push(e.message));
  const dom=await JSDOM.fromFile(path.join(__dirname,'../crimson_doj/web/index.html'),{runScripts:'dangerously',resources:'usable',virtualConsole:console,beforeParse(w){
-  w.GetParentResourceName=()=> 'crimson_doj';w.confirm=()=>true;
+  w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.HTMLMediaElement.prototype.pause=function(){};w.HTMLMediaElement.prototype.load=function(){};w.GetParentResourceName=()=> 'crimson_doj';w.confirm=()=>true;
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.fetch=async(url,opts)=>{const data=JSON.parse(opts.body);lastRequest=data;calls.push(data);let result;
    if(data.action==='bootstrap')result=bootstrap;
@@ -59,9 +59,17 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
  await open({...base,department:'ems',job:'ambulance',label:'Crimson Medical',modules:{medical:{write:true,subject:true},document:{write:true},note:{write:true},dispatch:{write:true},recording:{write:true}},counts:[]});
  check(!$('[data-view="case"]'),'legal cases hidden from EMS');check(!$('[data-view="businesses"]'),'business registry hidden from EMS');check(!!$('[data-view="medical"]'),'medical module available');
  await open({...base,department:'business',job:'mechanic',label:'Mechanic',modules:{invoice:{write:true},product:{write:true},document:{write:true},note:{write:true}},counts:[]});
- check(!$('[data-view="roster"]'),'business has no units');check(!$('[data-view="medical"]'),'business has no medical module');await nav('invoice');check($('#subtitle').textContent.includes('payment integration not configured'),'billing limitation visible');
+ check(!$('[data-view="roster"]'),'business has no units');check(!$('[data-view="medical"]'),'business has no medical module');await nav('invoice');check($('#subtitle').textContent.includes('recipient confirmation'),'billing consent visible');
+ w.postMessage({action:'document',data:{title:'<img src=x>',body:'Printed contents',recordId:1,version:2,issuedBy:'STAFF',issuerName:'Test Judge',department:'Justice',printId:7,printedAt:'2026-10-27'}},'*');await sleep(40);
+ check(!$('#printed-document').hidden&&$('#tablet').hidden,'physical document has separate reader');
+ check($('#printed-body').textContent==='Printed contents','printed snapshot contents shown');check(!$('#printed-document img'),'printed title never interprets HTML');
+ $('#printed-close').click();await sleep(30);check($('#printed-document').hidden,'physical reader closes');
  await open({...base,onduty:false});check($('#content').textContent.includes('You are off duty'),'off duty access screen');await nav('case');check($('#content').textContent.includes('Clock in first'),'off duty records blocked in UI');
  $('#duty').click();await sleep(70);check(calls.some(x=>x.action==='duty'&&x.payload.enabled===true),'duty toggle callback');
+ w.postMessage({action:'videoStart',data:{ticket:'test-ticket',total:1,bytes:4}},'*');await sleep(20);check($('#video-dialog').open,'private video dialog opens');
+ w.postMessage({action:'videoChunk',data:{ticket:'wrong',index:1,total:1,data:'AQIDBA=='}},'*');await sleep(20);check($('#video-status').textContent.includes('Loading'),'wrong video ticket ignored');
+ w.postMessage({action:'videoChunk',data:{ticket:'test-ticket',index:1,total:1,data:'AQIDBA=='}},'*');await sleep(20);check($('#bodycam-video').getAttribute('src')==='blob:test','bounded video transfer decoded');
+ $('#video-close').click();await sleep(20);check(!$('#video-dialog').open&&!$('#bodycam-video').getAttribute('src'),'video closes and releases blob');
  $('#close').click();await sleep(30);check($('#tablet').hidden,'tablet closes');check(w.getComputedStyle(d.documentElement).backgroundColor==='rgba(0, 0, 0, 0)','canvas transparent after closing');
  check(errors.length===0,'zero DOM runtime exceptions: '+errors.join('; '));dom.window.close();process.stdout.write(`PASS ${passed} UI checks across DOJ, EMS, Business, safe rendering, forms and duty\n`);process.exit(0);
 })().catch(e=>{process.stderr.write(e.stack+'\n');process.exit(1);});

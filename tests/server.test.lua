@@ -1,4 +1,7 @@
 local saved={}
+local readPrinted
+local printSnapshot,heldDocument
+local serviceCallbacks={}
 local callback,player,sourceNumber,passed= nil,nil,0,0
 local queries,inserts,updates,groupChanges={},0,0,0
 local selectedRow,selectedProduct,groupGrade,oldVersionChanged,legacy,migrated,migrationArgs
@@ -24,8 +27,11 @@ GetPlayerPed=function()return 5 end
 GetEntityCoords=function()return {x=10,y=20,z=30}end
 GetResourceState=function()return 'missing'end
 AddEventHandler=function()end
-json={decode=function(s)if s=='PRODUCT' then return {price=50}end if s=='PRIVATE' then return {url='https://test'}end return {}end,encode=function(t)return t end}
-lib={callback={register=function(_,fn)callback=fn end}}
+RegisterNetEvent=function()end
+RegisterCommand=function()end
+TriggerClientEvent=function()end
+json={decode=function(s)if type(s)=='table' then return s end if s=='PRODUCT' then return {price=50}end if s=='PRIVATE' then return {url='https://test'}end return {}end,encode=function(t)return t end}
+lib={callback={register=function(name,fn)if name=='crimson_doj:request' then callback=fn elseif name=='crimson_doj:readPrinted' then readPrinted=fn else serviceCallbacks[name]=fn end end}}
 local initializer
 MySQL={query={await=function(sql,args)
  queries[#queries+1]={sql=sql,args=args}
@@ -38,17 +44,21 @@ end},scalar={await=function(sql,args)
  if sql:find('crimson_mdt_migrations')then return migrated or 0 end
  if sql:find('SELECT grade FROM player_groups')then return groupGrade end
  if sql:find('SELECT threat')then return 'green'end
+ if sql:find('SELECT UUID')then return 'test-print-ticket'end
  return 0
 end},single={await=function(sql,args)
  queries[#queries+1]={sql=sql,args=args}
+ if sql:find('FROM crimson_mdt_prints')then if args[1]==42 and args[2]=='test-print-ticket' then return {snapshot=printSnapshot,created_at='2026-10-27'} end return nil end
  if sql:find('FROM players')then return {citizenid='CITIZEN',charinfo='{}'}end
  if sql:find("kind='product'")then return selectedProduct end
  return selectedRow
-end},insert={await=function()inserts=inserts+1 return 42 end},update={await=function()updates=updates+1 return oldVersionChanged and 0 or 1 end},transaction={await=function(args)migrationArgs=args return true end},ready=function(fn)initializer=fn;fn()end}
+end},insert={await=function(sql,args)inserts=inserts+1 if sql:find('INSERT INTO crimson_mdt_prints')then printSnapshot=args[3] end return 42 end},update={await=function(sql)if sql:find('UPDATE crimson_mdt_entries') then updates=updates+1 return oldVersionChanged and 0 or 1 end return 1 end},transaction={await=function(args)migrationArgs=args return true end},ready=function(fn)initializer=fn;fn()end}
+dofile('crimson_doj/server_extras.lua')
 dofile('crimson_doj/server.lua')
 local function request(action,data,id)sourceNumber=sourceNumber+1 saved[id or sourceNumber]=player return callback(id or sourceNumber,action,data or {})end
 local function check(value,label)assert(value,label)passed=passed+1 end
 local function denied(action,data,label)local r=request(action,data)check(not r.ok,label)return r end
+user('doj',3,true);denied('initialize',nil,'internal service initializer is not an RPC action');denied('resolvePayment',{},'console payment resolution is not exposed to NUI')
 user('unemployed',4,true);denied('bootstrap',nil,'nonjob denied')
 user('doj',0,false);local b=request('bootstrap');check(b.ok and #b.data.recent==0,'off duty bootstrap has no sensitive data');denied('search',{query='Test'},'off duty search denied')
 check(request('duty',{enabled=true}).ok and player.PlayerData.job.onduty,'can clock in')
@@ -94,6 +104,26 @@ denied('armory',{id=1},'armory server distance enforced')
 
 local initial=inserts;request('create',{kind='dispatch',subject='',title='Officer assistance',details={coords={x=999}}});check(inserts>initial,'dispatch created');
 local r;for i=1,51 do r=request('bootstrap',{},9000)end check(not r.ok,'rate limit enforced')
+
+user('police',3,true,'PRINTER')
+Config.Printing={enabled=true,item='crimson_document',cooldown=5}
+Config.Printers={{coords={x=10,y=20,z=30},radius=2,jobs={police=true}}}
+GetEntityCoords=function()return {x=10,y=20,z=30}end
+selectedRow={id=8,kind='document',title='Official copy',body='Original contents',details='{}',version=1,owner='STAFF'}
+check(request('printDocument',{id=8,printer=1}).ok,'physical document print')
+check(printSnapshot.body=='Original contents' and printSnapshot.version==1,'print stores immutable snapshot')
+denied('printDocument',{id=8,printer=1},'print cooldown enforced')
+heldDocument={name='crimson_document',metadata={print_id=42,print_ticket='test-print-ticket'}}
+exports.ox_inventory.GetSlot=function()return heldDocument end
+selectedRow.body='Changed later'
+local copy=readPrinted(20000,1)
+check(copy.ok and copy.data.body=='Original contents','physical copy remains readable after source changes')
+heldDocument=nil;check(not readPrinted(20001,1).ok,'reader requires inventory possession')
+heldDocument={name='radio',metadata={print_id=42,print_ticket='test-print-ticket'}};check(not readPrinted(20002,1).ok,'wrong inventory item rejected')
+heldDocument={name='crimson_document',metadata={print_id=42,print_ticket='forged'}};check(not readPrinted(20003,1).ok,'forged document ticket rejected')
+check(not readPrinted(20004,-1).ok,'invalid document slot rejected')
+user('ambulance',3,true);denied('printDocument',{id=8,printer=1},'printer job allowlist enforced')
+
 local oldQuery=MySQL.query.await;MySQL.query.await=function()error('SENSITIVE SQL DETAILS')end;r=request('search',{query='Test'});check(not r.ok and not r.error:find('SENSITIVE'),'internal database errors not leaked');MySQL.query.await=oldQuery
 legacy=1;migrated=0;initializer();check(migrationArgs and #migrationArgs==2,'migration is transactional');check(migrationArgs[1].query:find('SELECT id,')~=nil,'migration preserves record IDs');check(not migrationArgs[1].query:find('DELETE'),'migration does not delete old table')
 print('PASS '..passed..' authorization, isolation, privacy, validation, migration and concurrency checks')

@@ -1,11 +1,7 @@
-# Mission Row starter configuration
+# Mission Row configuration (v3)
 
-Replace crimson_doj/config.lua with downloads/config.lua, then run `restart crimson_doj` in the server console. The current ZIP also contains this configuration.
+Camera, radio kit and a physical document printer are configured for the default Mission Row area. Refer to crimson_doj/config.lua for exact coordinates/grade/job allowlists. Custom MLOs require adjustment.
 
-- Original uploaded job thresholds, business jobs, key/command and penal-code settings are preserved.
-- Camera: Mission Row entrance, allowed jobs doj/police/sheriff.
-- Armory: one radio, grade 1+, on duty with write permission, within 3 metres of (450,-980,30). Cooldown 30 minutes per citizen/job/kit. Item radio must exist in ox_inventory; start that resource first.
-- Camera at (440,-981,35), rotation (-20,0,90). These are starter positions for Mission Row; a custom MLO may require different coordinates/rotation.
-- Open /dojmdt, choose Equipment & cameras. Esc returns from camera view. Armory collection is available only near the configured location.
-- Banking/jail/bodycam remain disabled/unimplemented; no such integrations were enabled.
-- Configuration syntax was checked locally; positions and inventory behavior still need verification in your server.
+Printer: (441.4,-982.2,30.7), radius 2m. Press E near the printer and select a saved document, or print from an open document in MDT. Register crimson_document from INSTALL/ox_inventory-items.lua first.
+
+v3 also selects Renewed-Banking, qbx_prison and screencapture. Read INSTALL_AR.md before starting: SQL import, inventory definitions and dependency installation are required. Preserving an old config without merging new fields leaves those features disabled. No live world-position validation was performed here.

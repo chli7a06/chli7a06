@@ -1,5 +1,9 @@
-Run from repository root with Node.js 24+: npm ci --prefix tests; npm test --prefix tests.
-Tests use fengari (Lua VM), luaparse and jsdom. Qbox, MySQL, FiveM native calls and NUI fetches are mocked. The runner verifies both execution exit status and explicit current-run completion summaries, since the Lua CLI can report Lua assertion failures without a useful exit code.
-No production dependencies or npm install are required for the resource itself.
+# Development checks
 
-Optional browser check: serve crimson_doj/web over local HTTP on port 9341; launch headless Chromium with remote debugging port 9337; run node tests/browser.test.cjs. MDT_TEST_URL and CHROME_DEBUG_PORT override those defaults. The container used --single-process --no-zygote because its normal renderer subprocess could not open the resource. Output screenshots go to /tmp/crimson-browser-review. Pixel analysis in validation/2.0.2/transparency.json was performed using Pillow against screenshots from the successful current run. This is not a live FiveM/CEF test.
+Node 24+: `npm ci --prefix tests`, then `npm test --prefix tests` from repository root. No npm installation is required for the FiveM resource itself.
+
+The suite checks Lua/JS syntax; server permissions/privacy/migrations/printer ownership; client focus/camera/item/video cancellation; UI forms, physical copy reading and bounded video assembly; payment/refund/uncertain-outcome/prison/capture adapters with mocks; and actual Node filesystem/chunk-transfer code. The runner requires explicit completion summaries because the Lua CLI can emit assertion failures with a misleading exit code.
+
+Optional actual SQL check: `python3 tests/database.test.py`. Requires Docker and the pinned MariaDB image; creates one ephemeral container with no network/host ports and removes it on completion. It never touches the production database.
+
+Optional actual browser check: serve crimson_doj/web on localhost:9341, launch headless Chromium with remote debugging on 9337, then `node tests/browser.test.cjs`. Override MDT_TEST_URL/CHROME_DEBUG_PORT if needed. This container required --single-process --no-zygote; ordinary machines may not. It records/decodes a small real WebM through NUI messages, checks printed-copy rendering, UI and close/camera states; screenshots go to /tmp/crimson-browser-review. NUI responses remain mocked, so this is not FiveM/CEF end-to-end validation.

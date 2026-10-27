@@ -1,6 +1,8 @@
 local opened, opening = false, false
 local uiEpoch, cameraEpoch = 0, 0
 local camera = nil
+local videoTicket = nil
+local bodycamActive = false
 local function stopCamera()
     cameraEpoch = cameraEpoch + 1
     if camera then
@@ -11,6 +13,7 @@ local function stopCamera()
     end
 end
 local function close()
+    if videoTicket then TriggerServerEvent('crimson_doj:cancelVideo',videoTicket) videoTicket=nil end
     uiEpoch = uiEpoch + 1
     opened, opening = false, false
     stopCamera()
@@ -86,4 +89,111 @@ RegisterNUICallback('camera', function(data, cb)
             end
         end
     end)
+end)
+
+local function nearestPrinter()
+ local pos=GetEntityCoords(PlayerPedId())
+ local nearest,distance=nil,math.huge
+ for index,p in ipairs(Config.Printers or {}) do
+  local c=p.coords
+  local d=((pos.x-c.x)^2+(pos.y-c.y)^2+(pos.z-c.z)^2)^0.5
+  if d<=(p.radius or 2) and d<distance then nearest,distance=index,d end
+ end
+ return nearest
+end
+RegisterNUICallback('printDocument',function(data,cb)
+ local printer=nearestPrinter()
+ if not printer then cb({ok=false,error='Go to your department printer first'}) return end
+ cb(requestWhileOpen('printDocument',{id=data.id,printer=printer}))
+end)
+exports('useDocument',function(data,slot)
+ if not Config.Printing or not Config.Printing.enabled then return end
+ close()
+ local epoch=uiEpoch
+ exports.ox_inventory:useItem(data,function(used)
+  if not used or uiEpoch~=epoch then return end
+  local ok,result=pcall(lib.callback.await,'crimson_doj:readPrinted',false,used.slot)
+  if uiEpoch~=epoch then return end
+  if not ok or type(result)~='table' or not result.ok then
+   lib.notify({title='Crimson document',description=type(result)=='table' and result.error or 'Could not read document',type='error'})
+   return
+  end
+  SetNuiFocusKeepInput(false)
+  SetNuiFocus(true,true)
+  SendNUIMessage({action='document',data=result.data})
+ end)
+end)
+CreateThread(function()
+ while true do
+  local wait=1000
+  if Config.Printing and Config.Printing.enabled and not opened and not opening and not camera then
+   local index=nearestPrinter()
+   if index then
+    wait=0
+    local printer=Config.Printers[index]
+    local c=printer.coords
+    DrawMarker(2,c.x,c.y,c.z+0.15,0.0,0.0,0.0,0.0,180.0,0.0,0.2,0.2,0.2,239,52,75,150,false,true,2,false,nil,nil,false)
+    BeginTextCommandDisplayHelp('STRING')
+    AddTextComponentSubstringPlayerName('Press ~INPUT_CONTEXT~ to use the Crimson printer')
+    EndTextCommandDisplayHelp(0,false,false,-1)
+    if IsControlJustReleased(0,38) then
+     local ok,result=pcall(lib.callback.await,'crimson_doj:request',false,'list',{kind='document',page=1,query=''})
+     if ok and result and result.ok then
+      local options={}
+      for _,record in ipairs(result.data.rows) do
+       local recordId=record.id
+       options[#options+1]={title=record.title,description='Document #'..recordId,onSelect=function()
+        local printed=lib.callback.await('crimson_doj:request',false,'printDocument',{id=recordId,printer=index})
+        lib.notify({title='Crimson printer',description=printed.ok and 'Document added to your inventory' or printed.error,type=printed.ok and 'success' or 'error'})
+       end}
+      end
+      if #options==0 then lib.notify({description='No saved documents. Create one in the MDT first.',type='inform'})
+      else lib.registerContext({id='crimson_printer',title=printer.label,options=options}) lib.showContext('crimson_printer') end
+     else lib.notify({description=type(result)=='table' and result.error or 'Printer unavailable',type='error'}) end
+    end
+   end
+  end
+  Wait(wait)
+ end
+end)
+
+RegisterNetEvent('crimson_doj:invoiceOffer',function(offer)
+ local answer=lib.alertDialog({header='Invoice · '..offer.business,content=offer.title..'\nAmount: $'..offer.amount..'\nPay from your bank account?',centered=true,cancel=true})
+ if answer~='confirm' then return end
+ local result=lib.callback.await('crimson_doj:payInvoice',false,{id=offer.id,version=offer.version})
+ lib.notify({title='Crimson payment',description=result.ok and 'Payment completed' or result.error,type=result.ok and 'success' or 'error'})
+end)
+
+RegisterNetEvent('crimson_doj:videoStart',function(data)
+ if not opened or type(data.ticket)~='string' then
+  if type(data.ticket)=='string' then TriggerServerEvent('crimson_doj:cancelVideo',data.ticket) end
+  return
+ end
+ videoTicket=data.ticket
+ SendNUIMessage({action='videoStart',data=data})
+end)
+RegisterNetEvent('crimson_doj:videoChunk',function(data)
+ if opened and data.ticket==videoTicket then SendNUIMessage({action='videoChunk',data=data}) end
+end)
+RegisterNUICallback('cancelVideo',function(_,cb)
+ if videoTicket then TriggerServerEvent('crimson_doj:cancelVideo',videoTicket) videoTicket=nil end
+ cb({ok=true})
+end)
+RegisterNetEvent('crimson_doj:bodycamStatus',function(data)
+ bodycamActive=data.active==true
+ if not bodycamActive then lib.notify({title='Crimson bodycam',description=data.saved and 'Recording saved in the library' or data.error or 'Recording stopped',type=data.saved and 'success' or 'inform'}) end
+end)
+RegisterCommand('bodycamstop',function()
+ local result=lib.callback.await('crimson_doj:stopOwnBodycam',false)
+ lib.notify({description=result.ok and 'Finalizing bodycam capture' or result.error,type=result.ok and 'success' or 'error'})
+end,false)
+CreateThread(function()
+ while true do
+  if bodycamActive then
+   DrawRect(0.87,0.08,0.2,0.04,110,10,25,190)
+   SetTextFont(0) SetTextScale(0.0,0.32) SetTextColour(255,235,235,255)
+   SetTextCentre(true) BeginTextCommandDisplayText('STRING') AddTextComponentSubstringPlayerName('REC · CRIMSON BODYCAM · /bodycamstop') EndTextCommandDisplayText(0.87,0.069)
+   Wait(0)
+  else Wait(300) end
+ end
 end)

@@ -1,9 +1,16 @@
+local exported={}
+local emitted={}
+local serverCalls=0
+local lastServerCallback
+exports=setmetatable({ox_inventory={useItem=function()end}},{__call=function(_,name,fn)exported[name]=fn end})
 Config={Command='dojmdt',Key='F12'}
 local commands,callbacks,handlers,messages={},{},{},{}
 local focus,keepInput,render,created,destroyed,hiddenText=false,false,false,0,0,0
 local delayed=false
 local response={ok=true,data={x=10,y=20,z=30,rx=0,ry=0,rz=0,fov=60}}
-lib={callback={await=function()if delayed then coroutine.yield() end return response end},notify=function()end,hideTextUI=function()hiddenText=hiddenText+1 end,showTextUI=function()end}
+lib={callback={await=function(name)serverCalls=serverCalls+1 lastServerCallback=name if delayed then coroutine.yield() end return response end},notify=function()end,hideTextUI=function()hiddenText=hiddenText+1 end,showTextUI=function()end}
+RegisterNetEvent=function(name,fn)handlers[name]=fn end
+TriggerServerEvent=function(name,ticket)emitted[#emitted+1]={name=name,ticket=ticket}end
 RegisterCommand=function(name,fn)commands[name]=fn end
 RegisterKeyMapping=function()end
 RegisterNUICallback=function(name,fn)callbacks[name]=fn end
@@ -45,4 +52,36 @@ commands.mdtclose()
 check(coroutine.resume(pendingCamera),'late camera response completes')
 check(not result.ok and created==previousCreated and not focus,'late camera response cannot activate after close')
 delayed=false
+Config.Printing={enabled=true}
+exports.ox_inventory.useItem=function(_,data,cb)cb({slot=1})end
+response={ok=true,data={title='Printed copy',body='Contents'}}
+exported.useDocument({},1)
+check(focus and messages[#messages].action=='document','inventory use opens physical reader')
+commands.mdtclose();check(not focus and messages[#messages].action=='close','physical reader recovery closes focus')
+delayed=true
+local reading=coroutine.create(function()exported.useDocument({},1)end)
+check(coroutine.resume(reading),'delayed item read starts')
+commands.mdtclose();check(coroutine.resume(reading),'delayed item read completes')
+check(not focus and messages[#messages].action=='close','late item response cannot reopen reader')
+delayed=false
+local before=#messages
+handlers['crimson_doj:videoStart']({ticket='closed',total=1,bytes=4})
+check(#messages==before and emitted[#emitted].ticket=='closed','closed tablet cancels a late video stream')
+commands.dojmdt()
+handlers['crimson_doj:videoStart']({ticket='valid',total=1,bytes=4})
+check(messages[#messages].action=='videoStart','open tablet accepts authenticated stream header')
+before=#messages
+handlers['crimson_doj:videoChunk']({ticket='wrong',index=1,total=1,data='AQIDBA=='})
+check(#messages==before,'unmatched stream chunks ignored')
+handlers['crimson_doj:videoChunk']({ticket='valid',index=1,total=1,data='AQIDBA=='})
+check(messages[#messages].action=='videoChunk','matching chunk forwarded to NUI')
+commands.mdtclose();check(emitted[#emitted].ticket=='valid','closing cancels active stream')
+before=#messages;handlers['crimson_doj:videoChunk']({ticket='valid',index=1,total=1,data='AQIDBA=='})
+check(#messages==before,'closed tablet rejects late chunks')
+lib.alertDialog=function()return 'cancel'end
+before=serverCalls;handlers['crimson_doj:invoiceOffer']({business='Garage',title='Repair',amount=100,id=1,version=1})
+check(serverCalls==before,'cancelled invoice offer never requests payment')
+lib.alertDialog=function()return 'confirm'end
+handlers['crimson_doj:invoiceOffer']({business='Garage',title='Repair',amount=100,id=1,version=1})
+check(lastServerCallback=='crimson_doj:payInvoice','confirmed invoice uses dedicated payment callback')
 print('PASS '..n..' client focus, camera lifecycle and recovery checks')

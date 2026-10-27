@@ -1,0 +1,19 @@
+{
+  "screencapture": {
+    "official_download": "https://github.com/itschip/screencapture/releases/latest/download/screencapture.zip",
+    "download_sha256": "ac2764970b5a6e45732a3750c95b741cbcca3d87aaf64d04ab07117e1ae984a3"
+  },
+  "Renewed-Banking": {
+    "official_download": "https://github.com/Renewed-Scripts/Renewed-Banking/releases/latest/download/Renewed-Banking.zip",
+    "download_sha256": "6bd212b31018e880c1b15f1ee68973401c09f6e4b3b519c4f1134b5874550322"
+  },
+  "ox_target": {
+    "official_download": "https://github.com/overextended/ox_target/releases/latest/download/ox_target.zip",
+    "download_sha256": "c404463199f5563399ff681b5e18641d8c9292d988c9c90b8e7e505b8e0768a7"
+  },
+  "qbx_prison": {
+    "source": "https://github.com/Qbox-project/qbx_prison",
+    "commit": "977634bbaf1757dba3e6d95f0b7dd3be693e11ae",
+    "distribution": "unmodified source including LICENSE"
+  }
+}

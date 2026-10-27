@@ -1,83 +1,60 @@
-# Crimson MDT 2.0 — multi-department preview
+# Crimson MDT 3.0.0 beta — independent Qbox resource
 
-Newly authored Qbox server/client, NUI and schema. Inspired by the requested multi-job workflow; this is not XR-MDT source conversion, an escrow unlock, or complete feature parity. Only the supplied Crimson logo is reused. No old Cfx entitlement, qb-core or compatibility bridge is required.
+New Lua, JavaScript, NUI and SQL written for Crimson. No XR-MDT code, escrow files or old entitlement is needed. Only the supplied Crimson logo is reused. This is an independent implementation with its own workflow, not exact feature/visual parity with XR-MDT.
 
-## Installation / upgrade from Crimson DOJ 1.0
-1. Back up both the resource and the full database. Keep a copy of your current config.lua.
-2. Stop the existing crimson_doj and any duplicate MDT resource before replacing its files. Use the crimson_doj folder in the ZIP, not an extra nested folder.
-3. Start oxmysql, ox_lib and qbx_core first; then `ensure crimson_doj`. This preview uses native Qbox exports and current Qbox player_groups membership storage. Vehicle search assumes player_vehicles(plate,citizenid,vehicle).
-4. Set Config.Jobs to your actual job names/grades. Defaults include doj, police, sheriff, ambulance, mechanic and burgershot. This resource does not create those Qbox jobs. For example, the existing DOJ setup with Judge grade 3 matches the default doj management grade. Do not copy a grade threshold blindly for other jobs.
-5. New tables are automatically created on first start using schema.sql. An account with CREATE TABLE permission is needed then. Existing Crimson DOJ 1.0 records are copied once, transactionally, with IDs preserved, into the justice scope. The old crimson_doj_records table is retained unchanged. This is not a migration of XR-MDT's database. Old audit history remains in the old table and is not imported.
-6. If initialization fails, read the console before retrying. Do not delete source data. If v2 tables already contain entries but the v1 migration marker is absent, restore/reconcile a backup instead of forcing conflicting IDs.
-7. Open `/dojmdt` or F12. The tablet selects the department from the character's current primary Qbox job. Off-duty staff can open the clock-in screen but cannot read operational records.
-8. Review FEATURES.md and complete the live acceptance checks below before using this preview for regular gameplay.
+## Runtime prerequisites
+Existing Qbox base: qbx_core, ox_lib, oxmysql, ox_inventory. Selected add-ons: Renewed-Banking 2.1.4, qbx_prison 1.0.0, screencapture 0.17.2 and ox_target 1.18.1. A companion pack includes official add-on distributions and their licenses/source archives. Do not overwrite existing customized resources blindly. Node 22 support in current FXServer artifacts is required by the media resource.
 
-## Department permissions
-- Police and DOJ share the justice records scope; each still has a server-enforced module allowlist.
-- EMS medical records live in a separate medical scope and are inaccessible to Police/DOJ/Business.
-- Businesses are partitioned by job name; one company cannot access another's invoices/catalog/documents.
-- Private notes are additionally restricted to their author, including against managers.
-- Read/write/manage grade thresholds are enforced on every server request. Writers edit their own records; managers edit department records. Issuing warrants, licenses, catalog management, rank changes, threat changes and audit reads require management permissions.
-- Managers cannot alter themselves or equal/higher ranks, or appoint another member to a grade at/above theirs. Job membership changes use native Qbox AddPlayerToJob/RemovePlayerFromJob, not direct SQL job writes.
-- GPS location is shared only while a member is on duty and has explicitly opted in. Stop sharing before leaving duty if desired; dropping clears GPS state. Locate gives a current waypoint, not continuous map tracking.
+See INSTALL/START_HERE_AR.md for installation. No external API key or paid upload service is used. Configure your actual Qbox job names and grade thresholds, merge the inventory item, import the bank SQL, and start dependencies before crimson_doj. Run the console-only `crimsoncheck` command afterwards.
 
-## Cameras and optional ox_inventory armory
-Only these two integrations have implemented providers in this preview. Do not enable other integration booleans expecting an implementation.
+## Implemented workflows
+- Department-aware Police/DOJ, EMS, and per-company Business MDT; duty, grade and server-side scope checks.
+- Citizen search/profiles; cases, incidents, warrants, evidence/charge text; separate medical reports.
+- Staff roster and native Qbox job membership management; self/equal/higher-grade protection.
+- Registered vehicle lookup/flags; serial/model weapon registry; configured business licenses/notes.
+- Service/product catalog, server-calculated invoices, recipient-confirmed bank payment offers.
+- Actual native Qbox bank debits and Renewed-Banking job-account credits; society balance/history and a durable payment journal.
+- Manager-only, nearby/same-routing-bucket fines and qbx_prison sentence/release actions linked to a case/incident. Default limits: $100,000 fine, 120 minutes; adjust Config.Law for your RP rules.
+- Saved documents, author-private notes, paging/archives, department audit and security code.
+- A physical Mission Row printer. Printed copies are immutable database snapshots in transferable ox_inventory items. A holder can read a copy without accessing the MDT/source department. Every read verifies actual server-side possession of the item and its copy ticket.
+- Manual dispatch, server-captured call position, units/status, consent-based unit GPS, configurable native fixed cameras, whitelisted proximity/grade/cooldown-checked ox_inventory kits.
+- Explicitly self-started, timed bodycam video capture through screencapture. On-screen REC indicator and /bodycamstop. A staff member can stop their own capture after a job/duty change. Private local video storage; department-authorized playback with bounded chunk transfer; manager deletion/retention controls.
+- Transparent closed NUI, owned-camera/focus cleanup, /mdtclose recovery and stale-response cancellation.
 
-Cameras: set Config.Integrations.cameras=true and add server-defined entries to Config.Cameras. Each camera must have an explicit jobs allowlist, for example:
+## Printing setup
+Merge the entry from INSTALL/ox_inventory-items.lua into ox_inventory/data/items.lua, inside its returned table. Do not replace your full inventory file. The item is `crimson_document`, consume=0, non-stackable, with client export crimson_doj.useDocument. Restart ox_inventory after changing items.
 
-```lua
-Config.Cameras = {
- {label='Mission Row entrance', jobs={police=true}, x=440.0,y=-981.0,z=35.0,rx=-20.0,ry=0.0,rz=90.0,fov=60},
-}
-```
+Default printer: Mission Row (441.4,-982.2,30.7), radius 2 metres, DOJ/Police/Sheriff. Adjust positions/allowlists for your MLO or add separate EMS/Business printers. At the printer, press E and choose a saved document, or view a document in MDT and select Print inventory copy. The item goes to the printer user's inventory; normal ox_inventory transfer can hand it to someone else. Source edits never alter an already printed copy. Reading requires no source MDT permissions, so print/share sensitive documents intentionally.
 
-These sample coordinates must be adjusted to your actual map. The client receives only authorized camera definitions; Esc returns from the native camera view. This is a fixed security camera, not video recording.
+## Payments and interrupted operations
+Invoices do not charge on creation. Send a payment request; the addressed online recipient confirms through ox_lib. Values are re-read server-side; client amounts are ignored. Negative/oversized amounts, missing accounts and insufficient bank balance are rejected. Financial calls use the citizen ID rather than a potentially reused server ID. Destination account derives from the company's server-side scope.
 
-Armory: requires an installed ox_inventory with valid items. Set Config.Integrations.inventory='ox_inventory' and explicitly configure locations/kits. Example (change location, grade and items first):
+One settlement per invoice/case is recorded and guarded against duplicate submission. A known credit refusal attempts a native Qbox refund. Exceptions/ambiguous provider outcomes and interrupted operations become needs_review, with no automatic replay or blind refund. Money movement across Qbox/Renewed-Banking cannot be part of one SQL transaction; this limitation is explicitly handled, not claimed atomic.
 
-```lua
-Config.Armory = {
- police={coords={x=450.0,y=-980.0,z=30.0}, radius=3.0, kits={
-  {label='Radio kit',grade=1,cooldown=1800,items={{name='radio',count=1}}},
- }},
-}
-```
+Review the Payments log and both providers. ONLY after verifying actual balances/transactions, the server console may resolve accounting metadata:
 
-Collection verifies the current job/duty/grade, server position, kit whitelist and per-citizen kit cooldown. Issued items carry issue metadata; failed multi-item collection attempts roll back issued items. There is no return/reclaim operation or shared stock system yet. Native cameras, GPS, armory and job mutation still require live server tests.
+`crimsonresolve <record-id> <paid|refunded|failed> <verified reason>`
 
-## Business invoices and integration gaps
-Invoices are persistent catalog-based records. Product prices and quantities are validated and totals calculated server-side; client-supplied totals are ignored. They remain unpaid and never move money. There is no payment callback, bank/society balance integration or debt collection in this preview. Closing an invoice does not mean payment.
+This command accepts only needs_review entries and moves no funds. It is not available through NUI or game clients. Already settled/refunded/failed invoices are not charged again; archive an obsolete invoice and create a replacement only after reconciliation. Bank history integration is best-effort; the MDT payment journal is authoritative for this resource's operation state, not a replacement for checking provider balances.
 
-Jail/fines, society banking/payments, actual bodycam capture/streaming, built-in police-call automation and inventory features beyond the explicit armory provider are not implemented. A recording entry stores an HTTPS reference; it does not capture video. To implement the missing providers, supply the installed resource names and versions (names only; do not share secrets). No generic client-provided export/event names are executed.
+General record mutation and audit insertion remain separate operations; an audit failure can leave a saved ordinary record without its audit entry, and a failed create retry can duplicate an ordinary record. This is not a tamper-proof evidentiary archive.
 
-Supply your own RP penal code in Config.PenalCode; the empty reference is intentional. No laws, fines or jail terms are invented. No original 43 MB map file is needed for this interface; it does not include the original interactive map.
+## Prison behavior
+Install qbx_prison and its inventory prerequisites. Both officer and target must be online, nearby and in the same routing bucket. Only configured legal managers can use legal actions. The target is the case/incident subject, never an arbitrary client-supplied player ID. Self-actions, out-of-range amounts/time and duplicate sentence execution for a case are rejected. Interrupted custody operations are not automatically retried.
 
-## Persistence and audit limits
-Records use optimistic version checks for concurrent edits. Archives filter closed/revoked/archived states on the server. There are no hard deletes. Audit insertion and each record mutation are currently separate SQL operations; a database failure between them can leave a mutation without an audit entry, and retrying a failed create can duplicate a record. This is not a tamper-proof legal archive or financial ledger. Legacy tables are retained for rollback, but new v2 records do not automatically sync back to v1.
+The selected qbx_prison default confiscates inventory and may reset the prisoner's primary job to unemployed; release returns inventory through that provider. Review its settings/source for your server. This adapter does not silently rewrite those defaults. Fines/prison terms are administrator-configured RP actions, not a bundled legal code.
 
-Lists/audits page 30 records; citizen search returns at most 40 matches; citizen profiles show latest 200 linked records; employee roster shows at most 200 members. Search matching is literal and values are parameterized. Private/internal errors are not returned to NUI. Text is rendered using textContent; arbitrary record HTML is not executed.
+## Bodycam and video storage
+Use Recording library → Record my bodycam. It records YOUR gameplay only, not another player's machine. Closing the tablet does not stop a capture; /bodycamstop does. Current provider records WebM video without microphone/game audio; its video API is experimental and needs live FiveM/CEF validation. Default duration 30 seconds at up to 1280×720, max 15 MiB per clip, max 200 stored clips globally. No remote upload endpoint or key is used.
 
-## Verified here
-- Lua/JavaScript syntax.
-- 62 server checks using mocked Qbox/MySQL: authorization, department/company partitioning, private notes, input checks, stale edits, hierarchy restrictions, GPS consent, camera allowlists, armory location/cooldown, transactional legacy migration setup, and internal error filtering.
-- 49 jsdom interaction checks: DOJ/EMS/Business navigation, counts, citizen search/profile, safe text rendering, create/edit dialog, archive filtering, employee form, roster, audit, integration states, duty and closing.
-- Native Qbox export signatures were checked against upstream qbx_core commit 58b345e2b53be98928c3e4ee44b100613ac9257f.
-- No live FiveM/Qbox/MySQL was available here. SQL execution, native camera/GPS/armory behavior, group changes and persistence in your server remain unverified. DOM tests are not a real CEF visual test.
+Clips are moved from screencapture/tmp into crimson_doj/recordings, which is not included in the client manifest. Rooted path/extension/signature/size checks reject invalid files. Playback rechecks the viewer's department before bounded server-to-client transfer; maximum 4 concurrent transfers. Client cancel/disconnect releases transfers. Screenshots/video are self-reported gameplay captures, not attested evidence. Back up recordings together with the database; do not delete this directory during updates. Provider failures may still require checking its temporary folder.
 
-Development tests (outside the resource): Node.js 24+, `npm ci --prefix tests`, then `npm test --prefix tests` from the repository root. Runtime requires no npm install.
+## Upgrade and persistence
+Use the new config.lua or merge new fields using defaults.lua/installation notes; blindly preserving an old config can leave providers/printers disabled. Preserve your actual Jobs/grades/MLO positions. New schema tables create automatically (CREATE permission required on first start). Original Crimson DOJ 1.0 records copy once transactionally into the justice scope with IDs preserved; old source tables stay intact. Original XR-MDT databases are not migrated. Old audit history remains in its original table. v3 records do not sync back into v1.
 
-## Live acceptance checks
-Test first on a backed-up staging server: unauthorized job denial; off-duty denial; DOJ/Police shared legal access; EMS medical isolation; separate company isolation; private-note isolation; citizen searches; create/edit/archive/reload/restart persistence; legacy record counts/IDs; concurrent edits; staff rank hierarchy; GPS opt-in/out; configured camera permissions; armory location, grade, capacity and cooldown. Inspect F8 and server console. Do not assume the local mocked checks cover these native behaviors.
+Police/DOJ share justice records; EMS medical records and different companies are isolated. Private notes remain author-only even for managers. Lists page 30; citizen search max 40; profiles latest 200 records; employee roster max 200. Dates on warrants/licenses are stored references and do not enforce gameplay expiry automatically. No hard deletion of ordinary records; manager video deletion removes the clip and archives its record.
 
-## 2.0.1 screen transparency fix
+## Validation and remaining live checks
+Local tests exercise permissions/isolation, printing possession/snapshots, payment consent and exact amounts, duplicate prevention, credit refusal/refund, ambiguous provider outcomes, prison bounds/proximity, recording lifecycle, private file paths/size checks, actual Node file/stream bytes, UI forms and close/cancel races. A real MariaDB container validates actual schema/migration/JSON update statements. Real Chromium renders the UI, verifies transparency and decodes a WebM clip transferred through the NUI message handler.
 
-Removed document-level dark color scheme and explicitly kept HTML/body transparent while the tablet is hidden. Form controls retain their own dark styling. Added `/mdtclose` (F8: `mdtclose`) to release this resource's NUI focus and owned camera even if the page cannot respond. Resource stop also runs the same cleanup. Added 7 transparency/camera-message DOM assertions and 14 client lifecycle assertions with mocked FiveM natives. All local checks pass; a Chromium screenshot attempt timed out, and actual FiveM/CEF transparency must still be confirmed in-game.
-
-## 2.0.2 — deeper validation and asynchronous close fix
-
-A new delayed-response test reproduced a separate defect: a server reply arriving after /mdtclose could reopen the tablet or activate its camera. UI request epochs now cancel stale replies; repeated open requests close/cancel instead of competing, and camera threads are bound to their own handle. Form controls and panel scrollbars remain dark without changing the transparent root canvas.
-
-Current checks passed: 62 mocked server assertions, 49 DOM interaction assertions, 20 mocked client lifecycle/cancellation assertions, and 9 real Chromium UI checks. Pixel analysis of fresh screenshots confirmed alpha=0 for every pixel while initially closed, while the browser overlay is hidden for camera view, and after closing again. The dashboard rendered and the browser citizen-search flow passed without runtime exceptions. Screenshots and source hashes are in validation/2.0.2 at repository level.
-
-The real browser test uses mocked NUI responses. It does not run FiveM, actual native cameras, Qbox, ox_inventory or a live database; those still need staging-server validation. The initial Chromium attempts failed; the successful run used local HTTP and a single-process container fallback.
+No FiveM engine was available here: native Qbox/ox_inventory/provider actions remain mocked in automated tests. Provider installation, world positions, actual camera views, item use/transfer, actual capture/stream performance, and end-to-end money/prison behavior MUST be tested on a backed-up staging server. These local checks are not a claim that every original XR-MDT feature or every live integration works.

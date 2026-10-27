@@ -51,3 +51,18 @@ end
 Config.PenalCode = {
  -- Supply YOUR RP laws: { code='T01', title='...', fine=0, months=0, category='Traffic' }
 }
+
+-- Physical document copies through ox_inventory. Register the item from INSTALL first.
+Config.Printing = { enabled=true, item='crimson_document', cooldown=5 }
+Config.Printers = {
+ {label='Mission Row printer', coords={x=441.4,y=-982.2,z=30.7}, radius=2.0,
+  jobs={doj=true,police=true,sheriff=true}},
+}
+
+-- Selected native Qbox providers. Install them before enabling live operations.
+Config.Integrations.banking = 'Renewed-Banking'
+Config.Integrations.jail = 'qbx_prison'
+Config.Integrations.bodycam = 'screencapture'
+Config.Payments = { maxAmount=1000000, offerCooldown=15 }
+Config.Law = { maxFine=100000, maxJailMinutes=120, distance=10.0, fineAccount='doj' }
+Config.Bodycam = { duration=30, maxBytes=15728640, maxClips=200, width=1280, height=720 }

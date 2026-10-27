@@ -1,0 +1,83 @@
+{
+  "default_suite": {
+    "server": 73,
+    "DOM": 57,
+    "client": 33,
+    "providers_mocked": 44,
+    "real_storage": 14,
+    "real_Node_transfer": 14
+  },
+  "real_MariaDB": 16,
+  "real_Chromium": 14,
+  "FiveM_native_runtime_tested": false,
+  "pixel_alpha": {
+    "closed": {
+      "dimensions": [
+        1600,
+        900
+      ],
+      "alpha_min": 0,
+      "alpha_max": 0
+    },
+    "dashboard": {
+      "dimensions": [
+        1600,
+        900
+      ],
+      "alpha_min": 1,
+      "alpha_max": 255
+    },
+    "camera-overlay-hidden": {
+      "dimensions": [
+        1600,
+        900
+      ],
+      "alpha_min": 0,
+      "alpha_max": 0
+    },
+    "closed-again": {
+      "dimensions": [
+        1600,
+        900
+      ],
+      "alpha_min": 0,
+      "alpha_max": 0
+    },
+    "video-player": {
+      "dimensions": [
+        1600,
+        900
+      ],
+      "alpha_min": 153,
+      "alpha_max": 255
+    },
+    "printed-copy": {
+      "dimensions": [
+        1600,
+        900
+      ],
+      "alpha_min": 0,
+      "alpha_max": 255
+    }
+  },
+  "source_sha256": {
+    "crimson_doj/client.lua": "b3c15f0b1071ef0b5cc6b997137f1692e9218bbfe6259baa28cdd14fa2617ccc",
+    "crimson_doj/schema.sql": "25e3052e03d09adc292255c66c4fad61a5dcf640af3171a941cf3b974d1b8479",
+    "crimson_doj/server_media.js": "d955541ae6792dab077ad76f14d4ca7deef4be7b9b5227b428d764566415f342",
+    "crimson_doj/config.lua": "25be17b42464c134d60906ab76ccd92b6d005d3adebf49044b499f8ff5bcd241",
+    "crimson_doj/media_core.cjs": "fe1cc4fa335b0c4d81e89fcce8866fc8adc133f4c5b5e0acf45d21404c496a42",
+    "crimson_doj/server.lua": "0521506eebd9afcbc6cc5fcdd191a09cf8e9a6caf1d8ed1cda3d4821b7bfba8e",
+    "crimson_doj/server_extras.lua": "c76fc1932cd9bb1c779cbe2e7895a7acd78911487c92a560eaf4200c868190d7",
+    "crimson_doj/defaults.lua": "e33446c8fea8ca6299b383d5d49c6cd1fa2ca725379836b024448ac580d39ad4",
+    "crimson_doj/fxmanifest.lua": "265c4aa0b2d1233ecb708f66201894108770fdb6af01d309b68464d1767f24a6",
+    "crimson_doj/FEATURES.md": "2078b6b0345887949eec7e4f0da503e49c56d14603c4fd7dee988d19e8d84796",
+    "crimson_doj/README.md": "43d21af670678a8ef4a5422d10edf85786b910c57db37de8a8da7daafab27eec",
+    "crimson_doj/web/app.js": "2b5b861f9401078126e0f8ec9b22115f06eaeeb3108d09adbc63d0fd0bc8b108",
+    "crimson_doj/web/index.html": "db8f1ac6d59e0fa82ef393da6c3f83378e9d28a7867ad11ea6a9f6f3043edd3f",
+    "crimson_doj/web/style.css": "22ee4f22237b7187eab583bdb9ceb0630e985fac0f05d2d3a508262459f7d5da",
+    "crimson_doj/web/crimson-logo.png": "b4b685ce4de628382fe95cd906db841677176cc8ac8ff1c2c49c5dab19b68ea8",
+    "crimson_doj/INSTALL/START_HERE_AR.md": "95a11b1d7969a32ff74e2fedd49b91823238e0b0b7fd397cc752b509ce5ad297",
+    "crimson_doj/INSTALL/ox_inventory-items.lua": "903be1f94024ec3f3701b0bf9b7f8a69d9624acf926de042ebe0209e095ce7d4",
+    "crimson_doj/INSTALL/prison-items.lua": "64b678666e054ffee290b42fe587d8307b16b8d36946cbfbc973afaab25019a0"
+  }
+}
