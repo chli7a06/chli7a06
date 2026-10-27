@@ -1,28 +1,30 @@
-# Crimson DOJ — installation candidate
+# Crimson DOJ 1.0 — independent Qbox resource
 
-This is an adaptation of the supplied XR-MDT files, not a rewritten or runtime-verified resource. Original author attribution and escrow files are preserved.
+All Lua, HTML, JavaScript, CSS and SQL in this folder are newly authored. Only the user-supplied Crimson logo is reused. No XR-MDT code, encrypted files, .fxap metadata, license-check bypass, WaveShield include, or QB compatibility bridge is included or required.
 
-Changes: Config.Framework=qbox; resource folder crimson_doj; DOJ logo and favicon use the supplied Crimson image; red/charcoal CSS theme; manifest declares qbx_core, ox_lib and oxmysql instead of yarn (the supplied UI is prebuilt).
+## Included workflow
+- Qbox server-side job, grade and duty authorization on every request.
+- Dashboard counts; search existing Qbox citizens by name or citizen ID.
+- Citizen profiles and linked cases, warrants and documents.
+- Create and edit records, management-only warrant creation and status changes.
+- Version checks prevent silently overwriting a concurrent edit.
+- Persistent SQL records and audit entries, with management-only audit view.
+- Crimson logo, red/charcoal NUI, /dojmdt command and remappable F12 key.
+- Read-only character lookup: no balance, job, inventory, jail or license mutations.
 
-## Before installation
-- Back up the existing resource and database. Do not run xr-mdt and crimson_doj together: original event and database names are intentionally retained because escrow code cannot be edited.
-- Requires an authorized FiveM Asset Escrow entitlement for the original resource. Renaming may be restricted by its protected code; this cannot be verified here. If the original enforces its resource name, obtain vendor support before using crimson_doj.
-- Requires Qbox with its QB compatibility bridge enabled: editable code still calls exports['qb-core']:GetCoreObject(). This is NOT a complete native Qbox API rewrite.
-- Requires ox_lib, oxmysql and the existing WaveShield resource referenced by the original manifest. No anticheat integration was removed.
-- Review INSTALL/inventory_setup.md for inventory items. Inventory and integrations must match your server.
-- Review configs/config.doj.lua: job is doj; grades and permissions must match your Qbox jobs. Existing grades and business lists were preserved.
-- Review configs/config.webhook.lua locally and disable or replace destinations you do not own; never share credentials.
-- Import INSTALL/database_qbox.sql only after reviewing it against a backed-up database; do not blindly re-import existing tables.
+## Install
+1. Back up your server/database. Stop the previous crimson_doj/xr-mdt to avoid conflicts.
+2. Extract this crimson_doj folder into your server resources.
+3. Requires qbx_core, ox_lib and oxmysql. Ensure they are configured and start first.
+4. Edit config.lua to match your actual Qbox job and grade levels. Defaults: doj read/write grade 0; manage grade 14. RequireDuty=true means the character must be on duty. If your top grade is lower, explicitly adjust manage. Ordinary writers can edit only their own non-warrant records, without changing status.
+5. Tables crimson_doj_records and crimson_doj_audit are automatically created on start. The database account needs CREATE TABLE permission the first time; alternatively import schema.sql using an administrator. This does not migrate or delete XR-MDT tables.
+6. Add `ensure crimson_doj` after its dependencies in server.cfg.
+7. Log in with a configured DOJ character, go on duty, and run /dojmdt or F12. If F12 has an old saved binding, change it in FiveM key bindings.
+8. Test unauthorized jobs and off-duty characters are rejected; test a writer and a manager separately; search a citizen; create/edit/close a case and warrant; reconnect and confirm persistence. Inspect server and F8 logs.
 
-## Installation and verification
-1. Copy the crimson_doj folder into your resources directory.
-2. Add your original map.webp to web/dist/images/map.webp. It was unavailable in the transferable uploads; map views remain incomplete until then.
-3. Start dependencies first, then ensure crimson_doj. Avoid running a second copy of the original MDT.
-4. Inspect both server and F8 logs for escrow/name restrictions, missing exports, schema errors and absent files.
-5. Use a test character with the doj job and an allowed grade. Try /dojmdt (F12) and the DOJ configuration command /doj (K), checking actual command registration on your server.
-6. Verify logo/theme, authorization, profiles, reports, cases, warrants, documents, permissions and persistence after reconnect. Check unauthorized jobs cannot access protected actions.
+## Scope and limitations
+This is a new initial DOJ implementation, not feature parity with XR-MDT. It does not include dispatch, GPS/map tracking, bodycams, armory, EMS/business tablets, employee management, fines, jail integration, uploads, document signing, PDF export or old-data migration. No map.webp is needed. Records are plaintext legal notes, not automatic gameplay enforcement. There is no delete operation: managers close/revoke records. Lists show latest 100 records, profiles latest 200, searches up to 40 matches; full pagination is not implemented.
 
-## Known limitations
-No FiveM server, Qbox runtime, live database or escrow entitlement was available here. Only UI JavaScript syntax and static file checks were run. Full gameplay behavior and resource renaming are unverified.
-The original upload's index.html references render_engine.js, and its manifest lists armory.html, but neither file was present in the supplied original dist listing. Their impact must be checked in FiveM; they have not been invented or replaced.
-Other images may be referenced by optional departments (for example lssd/sasp/logo.png); only uploaded images are included. DOJ uses crimson-logo.png directly.
+Validation: JavaScript and Lua syntax; 19 server tests with mocked Qbox/database cover job/duty/grade denial, unauthorized edits, malformed inputs and stale versions. DOM interaction checks in jsdom with mocked NUI responses passed for opening, counts, search, profiles, safe text rendering, creation form and closing. Chromium execution hung and did not complete; no real-browser visual validation is claimed. No live FiveM/Qbox/MySQL instance was available, so actual runtime compatibility, SQL execution and persistence still require the installation checks above. A successful mocked test is not proof that the resource works in your server.
+
+Audit insertion and record mutation are separate SQL calls; a database failure between them can leave a record without its audit entry. Back up your database and avoid treating this initial audit log as a tamper-proof legal archive.

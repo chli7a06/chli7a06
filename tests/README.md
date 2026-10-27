@@ -1,0 +1,1 @@
+Run from repository root using a Lua 5.3+ interpreter: lua tests/server.test.lua. This mocks Qbox and MySQL; it does not validate live SQL or FiveM. Development validation also parsed Lua with luaparse and checked web/app.js with node --check. DOM interaction checks ran in jsdom; Chromium did not finish.

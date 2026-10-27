@@ -1,9 +1,11 @@
-# CCX — Crimson DOJ
+# Crimson DOJ — independent Qbox version
 
-[Download crimson_doj.zip](../../raw/HEAD/crimson_doj.zip)
+[Download crimson_doj.zip](https://github.com/chli7a06/chli7a06/raw/refs/heads/main/crimson_doj.zip)
 
-Qbox configuration and Crimson logo/red-and-charcoal UI adaptation of the supplied XR-MDT resource. See [installation instructions](INSTALL_CRIMSON.md).
+Newly authored Lua server/client and NUI; no encrypted XR-MDT files, entitlement dependency or QB compatibility bridge. Only the supplied Crimson logo is reused.
 
-This is an installation candidate, not a verified native Qbox rewrite. It requires the Qbox QB compatibility bridge, original escrow entitlement and existing dependencies. FiveM runtime behavior and resource renaming remain unverified. Add your original `map.webp` locally under `crimson_doj/web/dist/images/`.
+Includes DOJ authorization, citizen search, cases, warrants, documents and audit history. This initial independent implementation does not reproduce every XR-MDT feature. See [installation, permissions, tests and limitations](INSTALL_CRIMSON.md).
 
-Discord webhook URLs have been removed from this distribution. Configure your own securely before enabling logging. Original event names, database names and author attribution are preserved for compatibility.
+The source is in [crimson_doj](crimson_doj). Requires qbx_core, ox_lib and oxmysql. No map upload is needed. Not yet validated in a live FiveM/Qbox/MySQL server.
+
+The old archive in repository history was the escrow-dependent adaptation. The current archive replaces it with the independent implementation.
