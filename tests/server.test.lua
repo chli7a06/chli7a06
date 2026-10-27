@@ -4,6 +4,10 @@ local queries,inserts,updates,groupChanges={},0,0,0
 local selectedRow,selectedProduct,groupGrade,oldVersionChanged,legacy,migrated,migrationArgs
 local employeeRows,searchRows={},{ }
 local cfg=assert(loadfile('crimson_doj/config.lua'));cfg()
+-- Explicit test fixtures are independent of the deployed integration configuration.
+Config.Integrations={inventory=false,cameras=false,banking=false,jail=false,bodycam=false}
+Config.Cameras={}
+Config.Armory={}
 Config.Jobs.police.manage=3
 local function user(job,grade,duty,cid)
  player={PlayerData={citizenid=cid or 'STAFF',charinfo={firstname='Test',lastname='Staff'},job={name=job,grade={level=grade},onduty=duty}}}
