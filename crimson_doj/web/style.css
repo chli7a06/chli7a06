@@ -3,3 +3,5 @@
 /* FiveM NUI must leave the game canvas transparent while closed. */
 html,body{width:100%;height:100%;background:transparent!important;background-color:transparent!important;color-scheme:normal!important;overflow:hidden}
 dialog,input,select,textarea{color-scheme:dark}
+/* Dark scrollbars only on tablet panels, never on the root NUI canvas. */
+nav,.workspace{color-scheme:dark;scrollbar-width:thin;scrollbar-color:#48414d transparent}

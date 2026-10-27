@@ -1,3 +1,5 @@
 Run from repository root with Node.js 24+: npm ci --prefix tests; npm test --prefix tests.
 Tests use fengari (Lua VM), luaparse and jsdom. Qbox, MySQL, FiveM native calls and NUI fetches are mocked. The runner verifies both execution exit status and explicit current-run completion summaries, since the Lua CLI can report Lua assertion failures without a useful exit code.
 No production dependencies or npm install are required for the resource itself.
+
+Optional browser check: serve crimson_doj/web over local HTTP on port 9341; launch headless Chromium with remote debugging port 9337; run node tests/browser.test.cjs. MDT_TEST_URL and CHROME_DEBUG_PORT override those defaults. The container used --single-process --no-zygote because its normal renderer subprocess could not open the resource. Output screenshots go to /tmp/crimson-browser-review. Pixel analysis in validation/2.0.2/transparency.json was performed using Pillow against screenshots from the successful current run. This is not a live FiveM/CEF test.

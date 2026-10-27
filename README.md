@@ -19,3 +19,11 @@ The current preview ZIP enables Mission Row cameras and a one-radio ox_inventory
 ## 2.0.1 screen transparency fix
 
 Removed document-level dark color scheme and explicitly kept HTML/body transparent while the tablet is hidden. Form controls retain their own dark styling. Added `/mdtclose` (F8: `mdtclose`) to release this resource's NUI focus and owned camera even if the page cannot respond. Resource stop also runs the same cleanup. Added 7 transparency/camera-message DOM assertions and 14 client lifecycle assertions with mocked FiveM natives. All local checks pass; a Chromium screenshot attempt timed out, and actual FiveM/CEF transparency must still be confirmed in-game.
+
+## 2.0.2 — deeper validation and asynchronous close fix
+
+A new delayed-response test reproduced a separate defect: a server reply arriving after /mdtclose could reopen the tablet or activate its camera. UI request epochs now cancel stale replies; repeated open requests close/cancel instead of competing, and camera threads are bound to their own handle. Form controls and panel scrollbars remain dark without changing the transparent root canvas.
+
+Current checks passed: 62 mocked server assertions, 49 DOM interaction assertions, 20 mocked client lifecycle/cancellation assertions, and 9 real Chromium UI checks. Pixel analysis of fresh screenshots confirmed alpha=0 for every pixel while initially closed, while the browser overlay is hidden for camera view, and after closing again. The dashboard rendered and the browser citizen-search flow passed without runtime exceptions. Screenshots and source hashes are in validation/2.0.2 at repository level.
+
+The real browser test uses mocked NUI responses. It does not run FiveM, actual native cameras, Qbox, ox_inventory or a live database; those still need staging-server validation. The initial Chromium attempts failed; the successful run used local HTTP and a single-process container fallback.

@@ -1,0 +1,41 @@
+{
+  "closed": {
+    "size": [
+      1600,
+      900
+    ],
+    "alpha_min": 0,
+    "alpha_max": 0
+  },
+  "dashboard": {
+    "size": [
+      1600,
+      900
+    ],
+    "alpha_min": 1,
+    "alpha_max": 255
+  },
+  "camera-overlay-hidden": {
+    "size": [
+      1600,
+      900
+    ],
+    "alpha_min": 0,
+    "alpha_max": 0
+  },
+  "closed-again": {
+    "size": [
+      1600,
+      900
+    ],
+    "alpha_min": 0,
+    "alpha_max": 0
+  },
+  "source_sha256": {
+    "crimson_doj/web/index.html": "783e7de141ace343ab6a2259ead282566b462303f688314e3d98f38d20f957fc",
+    "crimson_doj/web/style.css": "a0bf9a018dd5019f278c3d68d8422932cfc9bc7cfc36524cd296ade85068deb8",
+    "crimson_doj/web/app.js": "a12c7b0b357209128ca95506338cb4354d2206faed903ad8dd8fd8919a07a1e9",
+    "crimson_doj/client.lua": "a3a87a1becd1ec1f3a3237a6f11021c741e8c39f4c65267ff949e3181e8dc542"
+  },
+  "scope": "Real Chromium rendering with mocked NUI; not FiveM native runtime."
+}
