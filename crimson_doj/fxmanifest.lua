@@ -4,7 +4,7 @@ lua54 'yes'
 name 'crimson_doj'
 author 'Crimson'
 description 'Crimson multi-department MDT — independent Qbox implementation'
-version '3.0.6-beta'
+version '3.0.7-beta'
 ui_page 'web/index.html'
 shared_scripts { '@ox_lib/init.lua', 'config.lua', 'defaults.lua' }
 client_script 'client.lua'

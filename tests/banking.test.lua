@@ -15,8 +15,21 @@ result=0;check(not pcall(b.credit,'mechanic',5,''));result=false;check(b.credit(
 Config.Banking={provider='custom',resource='mybank',balanceExport='ReadCompany',balanceField='money',accounts={mechanic='society_mechanic'}}
 states.mybank='started';exports.mybank={ReadCompany=function(_,a)check(a=='society_mechanic')return {money=777}end}
 b=CrimsonBankProvider();check(b.balance('mechanic')==777);check(b.credit==nil)
-Config.Banking.provider='apex_banking';states.apex_banking='started';check(not pcall(CrimsonBankProvider))
-CrimsonBankAdapters.apex_banking={balance=function()return 800 end};b=CrimsonBankProvider();check(b.balance('mechanic')==800)
+Config.Banking={provider='apex_banking',accounts={mechanic='tuner'}};states.apex_banking='started'
+local credit,why=150,nil
+exports.apex_banking={ResolveIban=function(_,iban)
+ if iban=='BIZ:tuner' then return {kind='business',job='tuner',iban='BIZ123'} end
+end,GetBusinessBalance=function(_,job)check(job=='tuner')return 800 end,
+AddBusinessMoney=function(_,job,amount,reason)check(job=='tuner' and amount==50 and reason=='invoice')return credit,why end}
+MySQL={query={await=function(sql,params)check(sql:find('LIMIT 100',1,true) and params[1]=='BIZ123' and params[2]=='BIZ123')return {{amount=50}}end}}
+b=CrimsonBankProvider();check(b.balance('mechanic')==800);check(b.balance('missing')==nil)
+check(#b.transactions('mechanic')==1);check(#b.transactions('missing')==0)
+check(b.credit('mechanic',50,'invoice')==true)
+credit=false;why='not_found';check(b.credit('mechanic',50,'invoice')==false)
+why='failed';check(not pcall(b.credit,'mechanic',50,'invoice'))
+credit=nil;check(not pcall(b.credit,'mechanic',50,'invoice'))
+credit=0;check(not pcall(b.credit,'mechanic',50,'invoice'))
+check(b.credit('missing',50,'invoice')==false)
 states.apex_banking='stopped';check(not pcall(CrimsonBankProvider))
 Config.Banking={provider='auto'};states={};check(not pcall(CrimsonBankProvider))
 print('PASS '..n..' banking adapter checks')

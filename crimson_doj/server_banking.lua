@@ -34,6 +34,36 @@ function CrimsonBankProvider()
    call(resource,'handleTransaction',account(job),'Crimson '..kind,amount,reason,cid,account(job),'deposit',reference)
    call(resource,'handleTransaction',cid,'Crimson '..kind,amount,reason,cid,account(job),'withdraw',reference)
   end
+ elseif selected=='apex_banking' then
+  local function descriptor(job)
+   local row=call(resource,'ResolveIban','BIZ:'..account(job))
+   if type(row)=='table' and row.kind=='business' and row.job==account(job) then return row end
+  end
+  b.balance=function(job)
+   -- Apex returns zero for missing accounts; resolve first to avoid a false zero.
+   if not descriptor(job) then return nil end
+   return call(resource,'GetBusinessBalance',account(job))
+  end
+  b.transactions=function(job)
+   local row=descriptor(job)
+   if not row or type(row.iban)~='string' or row.iban=='' then return {} end
+   return MySQL.query.await([[
+    SELECT id AS trans_id, kind AS trans_type, amount, label AS title,
+           from_iban AS issuer, to_iban AS receiver,
+           UNIX_TIMESTAMP(created_at) AS time
+    FROM apex_banking_transactions
+    WHERE from_iban=? OR to_iban=? ORDER BY id DESC LIMIT 100
+   ]],{row.iban,row.iban}) or {}
+  end
+  b.credit=function(job,amount,reason)
+   if not descriptor(job) then return false end
+   local result,why=call(resource,'AddBusinessMoney',account(job),amount,reason)
+   -- Supplied Apex returns the new positive balance, NOT just a boolean.
+   local balance=finite(result)
+   if result==true or (balance and balance>0) then return true end
+   if result==false and ({bad_args=true,disabled=true,not_found=true})[why] then return false end
+   error('Apex company credit outcome uncertain; verify the treasury before retrying',0)
+  end
  elseif selected=='qb-banking' then
   -- GetAccount distinguishes missing accounts from a genuine zero balance.
   b.balance=function(job)local row=call(resource,'GetAccount',account(job));return type(row)=='table' and row.account_balance or nil end

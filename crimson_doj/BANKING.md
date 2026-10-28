@@ -1,4 +1,4 @@
-# Company banking adapters — 3.0.5
+# Company banking adapters — 3.0.7
 
 Personal citizen balances continue to use Qbox money.bank. Company balances use a server-only adapter. This is not automatic compatibility with every banking product.
 
@@ -6,7 +6,7 @@ Personal citizen balances continue to use Qbox money.bank. Company balances use 
 
 Config.Banking = { provider='auto', accounts={} }
 
-Auto selection works only when exactly one of Renewed-Banking, qb-banking, apex_banking is started. Apex detection deliberately reports that an adapter is required until its API is verified. More than one detected resource fails clearly rather than silently selecting the wrong ledger. Explicit examples:
+Auto selection works only when exactly one of Renewed-Banking, qb-banking, apex_banking is started. Apex support was verified against the user-supplied resource exports and schema. New installs select apex_banking explicitly; retained older configs can select it with Config.Banking.provider. More than one detected resource fails clearly rather than silently selecting the wrong ledger. Explicit examples:
 
 ```lua
 Config.Banking = {
@@ -48,6 +48,24 @@ CrimsonBankAdapters['YOUR_BANK_RESOURCE'] = {
 }
 ```
 
-Select that provider explicitly. Never implement credit by blindly returning true or by writing SQL balances directly. Only server administrators edit adapters. Preserve local adapter/config files when updating. Apex support needs its actual SQL/export/bridge files; no Apex schema or API is guessed.
+Select that provider explicitly. Never implement credit by blindly returning true or by writing SQL balances directly. Only server administrators edit adapters. Preserve local adapter/config files when updating. Apex support uses the supplied ResolveIban/GetBusinessBalance/AddBusinessMoney APIs and its transaction schema; no Apex source is redistributed.
 
-Validation: full local suite plus 17 adapter checks covers zero/missing accounts, resource readiness, ambiguous/no-provider selection, mapping, custom balance fields, read-only custom mode, unknown Apex refusal, credit return semantics. Actual live bank integrations require in-server testing; no production DB or money was touched.
+Validation: full local suite plus 32 adapter checks covers zero/missing accounts, resource readiness, ambiguous/no-provider selection, mapping, custom balance fields, read-only custom mode, Apex existence, mapping, history and credit outcomes, credit return semantics. Actual live bank integrations require in-server testing; no production DB or money was touched.
+
+## Apex banking
+
+For this user deployment append to config.lua:
+
+```lua
+Config.Banking = Config.Banking or {}
+Config.Banking.provider = 'apex_banking'
+Config.Banking.accounts = Config.Banking.accounts or {}
+```
+
+Start apex_banking before crimson_doj. Keep the existing Apex resource and database. This update needs no new SQL import. Config.BusinessJobs lists Qbox job keys, not display labels; mechanic is the default example. If the MDT job key differs from the Apex treasury key use Config.Banking.accounts.mechanic='actual_apex_job'.
+
+Apex resolution uses ResolveIban('BIZ:'..job), checking business kind and exact job. Only existing treasuries are queried through GetBusinessBalance; missing accounts stay Unavailable rather than Apex's fallback zero. Provider may perform its own initial society sync when reading its snapshot, matching its banking UI. Transaction history uses a bounded, parameterized read of the verified apex_banking_transactions schema filtered to that company's resolved IBAN, with selected public fields only. Crimson performs no direct SQL balance writes.
+
+Credits call AddBusinessMoney. In the supplied version success returns the new numeric treasury balance; it is not necessarily true. Explicit bad_args/disabled/not_found rejection is refundable. Other false/nil/zero or thrown results are uncertain and lock the settlement for review. Apex logs its own company credit, so Crimson does not duplicate the history. Existing fine/invoice consent and payment journal remain active. Personal bank inspection still uses Qbox, consistent with Apex's Qbox bridge.
+
+Validation is local with mocked APIs and the complete existing authorization/payment suite, not a live server acceptance test. Replacing the bank implementation or changing its SQL schema may require a revised adapter.
