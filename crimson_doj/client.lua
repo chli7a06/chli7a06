@@ -3,6 +3,35 @@ local uiEpoch, cameraEpoch = 0, 0
 local camera = nil
 local videoTicket = nil
 local bodycamActive = false
+-- tablet2 pose and prop, independent of any emote-menu resource.
+local tabletProp, tabletPed
+local tabletDict = 'amb@world_human_seat_wall_tablet@female@base'
+local function stopTablet()
+    if tabletPed and DoesEntityExist(tabletPed) then
+        StopAnimTask(tabletPed, tabletDict, 'base', 1.0)
+    end
+    if tabletProp and DoesEntityExist(tabletProp) then DeleteEntity(tabletProp) end
+    tabletProp, tabletPed = nil, nil
+end
+local function startTablet(epoch)
+    local model = joaat('prop_cs_tablet')
+    local ok = pcall(function()
+        lib.requestAnimDict(tabletDict, 5000)
+        lib.requestModel(model, 5000)
+        if not opened or uiEpoch ~= epoch then return end
+        local ped = PlayerPedId()
+        if IsEntityDead(ped) then return end
+        local pos = GetEntityCoords(ped)
+        local prop = CreateObject(model, pos.x, pos.y, pos.z, false, false, false)
+        if prop == 0 then return end
+        tabletProp, tabletPed = prop, ped
+        AttachEntityToEntity(prop, ped, GetPedBoneIndex(ped, 60309),
+            0.03, 0.002, -0.0, 10.0, 160.0, 0.0, true, true, false, true, 1, true)
+        TaskPlayAnim(ped, tabletDict, 'base', 3.0, 3.0, -1, 49, 0.0, false, false, false)
+    end)
+    SetModelAsNoLongerNeeded(model)
+    if not ok then stopTablet() end
+end
 local function stopCamera()
     cameraEpoch = cameraEpoch + 1
     if camera then
@@ -17,6 +46,7 @@ local function close()
     uiEpoch = uiEpoch + 1
     opened, opening = false, false
     stopCamera()
+    stopTablet()
     SetNuiFocus(false, false)
     SetNuiFocusKeepInput(false)
     SendNUIMessage({ action = 'close' })
@@ -44,6 +74,7 @@ RegisterCommand(Config.Command, function()
     SetNuiFocusKeepInput(false)
     SetNuiFocus(true, true)
     SendNUIMessage({ action = 'open', data = result.data })
+    CreateThread(function() startTablet(epoch) end)
 end, false)
 RegisterKeyMapping(Config.Command, 'Open Crimson MDT', 'keyboard', Config.Key)
 RegisterCommand('mdtclose', function() close() end, false)

@@ -84,4 +84,30 @@ check(serverCalls==before,'cancelled invoice offer never requests payment')
 lib.alertDialog=function()return 'confirm'end
 handlers['crimson_doj:invoiceOffer']({business='Garage',title='Repair',amount=100,id=1,version=1})
 check(lastServerCallback=='crimson_doj:payInvoice','confirmed invoice uses dedicated payment callback')
+-- Exercise the tablet thread separately from the perpetual marker/HUD threads.
+commands.mdtclose()
+local pendingTablet,props,animations,deletions=nil,0,0,0
+CreateThread=function(fn)pendingTablet=fn end
+joaat=function()return 123 end
+lib.requestAnimDict=function()end
+lib.requestModel=function()end
+SetModelAsNoLongerNeeded=function()end
+PlayerPedId=function()return 7 end
+DoesEntityExist=function()return true end
+IsEntityDead=function()return false end
+GetEntityCoords=function()return {x=1,y=2,z=3}end
+CreateObject=function()props=props+1 return 99 end
+GetPedBoneIndex=function()return 10 end
+AttachEntityToEntity=function()end
+TaskPlayAnim=function()animations=animations+1 end
+StopAnimTask=function()end
+DeleteEntity=function()deletions=deletions+1 end
+commands.dojmdt();pendingTablet()
+check(props==1 and animations==1,'tablet2 pose attaches prop after authorized opening')
+commands.mdtclose()
+check(deletions==1,'closing deletes owned tablet prop')
+commands.dojmdt();local late=pendingTablet;commands.mdtclose();late()
+check(props==1,'late animation loading cannot create tablet after closing')
+commands.dojmdt();pendingTablet();handlers.onResourceStop('crimson_doj')
+check(deletions==2,'resource stop deletes tablet prop')
 print('PASS '..n..' client focus, camera lifecycle and recovery checks')
