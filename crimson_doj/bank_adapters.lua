@@ -1,0 +1,2 @@
+-- Register verified server-only custom providers in CrimsonBankAdapters here.
+-- See BANKING.md. Never write balances directly to a banking SQL table.

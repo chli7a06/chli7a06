@@ -5,7 +5,9 @@ function CrimsonServices(h)
  local captures={}
 
  local function requireBank()
-  if Config.Integrations.banking~='Renewed-Banking' or GetResourceState('Renewed-Banking')~='started' then reject('Install and start Renewed-Banking first') end
+  local ok,bank=pcall(CrimsonBankProvider)
+  if not ok then reject(tostring(bank)) end
+  return bank
  end
  local function legal(a)
   if (a.department~='doj' and a.department~='police') or not a.manage then reject('Legal management permission required') end
@@ -32,11 +34,12 @@ function CrimsonServices(h)
   MySQL.update.await('UPDATE crimson_mdt_payments SET state=?,error_note=? WHERE entry_id=?',{state,note or '',id})
  end
  local function settle(row,payer,amount,account,kind,scope,actor,reason)
-  requireBank()
+  local bank=requireBank()
+  if not bank.credit then reject('This banking adapter is read-only; payments are disabled') end
   if not integer(amount,1,Config.Payments.maxAmount) then reject('Invalid payment amount') end
   if type(account)~='string' then reject('Invalid destination account') end
-  local accountBalance=exports['Renewed-Banking']:getAccountMoney(account)
-  if accountBalance==false or accountBalance==nil then reject('Create the job account in Renewed-Banking first: '..account) end
+  local accountBalance=bank.balance(account)
+  if accountBalance==false or accountBalance==nil then reject('Company bank account unavailable: '..account) end
   local cid=payer.PlayerData.citizenid
   local current=exports.qbx_core:GetPlayer(payer.PlayerData.source)
   if not current or current.PlayerData.citizenid~=cid then reject('Payer disconnected or changed character') end
@@ -57,7 +60,7 @@ function CrimsonServices(h)
    if not removedOk then journal(row.id,'needs_review','Debit outcome unknown') reject('Bank outcome uncertain; payment locked for review') end
    if not removed then journal(row.id,'failed','Debit rejected; no credit attempted') reject('Qbox rejected the bank debit') end
    journal(row.id,'crediting')
-   local creditedOk,credited=pcall(function()return exports['Renewed-Banking']:addAccountMoney(account,amount)end)
+   local creditedOk,credited=pcall(function()return bank.credit(account,amount,reason or '')end)
    if not creditedOk then journal(row.id,'needs_review','Credit outcome unknown') reject('Credit outcome uncertain; do not retry; ask a manager to reconcile') end
    if not credited then
     local refundedOk,refunded=pcall(function()return exports.qbx_core:AddMoney(cid,'bank',amount,'crimson-mdt-refund-'..row.id)end)
@@ -73,8 +76,7 @@ function CrimsonServices(h)
    if not saved then journal(row.id,'needs_review','Funds moved; final SQL transaction failed') reject('Funds moved, but accounting needs manager review. Do not pay again.') end
    pcall(function()
     local reference='crimson-'..kind..'-'..row.id
-    exports['Renewed-Banking']:handleTransaction(account,'Crimson '..kind,amount,reason or '',cid,account,'deposit',reference)
-    exports['Renewed-Banking']:handleTransaction(cid,'Crimson '..kind,amount,reason or '',cid,account,'withdraw',reference)
+    if bank.history then bank.history(account,cid,kind,amount,reason or '',reference) end
    end)
    return {paid=true,amount=amount}
   end)
@@ -91,7 +93,7 @@ function CrimsonServices(h)
   return {
    inventory=Config.Integrations.inventory=='ox_inventory' and GetResourceState('ox_inventory')=='started',
    cameras=Config.Integrations.cameras==true,
-   banking=Config.Integrations.banking=='Renewed-Banking' and GetResourceState('Renewed-Banking')=='started',
+   banking=pcall(CrimsonBankProvider),
    jail=Config.Integrations.jail=='qbx_prison' and GetResourceState('qbx_prison')=='started',
    bodycam=Config.Integrations.bodycam=='screencapture' and GetResourceState('screencapture')=='started',
   }
@@ -131,13 +133,13 @@ function CrimsonServices(h)
   local configured=false
   for _,name in ipairs(Config.BusinessJobs)do if name==job then configured=true break end end
   if not configured then reject('Business is not in the configured registry') end
-  requireBank()
-  local value=exports['Renewed-Banking']:getAccountMoney(job)
+  local bank=requireBank()
+  local value=bank.balance(job)
   local balance=value~=false and tonumber(value) or nil
   local available=balance~=nil and balance==balance and balance~=math.huge and balance~=-math.huge
   local transactions={}
   if available then
-   local rows=exports['Renewed-Banking']:getAccountTransactions(job)
+   local rows=bank.transactions(job)
    if type(rows)=='table' then
     for _,row in ipairs(rows)do
      if #transactions>=100 then break end
@@ -150,15 +152,15 @@ function CrimsonServices(h)
    end
   end
   h.log(a,'business_bank_read',nil)
-  return {account=job,available=available,balance=available and balance or nil,transactions=transactions}
+  return {provider=bank.name,account=job,available=available,balance=available and balance or nil,transactions=transactions}
  end
  function api.bankAccount(a)
   if not a.manage then reject('Management permission required') end
-  requireBank()
+  local bank=requireBank()
   local account=a.p.job.name
-  local balance=exports['Renewed-Banking']:getAccountMoney(account)
-  if balance==false or balance==nil then reject('Job account missing in Renewed-Banking') end
-  return {account=account,balance=balance,transactions=exports['Renewed-Banking']:getAccountTransactions(account)}
+  local balance=bank.balance(account)
+  if balance==false or balance==nil then reject('Company bank account unavailable') end
+  return {provider=bank.name,account=account,balance=balance,transactions=bank.transactions(account)}
  end
  function api.offerInvoice(a,payload)
   if a.department~='business' or not a.write then reject('Business invoice permission required') end

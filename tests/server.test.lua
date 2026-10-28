@@ -55,6 +55,8 @@ end},single={await=function(sql,args)
  if sql:find("kind='product'")then return selectedProduct end
  return selectedRow
 end},insert={await=function(sql,args)inserts=inserts+1 if sql:find('INSERT INTO crimson_mdt_prints')then printSnapshot=args[3] end return 42 end},update={await=function(sql)if sql:find('UPDATE crimson_mdt_entries') then updates=updates+1 return oldVersionChanged and 0 or 1 end return 1 end},transaction={await=function(args)migrationArgs=args return true end},ready=function(fn)initializer=fn;fn()end}
+Config.Banking={provider='Renewed-Banking',accounts={}}
+dofile('crimson_doj/server_banking.lua')
 dofile('crimson_doj/server_extras.lua')
 dofile('crimson_doj/server.lua')
 local function request(action,data,id)sourceNumber=sourceNumber+1 saved[id or sourceNumber]=player return callback(id or sourceNumber,action,data or {})end

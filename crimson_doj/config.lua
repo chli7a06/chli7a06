@@ -66,3 +66,6 @@ Config.Integrations.bodycam = 'screencapture'
 Config.Payments = { maxAmount=1000000, offerCooldown=15 }
 Config.Law = { maxFine=100000, maxJailMinutes=120, distance=10.0, fineAccount='doj' }
 Config.Bodycam = { duration=30, maxBytes=15728640, maxClips=200, width=1280, height=720 }
+
+-- Set provider explicitly when more than one bank is installed.
+Config.Banking = Config.Banking or { provider='auto', accounts={} }
