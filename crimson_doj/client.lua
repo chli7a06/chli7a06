@@ -228,3 +228,14 @@ CreateThread(function()
   else Wait(300) end
  end
 end)
+
+exports('useBadge',function(data)
+ exports.ox_inventory:useItem(data,function(used)
+  if not used then return end
+  local result=lib.callback.await('crimson_doj:showBadge',false,used.slot)
+  if not result or not result.ok then lib.notify({title='DOJ badge',description=result and result.error or 'Badge unavailable',type='error'}) end
+ end)
+end)
+RegisterNetEvent('crimson_doj:badge',function(data)
+ SendNUIMessage({action='dojBadge',data=data})
+end)
