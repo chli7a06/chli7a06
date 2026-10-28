@@ -5,8 +5,23 @@ function CrimsonServices(h)
  local captures={}
 
  local function requireBank()
-  local ok,bank=pcall(CrimsonBankProvider)
-  if not ok then reject(tostring(bank)) end
+  -- Recover upgrades that retained an older manifest without the new adapter files.
+  if type(CrimsonBankProvider)~='function' then
+   for _,filename in ipairs({'server_banking.lua','bank_adapters.lua'}) do
+    local source=LoadResourceFile(GetCurrentResourceName(),filename)
+    if not source then reject('Missing '..filename..'. Install the complete Crimson resource ZIP.') end
+    local chunk,parseError=load(source,'@crimson_doj/'..filename,'t',_ENV)
+    if not chunk then reject('Bank adapter file could not load: '..tostring(parseError)) end
+    local loaded,loadError=pcall(chunk)
+    if not loaded then reject('Bank adapter initialization failed: '..tostring(loadError)) end
+   end
+  end
+  if type(CrimsonBankProvider)~='function' then reject('Bank adapter did not initialize') end
+  local ok,bank=xpcall(CrimsonBankProvider,debug.traceback)
+  if not ok then
+   print('[crimson_doj banking] '..tostring(bank))
+   reject(tostring(bank):match('^[^\n]+') or 'Bank provider initialization failed')
+  end
   return bank
  end
  local function legal(a)
@@ -93,7 +108,7 @@ function CrimsonServices(h)
   return {
    inventory=Config.Integrations.inventory=='ox_inventory' and GetResourceState('ox_inventory')=='started',
    cameras=Config.Integrations.cameras==true,
-   banking=pcall(CrimsonBankProvider),
+   banking=pcall(requireBank),
    jail=Config.Integrations.jail=='qbx_prison' and GetResourceState('qbx_prison')=='started',
    bodycam=Config.Integrations.bodycam=='screencapture' and GetResourceState('screencapture')=='started',
   }

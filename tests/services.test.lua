@@ -139,4 +139,18 @@ deny(function()api.businessFinance(legalActor,{job='unlisted-account'})end,'arbi
 exportsTable['Renewed-Banking'].getAccountTransactions=function()local t={}for i=1,105 do t[i]={amount=i}end return t end
 accounts.mechanic=1;check(#api.businessFinance(legalActor,{job='mechanic'}).transactions==100,'company transaction history bounded to 100')
 
+SavedBankProvider=CrimsonBankProvider
+CrimsonBankProvider=nil
+local originalLoad=LoadResourceFile
+LoadResourceFile=function(_,filename)
+ if filename=='server_banking.lua' then return 'CrimsonBankProvider=SavedBankProvider' end
+ if filename=='bank_adapters.lua' then return '-- server adapters' end
+end
+check(api.bankAccount(legalActor).balance==accounts.doj,'retained old manifest lazily loads verified local bank modules')
+CrimsonBankProvider=nil
+LoadResourceFile=function()return nil end
+local missingOk,missingError=pcall(api.bankAccount,legalActor)
+check(not missingOk and tostring(missingError):find('Missing server_banking.lua',1,true),'missing banking file yields actionable diagnostic')
+LoadResourceFile=originalLoad
+dofile('crimson_doj/server_banking.lua')
 print('PASS '..checks..' service checks for consent payments, failures, prison and recordings')

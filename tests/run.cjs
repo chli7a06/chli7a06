@@ -9,7 +9,7 @@ run=spawnSync(process.execPath,['tests/ui.test.cjs'],{cwd:root,encoding:'utf8',t
 
 run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/client.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS 37 client/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim());
 
-run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/services.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS 53 service checks/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim());
+run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/services.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS 55 service checks/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim());
 
 for(const file of ['crimson_doj/media_core.cjs','crimson_doj/server_media.js']){run=spawnSync(process.execPath,['--check',file],{cwd:root,encoding:'utf8'});assert.equal(run.status,0,run.stderr);}
 run=spawnSync(process.execPath,['tests/media.test.cjs'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS 14 media/);console.log(run.stdout.trim());

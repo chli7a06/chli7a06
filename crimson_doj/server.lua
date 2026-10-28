@@ -495,6 +495,7 @@ end)
 -- Console-only installation report; prints no credentials or citizen data.
 RegisterCommand('crimsoncheck',function(source)
  if source~=0 then return end
+ print('[Crimson check] banking factory='..type(CrimsonBankProvider)..'; server_banking.lua='..(LoadResourceFile(GetCurrentResourceName(),'server_banking.lua') and 'present' or 'MISSING'))
  print('[Crimson check] database='..(ready and 'ready' or 'not ready'))
  for _,resource in ipairs({'qbx_core','ox_lib','oxmysql','ox_inventory','ox_target','Renewed-Banking','qbx_prison','screencapture'})do
   print('[Crimson check] '..resource..'='..GetResourceState(resource))
