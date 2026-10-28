@@ -1,0 +1,17 @@
+LB-PHONE → APEX COMPANY BANKING (Qbox)
+
+PATCH ONLY: do not delete or replace the full lb-phone resource.
+1. Back up the original phone folder and database.
+2. Copy the enclosed lb-phone folder contents OVER your existing lb-phone folder. There are four files only; overwrite the three services.lua files and add server/custom/functions/crimson_apex.lua. Do not create lb-phone/lb-phone nesting.
+3. Ensure qbx_core and apex_banking are started before lb-phone.
+4. Keep your current Config.Framework="qb"; the included qbox server custom file also supports the existing qbox callback path. Do not overwrite your config or change frameworks just for this patch.
+5. restart lb-phone and reopen the phone company Actions page.
+6. MDT must remain configured with Config.Banking.provider='apex_banking' (Crimson 3.0.7).
+
+No SQL import, bank restart, money migration or Apex file replacement is required. Existing $10,000 in qb-management/qb-banking remains there; the phone will now show the Apex company treasury. A missing Apex treasury returns an error, not a fabricated zero. Company read/deposit/withdraw requires the current character's own boss job on the server. Positive integer amounts only, capped at $1,000,000 per operation. Personal transfers use stable Qbox citizen ID, rather than a potentially reused player source.
+
+This patch changes only the phone's company banking path. Personal accounts continue through the existing Qbox bridge. Employee hiring/duty behavior is retained. No licensed/escrow files are decrypted or replaced.
+
+Uncertain transfers are locked per company using a persistent resource KVP. Do not delete those markers or replay a failed transfer blindly. In the server console, an administrator may run phoneapexresolve <job> <verified reason> ONLY after checking/reconciling both balances. This clears accounting metadata only; it moves no money. Known rejected credits are refunded; uncertain outcomes are not automatically retried.
+
+Validation: four files parse after masking the ORIGINAL client's Cfx optional-chaining syntax for the standard Lua parser; 19 local mocked balance/permission/transfer/refund/uncertainty checks passed. Actual FiveM callback and money behavior still requires in-server acceptance. Built for the exact uploaded custom bridge and Apex exports; back up before applying to another version.
