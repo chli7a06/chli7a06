@@ -37,12 +37,19 @@ local function identity(source, allowOffDuty)
  local p=player and player.PlayerData
  local policy=p and p.job and Config.Jobs[p.job.name]
  if not policy or type(p.citizenid)~='string' then return end
+ if Config.MDTJobs and not Config.MDTJobs[p.job.name] then return end
  if Config.RequireDuty and not p.job.onduty and not allowOffDuty then return end
  local grade=type(p.job.grade)=='table' and tonumber(p.job.grade.level) or tonumber(p.job.grade)
  if not grade or grade<policy.read then return end
  local department=policy.department
  local scope=(department=='police' or department=='doj') and 'justice' or department=='ems' and 'medical' or 'business:'..p.job.name
- return {p=p,policy=policy,grade=grade,scope=scope,department=department,write=grade>=policy.write,manage=grade>=policy.manage,source=source}
+ local rank=department=='doj' and Config.DojGrades and Config.DojGrades[tostring(grade)]
+ if department=='doj' and Config.DojGrades and not rank then return end
+ local perms=rank and rank.permissions
+ return {p=p,policy=policy,grade=grade,scope=scope,department=department,
+  permissions=perms,gradeLabel=rank and rank.label,
+  write=perms and (perms.reports_create or perms.profiles_edit or perms.warrants_create or perms.vehicles_edit or perms.business_manage)==true or (not perms and grade>=policy.write),
+  manage=perms and (perms.code_change or perms.business_manage)==true or (not perms and grade>=policy.manage),source=source}
 end
 local function person(cid)
  return MySQL.single.await('SELECT citizenid,charinfo FROM players WHERE citizenid=? LIMIT 1',{cid})
@@ -52,7 +59,7 @@ local function publicPerson(row)
  return {citizenid=row.citizenid,firstname=c.firstname or '',lastname=c.lastname or '',birthdate=c.birthdate or '',nationality=c.nationality or ''}
 end
 local function citizenBank(a,cid)
- if not a.manage or (a.department~='doj' and a.department~='police') then return nil end
+ if not CrimsonPermission(a,'profiles_view',a.manage) or (a.department~='doj' and a.department~='police') then return nil end
  local online=exports.qbx_core:GetPlayerByCitizenId(cid)
  local value,source
  if online then
@@ -75,12 +82,12 @@ local function log(a,action,id)
  MySQL.insert.await('INSERT INTO crimson_mdt_audit(scope,actor,action,record_id) VALUES(?,?,?,?)',{a.scope,a.p.citizenid,action,id})
 end
 local function visible(a,kind)
- return definition[kind] and definition[kind][a.department] == true
+ return definition[kind] and definition[kind][a.department] == true and CrimsonModulePermission(a,kind,1,true)
 end
 local function moduleList(a)
  local out={}
  for kind,d in pairs(definition) do
-  if d[a.department] then out[kind]={write=a.write and (not d.management or a.manage),subject=d.subject or false,private=d.private or false} end
+  if visible(a,kind) then out[kind]={write=CrimsonModulePermission(a,kind,2,a.write and (not d.management or a.manage)),status=CrimsonModulePermission(a,kind,3,a.manage),subject=d.subject or false,private=d.private or false} end
  end
  return out
 end
@@ -170,9 +177,12 @@ local services=assert(CrimsonServices,'server_extras.lua must load before server
 })
 local function run(a,action,payload)
  if ({paymentStatus=true,businessFinance=true,bankAccount=true,offerInvoice=true,fine=true,jail=true,release=true,bodycamStart=true,bodycamStop=true,playRecording=true,deleteRecording=true})[action] then return services[action](a,payload) end
+ local actionPermissions={bootstrap='dashboard_view',search='profiles_view',profile='profiles_view',employees='employees_view',employee='employees_manage',vehicles='vehicles_view',businesses='business_view',threat='code_change'}
+ local needed=actionPermissions[action]
+ if needed and not CrimsonPermission(a,needed,true) then reject('Permission required: '..needed) end
  if action=='bootstrap' then
   if Config.RequireDuty and not a.p.job.onduty then
-   return {citizenid=a.p.citizenid,name=actorName(a.p),job=a.p.job.name,label=a.policy.label,department=a.department,grade=a.grade,canWrite=a.write,canManage=a.manage,onduty=false,modules=moduleList(a),counts={},recent={},threat='green',integrations=Config.Integrations}
+   return {citizenid=a.p.citizenid,name=actorName(a.p),job=a.p.job.name,label=a.policy.label,department=a.department,grade=a.grade,canWrite=a.write,canManage=a.manage,permissions=a.permissions,gradeLabel=a.gradeLabel,onduty=false,modules=moduleList(a),counts={},recent={},threat='green',integrations=Config.Integrations}
   end
   local counts=MySQL.query.await("SELECT kind,status,COUNT(*) AS total FROM crimson_mdt_entries WHERE scope=? AND (kind<>'note' OR owner=?) GROUP BY kind,status",{a.scope,a.p.citizenid})
   local state=MySQL.scalar.await('SELECT threat FROM crimson_mdt_state WHERE scope=?',{a.scope}) or 'green'
@@ -181,13 +191,13 @@ local function run(a,action,payload)
   local safeCounts,safeRecent={},{}
   for _,row in ipairs(counts) do if visible(a,row.kind) then safeCounts[#safeCounts+1]=row end end
   for _,row in ipairs(recent) do if visible(a,row.kind) then safeRecent[#safeRecent+1]=row end end
-  return {citizenid=a.p.citizenid,name=actorName(a.p),job=a.p.job.name,label=a.policy.label,department=a.department,grade=a.grade,canWrite=a.write,canManage=a.manage,onduty=a.p.job.onduty,modules=moduleList(a),counts=safeCounts,recent=safeRecent,threat=state,integrations=Config.Integrations}
+  return {citizenid=a.p.citizenid,name=actorName(a.p),job=a.p.job.name,label=a.policy.label,department=a.department,grade=a.grade,canWrite=a.write,canManage=a.manage,permissions=a.permissions,gradeLabel=a.gradeLabel,onduty=a.p.job.onduty,modules=moduleList(a),counts=safeCounts,recent=safeRecent,threat=state,integrations=Config.Integrations}
  elseif action=='duty' then
   if type(payload.enabled)~='boolean' then reject('Invalid duty state') end
   exports.qbx_core:SetJobDuty(a.source,payload.enabled)
   return {enabled=payload.enabled}
  elseif action=='threat' then
-  if not a.manage then reject('Management permission required') end
+  if not CrimsonPermission(a,'code_change',a.manage) then reject('Management permission required') end
   if not ({green=true,yellow=true,red=true,black=true})[payload.value] then reject('Invalid security code') end
   MySQL.query.await('INSERT INTO crimson_mdt_state(scope,threat) VALUES(?,?) ON DUPLICATE KEY UPDATE threat=VALUES(threat)',{a.scope,payload.value})
   log(a,'threat_'..payload.value,nil) return true
@@ -220,9 +230,10 @@ local function run(a,action,payload)
   else kind=payload.kind end
   local d=definition[kind]
   if not d or not visible(a,kind) then reject('Module access denied') end
-  if d.management and not a.manage then reject('Management permission required') end
+  if not CrimsonModulePermission(a,kind,2,a.write and (not d.management or a.manage)) then reject('Record write permission required') end
   if d.private and old and old.owner~=a.p.citizenid then reject('Private note access denied') end
-  if old and not a.manage and old.owner~=a.p.citizenid then reject('You can edit only your own records') end
+  local statusOnly=old and not a.manage and old.owner~=a.p.citizenid
+  if statusOnly and not (payload.status~=old.status and CrimsonModulePermission(a,kind,3,false)) then reject('You can edit only your own records') end
   local title,body=clean(payload.title,160,true),clean(payload.body or '',Config.MaxText,false)
   local subject=old and old.subject or clean(payload.subject or '',80,false)
   if not title or not body or not subject then reject('Invalid fields or text too long') end
@@ -233,8 +244,10 @@ local function run(a,action,payload)
   end
   local status=old and payload.status or 'open'
   if not ({open=true,closed=true,revoked=true,archived=true})[status] then reject('Invalid status') end
-  if old and not a.manage and status~=old.status then reject('Management permission required for status changes') end
-  local details=allowedDetails(a,kind,payload,old)
+  if old and status~=old.status and not CrimsonModulePermission(a,kind,3,a.manage) then reject('Record status permission required') end
+  local details
+  if statusOnly then title=old.title body=old.body details=decode(old.details)
+  else details=allowedDetails(a,kind,payload,old) end
   local id
   if old then
    local version=integer(payload.version,1,2147483647)
@@ -255,7 +268,7 @@ local function run(a,action,payload)
   local safe={} for grade,g in pairs(grades) do safe[#safe+1]={level=grade,name=g.name} end
   return {rows=employeeRows(a),grades=safe}
  elseif action=='employee' then
-  if not a.manage then reject('Management permission required') end
+  if not CrimsonPermission(a,'employees_manage',a.manage) then reject('Management permission required') end
   local cid=clean(payload.citizenid,64,true)
   if not cid or cid==a.p.citizenid then reject('Cannot manage yourself') end
   local jobs=exports.qbx_core:GetJobs()

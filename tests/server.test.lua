@@ -55,6 +55,8 @@ end},single={await=function(sql,args)
  if sql:find("kind='product'")then return selectedProduct end
  return selectedRow
 end},insert={await=function(sql,args)inserts=inserts+1 if sql:find('INSERT INTO crimson_mdt_prints')then printSnapshot=args[3] end return 42 end},update={await=function(sql)if sql:find('UPDATE crimson_mdt_entries') then updates=updates+1 return oldVersionChanged and 0 or 1 end return 1 end},transaction={await=function(args)migrationArgs=args return true end},ready=function(fn)initializer=fn;fn()end}
+dofile('crimson_doj/permissions.lua')
+Config.DojGrades=nil;Config.MDTJobs=nil
 Config.Banking={provider='Renewed-Banking',accounts={}}
 dofile('crimson_doj/server_banking.lua')
 dofile('crimson_doj/server_extras.lua')
@@ -152,4 +154,33 @@ check(profile.ok and profile.data.financial==nil,'business manager cannot read p
 
 local oldQuery=MySQL.query.await;MySQL.query.await=function()error('SENSITIVE SQL DETAILS')end;r=request('search',{query='Test'});check(not r.ok and not r.error:find('SENSITIVE'),'internal database errors not leaked');MySQL.query.await=oldQuery
 legacy=1;migrated=0;initializer();check(migrationArgs and #migrationArgs==2,'migration is transactional');check(migrationArgs[1].query:find('SELECT id,')~=nil,'migration preserves record IDs');check(not migrationArgs[1].query:find('DELETE'),'migration does not delete old table')
+-- Exact supplied DOJ ranks, including deliberately non-monotonic grants.
+dofile('crimson_doj/permissions.lua')
+user('mechanic',14,true);denied('bootstrap',nil,'mechanic denied even at high grade')
+user('burgershot',14,true);denied('bootstrap',nil,'business job denied')
+local personnel={[6]=true,[9]=true,[13]=true,[14]=true}
+for grade=0,14 do
+ user('doj',grade,true)
+ local data=request('bootstrap').data
+ check(data and data.gradeLabel==Config.DojGrades[tostring(grade)].label,'rank label '..grade)
+ check(data.modules.case.write==(grade>=1),'report create '..grade)
+ check(data.modules.warrant.write==(grade>=4),'warrant create '..grade)
+ check(data.modules.vehicle_flag.write==(grade>=5),'vehicle edit '..grade)
+ check(data.modules.business_license.write==(grade>=13),'business management '..grade)
+ check(data.modules.case.status==(grade>=5),'report delete/status '..grade)
+ check(data.modules.warrant.status==(grade==7 or grade>=10),'exact warrant delete/status '..grade)
+ check(data.permissions.profiles_edit==(grade>=2),'profile edit flag '..grade)
+ check(data.permissions.convictions_create==(grade>=4),'conviction flag '..grade)
+ local employee=request('employee',{citizenid='STAFF',operation='remove'})
+ check(not employee.ok and ((employee.error:find('employees_manage',1,true)~=nil)==(not personnel[grade])),'exact personnel grant '..grade)
+ local code=request('threat',{value='green'})
+ check(code.ok==(grade>=13),'code permission '..grade)
+end
+user('doj',15,true);denied('bootstrap',nil,'undefined DOJ rank denied')
+user('doj',0,true);denied('create',{kind='case',subject='CITIZEN',title='t',body='b'},'student cannot create report')
+user('doj',4,true);check(request('create',{kind='warrant',subject='CITIZEN',title='t',body='b'}).ok,'rank four warrant does not need broad management')
+user('doj',7,true);local seventh=request('bootstrap').data
+check(seventh.modules.warrant.status,'rank seven can revoke warrant')
+user('doj',8,true);local eighth=request('bootstrap').data
+check(not eighth.modules.warrant.status,'rank eight does not inherit rank seven warrant delete')
 print('PASS '..passed..' authorization, isolation, privacy, validation, migration and concurrency checks')

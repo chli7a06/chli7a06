@@ -79,6 +79,8 @@ local function clean(v,max,required)if type(v)~='string' or #v>max or required a
 local function integer(v,lo,hi)if type(v)=='number'and v==v and v%1==0 and v>=lo and v<=hi then return v end end
 local function actor(department,manage)return {department=department,manage=manage,write=true,scope=department=='business'and'business:mechanic'or department=='ems'and'medical'or'justice',p={citizenid='STAFF',job={name=department=='business'and'mechanic'or'doj'}},source=1,policy={label='Crimson'}}end
 local business,legalActor=actor('business',true),actor('doj',true)
+dofile('crimson_doj/permissions.lua')
+Config.DojGrades=nil;Config.MDTJobs=nil
 Config.Banking={provider='Renewed-Banking',accounts={}}
 dofile('crimson_doj/server_banking.lua')
 dofile('crimson_doj/server_extras.lua')

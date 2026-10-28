@@ -25,7 +25,7 @@ function CrimsonServices(h)
   return bank
  end
  local function legal(a)
-  if (a.department~='doj' and a.department~='police') or not a.manage then reject('Legal management permission required') end
+  if (a.department~='doj' and a.department~='police') or not CrimsonPermission(a,'convictions_create',a.manage) then reject('Legal management permission required') end
  end
  local function caseRow(a,id)
   id=integer(id,1,2147483647)
@@ -143,7 +143,7 @@ function CrimsonServices(h)
   return result
  end
  function api.businessFinance(a,payload)
-  if a.department~='doj' or not a.manage then reject('DOJ management permission required') end
+  if a.department~='doj' or not CrimsonPermission(a,'business_view',a.manage) then reject('DOJ business view permission required') end
   local job=clean(payload.job,80,true)
   local configured=false
   for _,name in ipairs(Config.BusinessJobs)do if name==job then configured=true break end end
@@ -346,7 +346,7 @@ function CrimsonServices(h)
   return {ticket=result.ticket}
  end
  function api.deleteRecording(a,payload)
-  if not a.manage or a.department=='business' then reject('Management permission required') end
+  if not CrimsonModulePermission(a,'recording',3,a.manage) or a.department=='business' then reject('Recording delete permission required') end
   local id=integer(payload.id,1,2147483647)
   local row=id and MySQL.single.await("SELECT * FROM crimson_mdt_entries WHERE id=? AND scope=? AND kind='recording'",{id,a.scope})
   if not row then reject('Recording not found') end

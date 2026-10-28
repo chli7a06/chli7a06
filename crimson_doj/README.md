@@ -1,3 +1,5 @@
+> Version 3.1.0: exact DOJ rank permissions live in permissions.lua; mechanics cannot enter MDT. Put your own UI audio in web/sounds/. DOJ/police/sheriff map markers are configured through Config.JobBlips. See the repository UPGRADE_3.1.0.md for installation and mappings.
+
 # Crimson MDT 3.0.0 beta — independent Qbox resource
 
 New Lua, JavaScript, NUI and SQL written for Crimson. No XR-MDT code, escrow files or old entitlement is needed. Only the supplied Crimson logo is reused. This is an independent implementation with its own workflow, not exact feature/visual parity with XR-MDT.

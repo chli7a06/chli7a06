@@ -6,12 +6,14 @@ const modules={case:{write:true,subject:true},warrant:{write:true,subject:true},
 const base={citizenid:'STAFF',name:'Test Judge',job:'doj',label:'Crimson Justice',department:'doj',grade:3,canWrite:true,canManage:true,onduty:true,modules,counts:[{kind:'case',status:'open',total:2}],recent:[],threat:'green',integrations:{inventory:false,cameras:false,bodycam:false,banking:false,jail:false}};
 const citizen={citizenid:'CID001',firstname:'Test',lastname:'Citizen',birthdate:'1990-01-01',nationality:'Test'};
 const record={id:7,kind:'case',title:'<img src=x onerror=alert(1)>',subject:'CID001',body:'Evidence narrative',owner:'STAFF',updated_by:'STAFF',status:'open',version:1,details:{charges:'Test charge'}};
+let soundsPlayed=[];
 let bootstrap={...base},lastRequest,rows=[record],calls=[];
 const check=(v,msg)=>{assert.ok(v,msg);passed++;};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{
  const errors=[];const console=new VirtualConsole();console.on('jsdomError',e=>errors.push(e.message));
  const dom=await JSDOM.fromFile(path.join(__dirname,'../crimson_doj/web/index.html'),{runScripts:'dangerously',resources:'usable',virtualConsole:console,beforeParse(w){
+  w.Audio=class{constructor(src){this.src=src;}pause(){}play(){soundsPlayed.push({src:this.src,volume:this.volume});return Promise.resolve();}};
   w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.HTMLMediaElement.prototype.pause=function(){};w.HTMLMediaElement.prototype.load=function(){};w.GetParentResourceName=()=> 'crimson_doj';w.confirm=()=>true;
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.fetch=async(url,opts)=>{const data=JSON.parse(opts.body);lastRequest=data;calls.push(data);let result;
@@ -79,5 +81,16 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
  w.postMessage({action:'dojBadge',data:{name:'<img src=x onerror=alert(1)>',rank:'Judge',number:'DOJ-X'}},'*');await sleep(25);
  check($('#doj-badge').querySelectorAll('img').length===1&&$('#doj-badge').textContent.includes('<img src=x'),'badge identity is rendered safely as text');
  check(d.querySelectorAll('#doj-badge').length===1,'one badge renderer');
+ const ranked={...base,grade:6,gradeLabel:'Special Agent',canManage:false,permissions:{employees_view:true,employees_manage:true,business_view:true,code_change:false,convictions_create:true},modules:{...modules,business_license:{write:false},business_note:{write:false}}};
+ await open(ranked);check($('#job').textContent.includes('Special Agent'),'supplied grade label displayed');
+ await nav('employees');check($('#content').textContent.includes('+ Add member'),'rank six personnel grant independent of global manager');
+ await nav('businesses');check($('#content').textContent.includes('Bank account'),'business view permission exposes read-only company finance');
+ await open({...ranked,grade:7,permissions:{...ranked.permissions,employees_manage:false}});
+ await nav('employees');check(!$('#content').textContent.includes('+ Add member'),'rank seven does not inherit personnel grant');
+ w.postMessage({action:'open',data:base,sounds:{enabled:true,volume:0.4,open:'open.ogg',close:'close.ogg',notification:'notification.wav'}},'*');await sleep(30);
+ check(soundsPlayed.at(-1).src==='sounds/open.ogg'&&soundsPlayed.at(-1).volume===0.4,'configured opening sound');
+ w.postMessage({action:'close'},'*');await sleep(25);check(soundsPlayed.at(-1).src==='sounds/close.ogg','closing sound');
+ const soundCount=soundsPlayed.length;w.postMessage({action:'dojBadge',data:{},sounds:{enabled:true,volume:1,notification:'https://example.com/a.ogg'}},'*');await sleep(25);
+ check(soundsPlayed.length===soundCount,'external sound URLs refused');
  check(errors.length===0,'zero DOM runtime exceptions: '+errors.join('; '));dom.window.close();process.stdout.write(`PASS ${passed} UI checks across DOJ, EMS, Business, safe rendering, forms and duty\n`);process.exit(0);
 })().catch(e=>{process.stderr.write(e.stack+'\n');process.exit(1);});
