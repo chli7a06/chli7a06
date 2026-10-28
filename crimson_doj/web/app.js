@@ -73,3 +73,24 @@ function videoChunk(data){const t=videoTransfer;if(!t||data.ticket!==t.ticket||d
 $('#video-close').onclick=async()=>{resetVideo();try{await nui('cancelVideo');}catch{}};$('#video-dialog').addEventListener('cancel',()=>{resetVideo();nui('cancelVideo').catch(()=>{});});
 
 async function businessBank(business){const token=reset(business.label+' · bank account','Read-only company bank account');const data=await request('businessFinance',{job:business.job});if(token!==sequence)return;const balance=panel('Company bank balance',data.account+' · '+(data.provider||'bank')),body=node('div',undefined,'panel-body');body.append(node('h1',data.available?currency(data.balance):'Unavailable'),node('p',data.available?'Current company account balance':'Account not found or balance unavailable','muted'),button('Refresh',()=>businessBank(business)),button('Back to businesses',()=>show('businesses')));balance.append(body);content.append(balance);const history=panel('Company transactions','Latest 100 available provider entries');if(!data.transactions.length)history.append(empty('No transactions available'));else history.append(table(['REFERENCE','TITLE','AMOUNT','TYPE','ISSUER / RECIPIENT','TIME'],data.transactions.map(r=>[r.id,textCell(r.title,r.message),r.amount==null?'—':currency(r.amount),r.type,textCell(r.issuer,r.receiver),r.time?stamp(r.time*1000):'—'])));content.append(history);}
+
+// Badge display is bundled with the main UI for retained manifests.
+(()=>{
+'use strict';
+if(window.__crimsonBadgeReady)return;
+window.__crimsonBadgeReady=true;
+const badgeCard=document.createElement('article');
+badgeCard.id='doj-badge';badgeCard.hidden=true;
+const seal=document.createElement('img');seal.src='crimson-logo.png';seal.alt='Crimson';
+const badgeFields=['CRIMSON DOJ','OFFICIAL CREDENTIAL','','',''];
+const fields=badgeFields.map(text=>{const p=document.createElement('div');p.textContent=text;return p;});
+badgeCard.append(seal,...fields);document.body.append(badgeCard);
+let badgeTimer;
+window.addEventListener('message',event=>{
+ if(event.data?.action!=='dojBadge')return;
+ const data=event.data.data||{};
+ fields[2].textContent=data.name||'';fields[3].textContent=data.rank||'';fields[4].textContent=data.number||'';
+ badgeCard.hidden=false;clearTimeout(badgeTimer);badgeTimer=setTimeout(()=>{badgeCard.hidden=true;},8000);
+});
+
+})();

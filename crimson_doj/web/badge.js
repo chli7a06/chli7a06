@@ -1,4 +1,7 @@
+(()=>{
 'use strict';
+if(window.__crimsonBadgeReady)return;
+window.__crimsonBadgeReady=true;
 const badgeCard=document.createElement('article');
 badgeCard.id='doj-badge';badgeCard.hidden=true;
 const seal=document.createElement('img');seal.src='crimson-logo.png';seal.alt='Crimson';
@@ -12,3 +15,5 @@ window.addEventListener('message',event=>{
  fields[2].textContent=data.name||'';fields[3].textContent=data.rank||'';fields[4].textContent=data.number||'';
  badgeCard.hidden=false;clearTimeout(badgeTimer);badgeTimer=setTimeout(()=>{badgeCard.hidden=true;},8000);
 });
+
+})();
