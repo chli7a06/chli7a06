@@ -154,38 +154,63 @@ exports('useDocument',function(data,slot)
   SendNUIMessage({action='document',data=result.data})
  end)
 end)
-CreateThread(function()
- while true do
-  local wait=1000
-  if Config.Printing and Config.Printing.enabled and not opened and not opening and not camera then
-   local index=nearestPrinter()
-   if index then
-    wait=0
-    local printer=Config.Printers[index]
-    local c=printer.coords
-    DrawMarker(2,c.x,c.y,c.z+0.15,0.0,0.0,0.0,0.0,180.0,0.0,0.2,0.2,0.2,239,52,75,150,false,true,2,false,nil,nil,false)
-    BeginTextCommandDisplayHelp('STRING')
-    AddTextComponentSubstringPlayerName('Press ~INPUT_CONTEXT~ to use the Crimson printer')
-    EndTextCommandDisplayHelp(0,false,false,-1)
-    if IsControlJustReleased(0,38) then
-     local ok,result=pcall(lib.callback.await,'crimson_doj:request',false,'list',{kind='document',page=1,query=''})
-     if ok and result and result.ok then
-      local options={}
-      for _,record in ipairs(result.data.rows) do
-       local recordId=record.id
-       options[#options+1]={title=record.title,description='Document #'..recordId,onSelect=function()
-        local printed=lib.callback.await('crimson_doj:request',false,'printDocument',{id=recordId,printer=index})
-        lib.notify({title='Crimson printer',description=printed.ok and 'Document added to your inventory' or printed.error,type=printed.ok and 'success' or 'error'})
-       end}
-      end
-      if #options==0 then lib.notify({description='No saved documents. Create one in the MDT first.',type='inform'})
-      else lib.registerContext({id='crimson_printer',title=printer.label,options=options}) lib.showContext('crimson_printer') end
-     else lib.notify({description=type(result)=='table' and result.error or 'Printer unavailable',type='error'}) end
-    end
-   end
-  end
-  Wait(wait)
+local printerZones = {}
+local printerBusy = false
+local function clearPrinterTargets()
+ if GetResourceState('ox_target')=='started' then
+  for _,zone in ipairs(printerZones) do exports.ox_target:removeZone(zone) end
  end
+ printerZones={}
+end
+local function openPrinter(index)
+ if printerBusy or opened or opening or camera then return end
+ local printer=Config.Printers[index]
+ if not printer then return end
+ printerBusy=true
+ local ok,result=pcall(lib.callback.await,'crimson_doj:request',false,'list',{kind='document',page=1,query=''})
+ printerBusy=false
+ if not ok or type(result)~='table' or not result.ok then
+  lib.notify({description=type(result)=='table' and result.error or 'Printer unavailable',type='error'})
+  return
+ end
+ local options={}
+ for _,record in ipairs(result.data.rows) do
+  local recordId=record.id
+  options[#options+1]={title=record.title,description='Document #'..recordId,onSelect=function()
+   local success,printed=pcall(lib.callback.await,'crimson_doj:request',false,'printDocument',{id=recordId,printer=index})
+   local done=success and type(printed)=='table' and printed.ok
+   lib.notify({title='Crimson printer',description=done and 'Document added to your inventory' or (type(printed)=='table' and printed.error or 'Printer unavailable'),type=done and 'success' or 'error'})
+  end}
+ end
+ if #options==0 then lib.notify({description='No saved documents. Create one in the MDT first.',type='inform'})
+ else lib.registerContext({id='crimson_printer',title=printer.label,options=options}) lib.showContext('crimson_printer') end
+end
+local function registerPrinterTargets()
+ clearPrinterTargets()
+ if not Config.Printing or not Config.Printing.enabled or GetResourceState('ox_target')~='started' then return end
+ for index,printer in ipairs(Config.Printers or {}) do
+  local id=index
+  local groups={}
+  for job,allowed in pairs(printer.jobs or {}) do if allowed then groups[job]=0 end end
+  if next(groups) then
+   local c=printer.coords
+   printerZones[#printerZones+1]=exports.ox_target:addSphereZone({
+    coords=vector3(c.x,c.y,c.z),radius=printer.radius or 2.0,debug=false,drawSprite=false,
+    options={{name='crimson_printer_'..id,label='Use Crimson printer',icon='fa-solid fa-print',
+     groups=groups,distance=printer.radius or 2.0,
+     canInteract=function()return not opened and not opening and not camera and not printerBusy end,
+     onSelect=function()openPrinter(id)end}}
+   })
+  end
+ end
+end
+CreateThread(registerPrinterTargets)
+AddEventHandler('onClientResourceStart',function(resource)
+ if resource=='ox_target' then registerPrinterTargets() end
+end)
+AddEventHandler('onClientResourceStop',function(resource)
+ if resource==GetCurrentResourceName() then clearPrinterTargets()
+ elseif resource=='ox_target' then printerZones={} end
 end)
 
 RegisterNetEvent('crimson_doj:invoiceOffer',function(offer)

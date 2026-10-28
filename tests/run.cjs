@@ -20,3 +20,5 @@ run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js
 run=spawnSync(process.execPath,['--check','crimson_doj/web/badge.js'],{cwd:root,encoding:'utf8'});assert.equal(run.status,0,run.stderr);
 
 run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/banking.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS .* banking adapter checks/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim());
+
+run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/printer-target.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS printer target zones/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim());
