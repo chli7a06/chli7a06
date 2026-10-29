@@ -122,21 +122,6 @@ RegisterNUICallback('camera', function(data, cb)
     end)
 end)
 
-local function nearestPrinter()
- local pos=GetEntityCoords(PlayerPedId())
- local nearest,distance=nil,math.huge
- for index,p in ipairs(Config.Printers or {}) do
-  local c=p.coords
-  local d=((pos.x-c.x)^2+(pos.y-c.y)^2+(pos.z-c.z)^2)^0.5
-  if d<=(p.radius or 2) and d<distance then nearest,distance=index,d end
- end
- return nearest
-end
-RegisterNUICallback('printDocument',function(data,cb)
- local printer=nearestPrinter()
- if not printer then cb({ok=false,error='Go to your department printer first'}) return end
- cb(requestWhileOpen('printDocument',{id=data.id,printer=printer}))
-end)
 exports('useDocument',function(data,slot)
  if not Config.Printing or not Config.Printing.enabled then return end
  close()
