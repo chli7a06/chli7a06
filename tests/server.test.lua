@@ -204,4 +204,9 @@ check(printSnapshot.imageUrl==url,'printed snapshot retains validated image URL'
 selectedRow.details.imageUrl='https://r2.fivemanage.com/changed.jpg'
 heldDocument={name='crimson_document',metadata={print_id=42,print_ticket='test-print-ticket'}}
 check(readPrinted(20005,1).data.imageUrl==url,'source edits do not change printed URL snapshot')
+for grade=0,14 do
+ user('doj',grade,true)
+ check(request('vehicles',{query='AA'}).ok,'vehicle search available for grade '..grade)
+ check(request('businesses').ok,'business registry available for grade '..grade)
+end
 print('PASS '..passed..' authorization, isolation, privacy, validation, migration and concurrency checks')

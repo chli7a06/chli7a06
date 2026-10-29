@@ -1,3 +1,5 @@
+> Version 3.2.1: DOJ credential is now an ID-style card with its own justice emblem. Vehicle search is in Operations and Businesses in Administration, visible to all permitted DOJ grades. Remaining Management access stays grade 10+. See UPGRADE_3.2.1.md in the ZIP.
+
 > Version 3.2.0: Management requires DOJ grade 10+. Chiefs (13+) issue named badges from Employees; /dojbadge is removed. Backspace dismisses badge presentation. Documents accept a validated hosted image URL for in-game printing. See UPGRADE_3.2.0.md in the release ZIP.
 
 > Version 3.1.0: exact DOJ rank permissions live in permissions.lua; mechanics cannot enter MDT. Put your own UI audio in web/sounds/. DOJ/police/sheriff map markers are configured through Config.JobBlips. See the repository UPGRADE_3.1.0.md for installation and mappings.

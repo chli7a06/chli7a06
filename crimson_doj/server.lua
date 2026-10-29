@@ -178,7 +178,7 @@ local services=assert(CrimsonServices,'server_extras.lua must load before server
 })
 local function run(a,action,payload)
  if ({paymentStatus=true,businessFinance=true,bankAccount=true,offerInvoice=true,fine=true,jail=true,release=true,bodycamStart=true,bodycamStop=true,playRecording=true,deleteRecording=true})[action] then return services[action](a,payload) end
- local managementActions={employees=true,employee=true,roster=true,shareGPS=true,unitWaypoint=true,unitStatus=true,vehicles=true,businesses=true,penalcode=true,audit=true,equipment=true,camera=true,armory=true}
+ local managementActions={employees=true,employee=true,roster=true,shareGPS=true,unitWaypoint=true,unitStatus=true,penalcode=true,audit=true,equipment=true,camera=true,armory=true}
  if managementActions[action] and not CrimsonManagement(a) then reject('Management requires DOJ grade 10 or higher') end
  local actionPermissions={bootstrap='dashboard_view',search='profiles_view',profile='profiles_view',employees='employees_view',employee='employees_manage',vehicles='vehicles_view',businesses='business_view',threat='code_change'}
  local needed=actionPermissions[action]

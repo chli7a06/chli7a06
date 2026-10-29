@@ -10,6 +10,19 @@ nav,.workspace{color-scheme:dark;scrollbar-width:thin;scrollbar-color:#48414d tr
 
 #video-dialog{width:min(1000px,90vw);padding:20px}#bodycam-video{display:block;width:100%;max-height:65vh;background:#000}#video-status{color:var(--muted);font-size:12px}
 
-#doj-badge{position:fixed;right:3vw;bottom:8vh;width:340px;max-width:85vw;padding:26px;background:linear-gradient(135deg,#26191c,#100e10);border:2px solid #b99a54;border-radius:14px;color:#f5ead3;box-shadow:0 12px 40px #0009;z-index:1000;text-align:center;font-family:Arial,sans-serif;pointer-events:none}#doj-badge[hidden]{display:none}#doj-badge img{width:95px;height:95px;object-fit:contain}#doj-badge div{margin-top:10px;overflow-wrap:anywhere}#doj-badge div:nth-of-type(1){font-size:24px;font-weight:bold;letter-spacing:3px}#doj-badge div:nth-of-type(2){font-size:10px;color:#b99a54;letter-spacing:3px}#doj-badge div:nth-of-type(3){font-size:22px;font-weight:bold}#doj-badge div:nth-of-type(5){font-family:monospace;font-size:14px;color:#b99a54}
 
 .document-image{margin:18px 0;text-align:center}.document-image img{max-width:100%;max-height:65vh;object-fit:contain;background:#fff;border-radius:4px}#printed-body .document-image img{max-height:none;width:100%;height:auto}
+
+#doj-badge{position:fixed;right:3vw;bottom:8vh;width:460px;max-width:90vw;background:#f4f0e5;color:#14283c;border:1px solid #b79a56;border-radius:14px;box-shadow:0 12px 35px #0008;z-index:1000;font-family:Arial,sans-serif;pointer-events:none;overflow:hidden;text-align:left}
+#doj-badge[hidden]{display:none}
+#doj-badge .credential-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 22px;background:#14283c;color:#f4f0e5;border-bottom:4px solid #a82737}
+#doj-badge .credential-brand{font-size:15px;font-weight:800;letter-spacing:3px}
+#doj-badge .credential-department{font-size:9px;letter-spacing:1.5px;text-align:right;max-width:160px}
+#doj-badge .credential-body{display:flex;align-items:center;gap:24px;padding:24px}
+#doj-badge .credential-body img{width:94px;height:108px;object-fit:contain;flex-shrink:0}
+#doj-badge .credential-identity{display:flex;flex-direction:column;gap:9px;min-width:0;overflow-wrap:anywhere}
+#doj-badge .credential-identity small{font-size:8px;letter-spacing:2px;color:#6e6655}
+#doj-badge .credential-name{font-size:23px;line-height:1.15}
+#doj-badge .credential-rank{font-size:14px;color:#6a2431}
+#doj-badge .credential-number{font:11px monospace;letter-spacing:1px}
+#doj-badge .credential-foot{display:flex;justify-content:space-between;gap:12px;padding:13px 22px;background:#e8e1cf;border-top:1px solid #cfc3a5;font-size:8px;letter-spacing:1.1px}

@@ -1,6 +1,6 @@
 local token,owned,expires,prop,ped
-local dict='paper_1_rcm_alt1-9'
-local clip='player_one_dual-9'
+local dict='mp_common'
+local clip='givetake1_a'
 local function stopPose()
  if ped and DoesEntityExist(ped) then StopAnimTask(ped,dict,clip,1.0) end
  if prop and DoesEntityExist(prop) then DeleteEntity(prop) end
@@ -20,7 +20,7 @@ RegisterNetEvent('crimson_doj:badge',function(data)
  if owned then
   local current=token
   CreateThread(function()
-   local model=joaat('prop_fib_badge')
+   local model=joaat('prop_cs_swipe_card')
    pcall(function()
     lib.requestAnimDict(dict,5000);lib.requestModel(model,5000)
     if token~=current then return end
@@ -29,8 +29,8 @@ RegisterNetEvent('crimson_doj:badge',function(data)
     local c=GetEntityCoords(ped)
     prop=CreateObject(model,c.x,c.y,c.z,false,false,false)
     if prop==0 then prop=nil return end
-    AttachEntityToEntity(prop,ped,GetPedBoneIndex(ped,28422),0.06,0.021,-0.04,90.0,-180.0,78.0,true,true,false,true,1,true)
-    TaskPlayAnim(ped,dict,clip,3.0,3.0,-1,49,0.0,false,false,false)
+    AttachEntityToEntity(prop,ped,GetPedBoneIndex(ped,28422),0.10,0.02,-0.02,-90.0,0.0,0.0,true,true,false,true,1,true)
+    TaskPlayAnim(ped,dict,clip,3.0,3.0,-1,50,0.0,false,false,false)
    end)
    SetModelAsNoLongerNeeded(model)
   end)

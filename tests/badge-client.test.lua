@@ -15,11 +15,11 @@ DoesEntityExist=function()return true end
 PlayerPedId=function()return 1 end
 GetEntityCoords=function()return {x=0,y=0,z=0}end
 IsEntityDead=function()return false end
-joaat=function()return 1 end
+joaat=function(model)assert(model=='prop_cs_swipe_card','ID card prop');return 1 end
 CreateObject=function()created=created+1;return 1 end
 GetPedBoneIndex=function()return 1 end
 AttachEntityToEntity=function()end
-TaskPlayAnim=function()played=played+1 end
+TaskPlayAnim=function(ped,dict,clip,speed,out,duration,flag)assert(dict=='mp_common' and clip=='givetake1_a' and flag==50,'ID card hold animation');played=played+1 end
 StopAnimTask=function()end
 DeleteEntity=function()deleted=deleted+1 end
 SetModelAsNoLongerNeeded=function()end

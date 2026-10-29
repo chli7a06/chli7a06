@@ -155,4 +155,8 @@ local missingOk,missingError=pcall(api.bankAccount,legalActor)
 check(not missingOk and tostring(missingError):find('Missing server_banking.lua',1,true),'missing banking file yields actionable diagnostic')
 LoadResourceFile=originalLoad
 dofile('crimson_doj/server_banking.lua')
+Config.ManagementMinGrade=10
+legalActor.grade=0;legalActor.permissions={business_view=true};legalActor.manage=false
+check(api.businessFinance(legalActor,{job='mechanic'}).balance==accounts.mechanic,'student can inspect company finance outside Management')
+deny(function()api.bankAccount(legalActor)end,'own Management treasury remains blocked below ten')
 print('PASS '..checks..' service checks for consent payments, failures, prison and recordings')

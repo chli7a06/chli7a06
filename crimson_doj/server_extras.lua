@@ -144,7 +144,6 @@ function CrimsonServices(h)
   return result
  end
  function api.businessFinance(a,payload)
-  if not CrimsonManagement(a) then reject('Management requires DOJ grade 10 or higher') end
   if a.department~='doj' or not CrimsonPermission(a,'business_view',a.manage) then reject('DOJ business view permission required') end
   local job=clean(payload.job,80,true)
   local configured=false

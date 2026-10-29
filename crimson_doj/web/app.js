@@ -34,8 +34,28 @@ function table(headers,rows){const wrap=node('div',undefined,'table-wrap'),t=nod
 function textCell(title,sub){return append(node('div',undefined,'long'),node('span',title),sub?node('span',sub,'sub'):null);}
 function reset(title,description=''){const token=++sequence;content.replaceChildren();clearError();$('#heading').textContent=title;$('#subtitle').textContent=description;$('#breadcrumb').textContent=`CRIMSON / ${session?.department?.toUpperCase()||'MDT'} / ${title.toUpperCase()}`;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));return token;}
 function hasPermission(key,fallback=false){return session?.permissions?session.permissions[key]===true:fallback;}
-function nav(){const nav=$('#nav');nav.replaceChildren();const add=(key,label,icon)=>{const b=button('',()=>show(key));b.dataset.view=key;b.append(node('span',icon,'icon'),node('span',label));nav.append(b);};nav.append(node('div','OVERVIEW','nav-group'));add('dashboard','Dashboard','▦');add('citizens',session.department==='ems'?'Patients':session.department==='business'?'Clients':'Citizens','◎');const groups=['RECORDS','OPERATIONS','BUSINESS','DOCUMENTATION','ADMINISTRATION'];for(const group of groups){const list=Object.entries(modules).filter(([key,d])=>session.modules[key]&&d.group===group);if(!list.length)continue;nav.append(node('div',group,'nav-group'));for(const [key,d]of list)add(key,d.label,d.icon);}
-if(session.management!==false){nav.append(node('div','MANAGEMENT','nav-group'));if(hasPermission('employees_view',true))add('employees',...extras.employees);if(session.canManage){add('bank','Bank account','＄');add('payments','Payments log','≡');}if(session.department!=='business')add('roster',...extras.roster);if(['police','doj'].includes(session.department)){add('vehicles',...extras.vehicles);add('penalcode',...extras.penalcode);}if(session.department==='doj'&&hasPermission('business_view',true))add('businesses',...extras.businesses);add('archive',...extras.archive);if(session.department!=='business')add('equipment',...extras.equipment);if(session.canManage)add('audit',...extras.audit);}}
+function nav(){
+ const nav=$('#nav');nav.replaceChildren();
+ const add=(key,label,icon)=>{const b=button('',()=>show(key));b.dataset.view=key;b.append(node('span',icon,'icon'),node('span',label));nav.append(b);};
+ nav.append(node('div','OVERVIEW','nav-group'));add('dashboard','Dashboard','▦');add('citizens',session.department==='ems'?'Patients':session.department==='business'?'Clients':'Citizens','◎');
+ for(const group of ['RECORDS','OPERATIONS','BUSINESS','DOCUMENTATION','ADMINISTRATION']){
+  const list=Object.entries(modules).filter(([key,d])=>session.modules[key]&&d.group===group);
+  const vehicles=group==='OPERATIONS'&&['police','doj'].includes(session.department)&&hasPermission('vehicles_view',true);
+  const businesses=group==='ADMINISTRATION'&&session.department==='doj'&&hasPermission('business_view',true);
+  if(!list.length&&!vehicles&&!businesses)continue;
+  nav.append(node('div',group,'nav-group'));for(const [key,d]of list)add(key,d.label,d.icon);
+  if(vehicles)add('vehicles',...extras.vehicles);if(businesses)add('businesses',...extras.businesses);
+ }
+ if(session.management!==false){
+  nav.append(node('div','MANAGEMENT','nav-group'));
+  if(hasPermission('employees_view',true))add('employees',...extras.employees);
+  if(session.canManage){add('bank','Bank account','＄');add('payments','Payments log','≡');}
+  if(session.department!=='business')add('roster',...extras.roster);
+  if(['police','doj'].includes(session.department))add('penalcode',...extras.penalcode);
+  add('archive',...extras.archive);if(session.department!=='business')add('equipment',...extras.equipment);if(session.canManage)add('audit',...extras.audit);
+ }
+}
+
 function hydrate(data){session=data;$('#dept').textContent=data.label;$('#name').textContent=data.name||data.citizenid;$('#job').textContent=`${data.job} · ${data.gradeLabel||('Grade '+data.grade)}`;$('#identity').textContent=`${data.citizenid} · ${data.label}`;$('#duty').textContent=data.onduty?'● On duty · clock out':'○ Off duty · clock in';$('#duty-dot').classList.toggle('online',data.onduty);$('#code').textContent=`CODE ${data.threat.toUpperCase()}`;$('#code').className=`badge ${data.threat}`;nav();}
 function listToolbar(kind,archived=false){const bar=node('form',undefined,'toolbar'),input=node('input');input.placeholder='Search title or reference…';input.maxLength=80;input.value=query;const submit=node('button','Search');submit.type='submit';bar.append(input,submit,node('span',undefined,'spacer'));if(!archived&&session.modules[kind]?.write)bar.append(button('+ New '+modules[kind].single,()=>edit(kind,null,profileId||''),'primary'));bar.onsubmit=e=>{e.preventDefault();query=input.value;page=1;show(view,false);};return bar;}
 function pagination(data,load){const p=node('div',undefined,'pagination'),buttons=node('div',undefined,'buttons');const prev=button('‹ Previous',()=>load(data.page-1)),next=button('Next ›',()=>load(data.page+1));prev.disabled=data.page<=1;next.disabled=data.page*30>=data.total;buttons.append(prev,next);p.append(node('span',`${data.total} records · Page ${data.page}`),buttons);return p;}
@@ -80,21 +100,22 @@ async function businessBank(business){const token=reset(business.label+' · bank
 'use strict';
 if(window.__crimsonBadgeReady)return;
 window.__crimsonBadgeReady=true;
-const badgeCard=document.createElement('article');
-badgeCard.id='doj-badge';badgeCard.hidden=true;
-const seal=document.createElement('img');seal.src='crimson-logo.png';seal.alt='Crimson';
-const badgeFields=['CRIMSON DOJ','OFFICIAL CREDENTIAL','','',''];
-const fields=badgeFields.map(text=>{const p=document.createElement('div');p.textContent=text;return p;});
-badgeCard.append(seal,...fields);document.body.append(badgeCard);
+const badgeCard=document.createElement('article');badgeCard.id='doj-badge';badgeCard.hidden=true;
+const element=(tag,text,cls)=>{const el=document.createElement(tag);if(text)el.textContent=text;if(cls)el.className=cls;return el;};
+const head=element('header',null,'credential-head');head.append(element('span','CRIMSON','credential-brand'),element('span','DEPARTMENT OF JUSTICE','credential-department'));
+const body=element('div',null,'credential-body'),seal=element('img');seal.src='doj-logo.svg';seal.alt='DOJ justice emblem';
+const identity=element('div',null,'credential-identity');const name=element('strong','','credential-name'),rank=element('span','','credential-rank'),number=element('span','','credential-number');
+identity.append(element('small','OFFICIAL IDENTIFICATION'),name,rank,number);body.append(seal,identity);
+const foot=element('footer',null,'credential-foot');foot.append(element('span','AUTHORIZED DOJ PERSONNEL'),element('span','BACKSPACE · CLOSE'));
+badgeCard.append(head,body,foot);document.body.append(badgeCard);
 let badgeTimer,presentation;
 window.addEventListener('message',event=>{
  if(event.data?.action==='badgeHide'&&(!event.data.presentation||event.data.presentation===presentation)){badgeCard.hidden=true;clearTimeout(badgeTimer);return;}
  if(event.data?.action!=='dojBadge')return;
  const data=event.data.data||{};presentation=data.presentation;
- fields[2].textContent=data.name||'';fields[3].textContent=data.rank||'';fields[4].textContent=data.number||'';
+ name.textContent=data.name||'';rank.textContent=data.rank||'';number.textContent=data.number||'';
  badgeCard.hidden=false;clearTimeout(badgeTimer);badgeTimer=setTimeout(()=>{badgeCard.hidden=true;},8000);
 });
-
 document.addEventListener('keydown',event=>{if(event.key==='Backspace'&&!badgeCard.hidden&&!['INPUT','TEXTAREA'].includes(event.target.tagName)){event.preventDefault();badgeCard.hidden=true;nui('badgeDismiss').catch(()=>{});}});
 })();
 
