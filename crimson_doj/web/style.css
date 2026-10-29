@@ -26,3 +26,4 @@ nav,.workspace{color-scheme:dark;scrollbar-width:thin;scrollbar-color:#48414d tr
 #doj-badge .credential-rank{font-size:14px;color:#6a2431}
 #doj-badge .credential-number{font:11px monospace;letter-spacing:1px}
 #doj-badge .credential-foot{display:flex;justify-content:space-between;gap:12px;padding:13px 22px;background:#e8e1cf;border-top:1px solid #cfc3a5;font-size:8px;letter-spacing:1.1px}
+.rich-document{white-space:normal;line-height:1.65}.rich-document p{margin:0 0 10px}.rich-document h2,.rich-document h3,.rich-document h4{margin:18px 0 8px}.print-signatures{border-top:1px solid #bbb;margin-top:24px;padding-top:14px}select[multiple]{height:auto;min-height:160px}#live-dialog{width:min(960px,90vw)}#live-dialog video{max-height:70vh;background:#000}.panel-body>.panel{margin:18px 0}.panel-body>button{margin:6px}

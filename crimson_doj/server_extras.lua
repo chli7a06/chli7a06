@@ -147,7 +147,7 @@ function CrimsonServices(h)
   if a.department~='doj' or not CrimsonPermission(a,'business_view',a.manage) then reject('DOJ business view permission required') end
   local job=clean(payload.job,80,true)
   local configured=false
-  for _,name in ipairs(Config.BusinessJobs)do if name==job then configured=true break end end
+  for _,name in ipairs(CrimsonBusinessJobs())do if name==job then configured=true break end end
   if not configured then reject('Business is not in the configured registry') end
   local bank=requireBank()
   local value=bank.balance(job)
@@ -282,6 +282,7 @@ function CrimsonServices(h)
   return Citizen.Await(p)
  end
  local function recordingAllowed(a)
+  if Config.RequireBodycamItem and (exports.ox_inventory:GetItemCount(a.source,Config.BodycamItem)or 0)<1 then reject('Bodycam inventory item required')end
   if a.department=='business' or not a.write then reject('Bodycam permission required') end
   if Config.Integrations.bodycam~='screencapture' or GetResourceState('screencapture')~='started' then reject('Install the screencapture release with video support first') end
  end

@@ -14,3 +14,19 @@ Config.JobBlips = Config.JobBlips or {enabled=true,interval=3000,sprite=1,colour
 
 -- Uses your installed emote menu's exact /e idcard command.
 Config.BadgeEmote = Config.BadgeEmote or {command='e idcard',cancel='e c'}
+
+Config.DiscoverBusinesses = Config.DiscoverBusinesses ~= false
+Config.BusinessExcludedJobs = Config.BusinessExcludedJobs or {unemployed=true}
+Config.LicenseTypes = Config.LicenseTypes or {driver='Driving license',weapon='Weapon license',business='Business license'}
+Config.Tracking = Config.Tracking or {enabled=true,item='crimson_tracking_band',tool='electronickit',grade=5,bypassGrade=10}
+Config.ArmoryCatalog = Config.ArmoryCatalog or {{name='radio',label='Radio',grade=0}}
+Config.DispatchSources = Config.DispatchSources or {}
+Config.AutomaticGunshots = Config.AutomaticGunshots ~= false
+
+Config.EnableLiveBodycam = Config.EnableLiveBodycam or false
+Config.DispatchSources.origen_police = true
+
+Config.StockArmory = Config.StockArmory ~= false
+
+Config.RequireBodycamItem = Config.RequireBodycamItem ~= false
+Config.BodycamItem = Config.BodycamItem or 'crimson_bodycam'

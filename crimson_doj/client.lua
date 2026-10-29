@@ -3,6 +3,7 @@ local uiEpoch, cameraEpoch = 0, 0
 local camera = nil
 local videoTicket = nil
 local bodycamActive = false
+local printedSlot=nil
 -- tablet2 pose and prop, independent of any emote-menu resource.
 local tabletProp, tabletPed
 local tabletDict = 'amb@world_human_seat_wall_tablet@female@base'
@@ -45,6 +46,7 @@ local function close()
     if videoTicket then TriggerServerEvent('crimson_doj:cancelVideo',videoTicket) videoTicket=nil end
     uiEpoch = uiEpoch + 1
     opened, opening = false, false
+    printedSlot=nil
     stopCamera()
     stopTablet()
     SetNuiFocus(false, false)
@@ -136,6 +138,7 @@ exports('useDocument',function(data,slot)
   end
   SetNuiFocusKeepInput(false)
   SetNuiFocus(true,true)
+  printedSlot=used.slot
   SendNUIMessage({action='document',data=result.data})
  end)
 end)
@@ -255,4 +258,50 @@ RegisterNetEvent('QBCore:Client:SetDuty',function(onDuty)if not onDuty and Confi
 RegisterNUICallback('issueBadge',function(data,cb)
  local ok,result=pcall(lib.callback.await,'crimson_doj:issueBadge',false,data)
  cb(ok and result or {ok=false,error='Badge issuer unavailable'})
+end)
+
+RegisterNetEvent('crimson_doj:accessChanged',function()close()end)
+RegisterNUICallback('signPrinted',function(_,cb)
+ if not printedSlot then cb({ok=false,error='Open a held printed copy first'})return end
+ local ok,result=pcall(lib.callback.await,'crimson_doj:signPrinted',false,printedSlot)
+ cb(ok and result or {ok=false,error='Signature unavailable'})
+end)
+RegisterNUICallback('extendedWaypoint',function(data,cb)
+ -- The source coordinates were authorized by the server tracking RPC.
+ if type(data.x)=='number'and type(data.y)=='number'then SetNewWaypoint(data.x+0.0,data.y+0.0);cb({ok=true})else cb({ok=false})end
+end)
+RegisterCommand('removeband',function()
+ local begin=lib.callback.await('crimson_doj:beginBandRemoval',false)
+ if not begin or not begin.ok then lib.notify({description=begin and begin.error or 'Unavailable',type='error'})return end
+ if begin.data.removed then lib.notify({description='Tracking band removed',type='success'});return end
+ local start=GetGameTimer()
+ local success=lib.skillCheck({'easy','medium','medium'},{'w','a','s','d'})
+ while GetGameTimer()-start<3000 do Wait(50)end
+ local result=lib.callback.await('crimson_doj:finishBandRemoval',false,begin.data.nonce,success)
+ lib.notify({description=result.ok and 'Tracking band removed' or result.error,type=result.ok and 'success'or 'error'})
+end,false)
+CreateThread(function()
+ while true do
+  Wait(250)
+  if Config.AutomaticGunshots and IsPedShooting(PlayerPedId())then TriggerServerEvent('crimson_doj:gunshots');Wait(30000)end
+ end
+end)
+exports('useBodycam',function(data)
+ exports.ox_inventory:useItem(data,function(used)
+  if not used then return end
+  local result
+  local wasActive=bodycamActive
+  if wasActive then result=lib.callback.await('crimson_doj:stopOwnBodycam',false)
+  else result=lib.callback.await('crimson_doj:request',false,'bodycamStart',{})end
+  lib.notify({description=result and result.ok and (wasActive and 'Finalizing recording' or 'Bodycam started')or (result and result.error or 'Bodycam unavailable'),type=result and result.ok and 'success'or 'error'})
+ end)
+end)
+exports('useTrackingBand',function(data)
+ exports.ox_inventory:useItem(data,function(used)
+  if not used then return end
+  local input=lib.inputDialog('Attach tracking band',{{type='number',label='Nearby player server ID',required=true},{type='number',label='Linked case ID',required=true}})
+  if not input then return end
+  local result=lib.callback.await('crimson_doj:request',false,'trackingApply',{source=input[1],caseId=input[2]})
+  lib.notify({description=result.ok and 'Tracking band attached' or result.error,type=result.ok and 'success'or 'error'})
+ end)
 end)

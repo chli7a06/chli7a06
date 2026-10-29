@@ -13,7 +13,7 @@ local definition = {
  business_note={doj=true},
  product={business=true,management=true},
  invoice={business=true},
- dispatch={police=true,ems=true},
+ dispatch={police=true,doj=true,ems=true},
  recording={police=true,doj=true,ems=true},
 }
 local function reject(message) error('CRIMSON_VALIDATION:'..message,0) end
@@ -38,6 +38,7 @@ local function identity(source, allowOffDuty)
  local policy=p and p.job and Config.Jobs[p.job.name]
  if not policy or type(p.citizenid)~='string' then return end
  if Config.MDTJobs and not Config.MDTJobs[p.job.name] then return end
+ if CrimsonSuspended and CrimsonSuspended(p.citizenid,p.job.name) then return end
  if Config.RequireDuty and not p.job.onduty and not allowOffDuty then return end
  local grade=type(p.job.grade)=='table' and tonumber(p.job.grade.level) or tonumber(p.job.grade)
  if not grade or grade<policy.read then return end
@@ -56,7 +57,7 @@ local function person(cid)
 end
 local function publicPerson(row)
  local c=decode(row.charinfo)
- return {citizenid=row.citizenid,firstname=c.firstname or '',lastname=c.lastname or '',birthdate=c.birthdate or '',nationality=c.nationality or ''}
+ return {citizenid=row.citizenid,firstname=c.firstname or '',lastname=c.lastname or '',birthdate=c.birthdate or '',nationality=c.nationality or '',phone=c.phone or ''}
 end
 local function citizenBank(a,cid)
  if not CrimsonPermission(a,'profiles_view',a.manage) or (a.department~='doj' and a.department~='police') then return nil end
@@ -118,7 +119,7 @@ local function allowedDetails(a,kind,payload,old)
  end
  local fields={
  case={'evidence','charges'}, warrant={'reason','expires'},incident={'charges','evidence'},medical={'diagnosis','treatment','allergies'},
- document={'category','imageUrl'},vehicle_flag={'reason'},weapon={'serial','model'},business_license={'licenseType','expires'},business_note={},
+ document={'category','imageUrl','signers'},vehicle_flag={'reason'},weapon={'serial','model'},business_license={'licenseType','expires'},business_note={},
  product={'category'},invoice={},note={},dispatch={'priority','location'},recording={'url'},
  }
  local input=payload.details
@@ -130,6 +131,15 @@ local function allowedDetails(a,kind,payload,old)
   end
  end
  if kind=='document' and details.imageUrl and details.imageUrl~='' and not CrimsonDocumentImage(details.imageUrl) then reject('Document image must be an allowed HTTPS JPG/PNG/WebP URL') end
+ if kind=='document' and details.signers then
+  local signers={}
+  for cid in details.signers:gmatch('[^,]+')do
+   cid=cid:match('^%s*(.-)%s*$')
+   if #signers>=8 or not person(cid)then reject('Up to eight existing signer citizen IDs are allowed')end
+   signers[#signers+1]=cid
+  end
+  details.signers=signers
+ end
  if details.expires and details.expires~='' and not details.expires:match('^%d%d%d%d%-%d%d%-%d%d$') then reject('Expiry must use YYYY-MM-DD') end
  if kind=='recording' and old and decode(old.details).storage=='local' then return decode(old.details) end
  if kind=='recording' and details.url and details.url~='' and not details.url:match('^https://') then reject('Recording URL must use HTTPS') end
@@ -176,7 +186,14 @@ local services=assert(CrimsonServices,'server_extras.lua must load before server
  identity=identity,reject=reject,clean=clean,integer=integer,decode=decode,person=person,log=log,
  ready=function()return ready end,
 })
+local extensions=CrimsonExtensions({identity=identity,reject=reject,clean=clean,integer=integer,decode=decode,person=person,log=log,visible=visible})
+local resources=CrimsonResources({identity=identity,reject=reject,clean=clean,integer=integer,decode=decode,person=person,log=log,ready=function()return ready end},extensions)
+CrimsonTracking({identity=identity,ready=function()return ready end})
+local live=CrimsonLive({identity=identity,reject=reject,log=log})
 local function run(a,action,payload)
+ if ({liveStart=true,liveStop=true,liveSources=true,liveWatch=true})[action]then return live[action](a,payload)end
+ if extensions.actions[action] then return extensions.actions[action](a,payload)end
+ if resources.actions[action] then return resources.actions[action](a,payload)end
  if ({paymentStatus=true,businessFinance=true,bankAccount=true,offerInvoice=true,fine=true,jail=true,release=true,bodycamStart=true,bodycamStop=true,playRecording=true,deleteRecording=true})[action] then return services[action](a,payload) end
  local managementActions={employees=true,employee=true,penalcode=true,audit=true,equipment=true,camera=true,armory=true}
  if managementActions[action] and not CrimsonManagement(a) then reject('Management requires DOJ grade 10 or higher') end
@@ -242,7 +259,7 @@ local function run(a,action,payload)
   if not title or not body or not subject then reject('Invalid fields or text too long') end
   if (d.subject or kind=='invoice') and not person(subject) then reject('Select an existing citizen ID') end
   if (kind=='business_license' or kind=='business_note') then
-   local found=false for _,job in ipairs(Config.BusinessJobs) do if job==subject then found=true end end
+   local found=false for _,job in ipairs(CrimsonBusinessJobs()) do if job==subject then found=true end end
    if not found then reject('Select a configured business job') end
   end
   local status=old and payload.status or 'open'
@@ -327,7 +344,7 @@ local function run(a,action,payload)
   if a.department~='doj' then reject('Business registry requires DOJ') end
   local out={}
   local jobs=exports.qbx_core:GetJobs()
-  for _,job in ipairs(Config.BusinessJobs) do
+  for _,job in ipairs(CrimsonBusinessJobs()) do
    out[#out+1]={job=job,label=jobs[job] and jobs[job].label or job,
     licenses=MySQL.query.await("SELECT id,title,details,status FROM crimson_mdt_entries WHERE scope='justice' AND kind='business_license' AND subject=? ORDER BY id DESC",{job})}
   end
@@ -368,7 +385,7 @@ local function run(a,action,payload)
   if not row then reject('Document not found') end
   local ticket=MySQL.scalar.await('SELECT UUID()')
   if type(ticket)~='string' then reject('Could not issue document copy') end
-  local snapshot={title=row.title,body=row.body,category=decode(row.details).category or '',imageUrl=CrimsonDocumentImage(decode(row.details).imageUrl),recordId=row.id,version=row.version,author=row.owner,issuedBy=a.p.citizenid,issuerName=actorName(a.p),department=a.policy.label}
+  local snapshot={title=row.title,body=row.body,category=decode(row.details).category or '',imageUrl=CrimsonDocumentImage(decode(row.details).imageUrl),signers=decode(row.details).signers or {},scope=a.scope,recordId=row.id,version=row.version,author=row.owner,issuedBy=a.p.citizenid,issuerName=actorName(a.p),department=a.policy.label}
   local printId=MySQL.insert.await('INSERT INTO crimson_mdt_prints(ticket,record_id,snapshot,issued_by) VALUES(?,?,?,?)',{ticket,row.id,json.encode(snapshot),a.p.citizenid})
   local holder=exports.qbx_core:GetPlayer(a.source)
   if not holder or holder.PlayerData.citizenid~=a.p.citizenid then
@@ -407,6 +424,13 @@ local function run(a,action,payload)
   log(a,'camera_view',nil)
   return {x=camera.x,y=camera.y,z=camera.z,rx=camera.rx or 0,ry=camera.ry or 0,rz=camera.rz or 0,fov=camera.fov or 60,label=camera.label}
  elseif action=='armory' then
+  if Config.StockArmory then
+   local armory=Config.Armory[a.p.job.name]
+   local index=armory and integer(payload.id,1,#(armory.kits or {}))
+   local kit=index and armory.kits[index]
+   if not kit or a.grade<(kit.grade or 0)then reject('Kit access denied')end
+   return resources.actions.armoryOrder(a,{items=kit.items})
+  end
   if a.department=='business' or not a.write then reject('Equipment access denied') end
   if Config.Integrations.inventory~='ox_inventory' or GetResourceState('ox_inventory')~='started' then reject('ox_inventory armory integration is not enabled') end
   local armory=Config.Armory[a.p.job.name]
@@ -469,6 +493,7 @@ MySQL.ready(function()
  if ok and services.initialize then
   ok,err=pcall(services.initialize)
  end
+ if ok then ok,err=pcall(extensions.initialize) end
  ready=ok
  if not ok then print('[crimson_doj] Initialization failed: '..tostring(err)) end
 end)
@@ -516,6 +541,9 @@ lib.callback.register('crimson_doj:readPrinted',function(source,slot)
   if not copy then reject('Document copy not found') end
   local data=decode(copy.snapshot)
   data.imageUrl=CrimsonDocumentImage(data.imageUrl)
+  data.signatures=MySQL.query.await('SELECT signer,signer_name,created_at FROM crimson_mdt_signatures WHERE print_id=? ORDER BY created_at',{id})
+  local reader=exports.qbx_core:GetPlayer(source)
+  data.viewerCitizenid=reader and reader.PlayerData.citizenid
   data.printId=id data.printedAt=copy.created_at
   return data
  end)
@@ -554,3 +582,13 @@ RegisterCommand('crimsonresolve',function(source,args)
  local ok,result=pcall(services.resolvePayment,id,outcome,note)
  print(ok and '[Crimson] Payment metadata resolved; no money was moved' or '[Crimson] '..tostring(result))
 end,true)
+
+CreateThread(function()
+ while true do
+  Wait(30000)
+  if ready then
+   local ok,err=pcall(extensions.tick)
+   if not ok then print('[Crimson periodic] '..tostring(err))end
+  end
+ end
+end)

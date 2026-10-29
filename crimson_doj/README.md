@@ -1,3 +1,7 @@
+# Crimson 4.0 preview
+
+Read [the upgrade guide](INSTALL/UPGRADE_4_AR.md) and [current feature status](FEATURES.md) first. This resource includes new inventory, archive, tracking, staff and live-video workflows; preserve existing configuration and recordings. The Origen bridge is supplied separately in the download bundle.
+
 > Version 3.2.2: badge presentation uses your installed /e idcard command. The ox_target printer menu lists only documents without a previous printed copy; their records stay in MDT. See UPGRADE_3.2.2.md in the ZIP.
 
 > Version 3.2.1: DOJ credential is now an ID-style card with its own justice emblem. Vehicle search is in Operations and Businesses in Administration, visible to all permitted DOJ grades. Remaining Management access stays grade 10+. See UPGRADE_3.2.1.md in the ZIP.

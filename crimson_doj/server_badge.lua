@@ -90,7 +90,7 @@ lib.callback.register('crimson_doj:showBadge',function(source,slot)
  presentations[source]={token=token,viewers=viewers}
  local rank=Config.DojGrades and Config.DojGrades[tostring(liveGrade)]
  for _,target in ipairs(viewers) do
-  TriggerClientEvent('crimson_doj:badge',target,{name=entry.display_name,rank=rank and rank.label or (type(p.job.grade)=='table' and p.job.grade.name or tostring(grade)),number='DOJ-'..p.citizenid,presentation=token,isOwner=target==source})
+  TriggerClientEvent('crimson_doj:badge',target,{name=entry.display_name,rank=rank and rank.label or (type(p.job.grade)=='table' and p.job.grade.name or tostring(grade)),number='DOJ-'..tostring((live.metadata and live.metadata.police_badge) or p.citizenid),presentation=token,isOwner=target==source})
  end
  SetTimeout(8000,function()hide(source,token)end)
  return {ok=true}

@@ -1,3 +1,11 @@
+# Crimson MDT 4.0 preview — Qbox
+
+[Download 4.0 preview](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_4.0.0_preview.zip) · [التركيب والتحديث](crimson_doj/INSTALL/UPGRADE_4_AR.md) · [Current feature audit](XR_PARITY_REVIEW_4.0.md)
+
+Adds full citizen/vehicle annotations, structured cases and convictions, native licenses, staff duty/suspension, business files, signed physical documents/archive, stock armory/kits/returns, tracking, dispatch responders/Origen alert bridge and statistics. Live bodycam is video-only and requires a separately deployed screencapture SFU Worker. This preview is independently implemented and is not exact XR parity. Automated checks pass; FiveM multiplayer acceptance is still required. Preserve customized configuration, sounds and recordings when upgrading.
+
+## Earlier releases
+
 # Crimson MDT 3.0.2 beta — Qbox
 
 [Download complete pack](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_qbox_pack_3.0.2.zip) · [Crimson resource only](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_3.0.2.zip)

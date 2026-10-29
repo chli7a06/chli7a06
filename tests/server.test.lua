@@ -30,6 +30,7 @@ GetResourceState=function()return 'missing'end
 AddEventHandler=function()end
 RegisterNetEvent=function()end
 RegisterCommand=function()end
+CreateThread=function()end
 TriggerClientEvent=function()end
 json={decode=function(s)if type(s)=='table' then return s end if s=='PRODUCT' then return {price=50}end if s=='PRIVATE' then return {url='https://test'}end return {}end,encode=function(t)return t end}
 lib={callback={register=function(name,fn)if name=='crimson_doj:request' then callback=fn elseif name=='crimson_doj:readPrinted' then readPrinted=fn else serviceCallbacks[name]=fn end end}}
@@ -60,6 +61,11 @@ Config.DojGrades=nil;Config.MDTJobs=nil;Config.ManagementMinGrade=0
 Config.Banking={provider='Renewed-Banking',accounts={}}
 dofile('crimson_doj/server_banking.lua')
 dofile('crimson_doj/server_extras.lua')
+dofile('crimson_doj/server_extensions.lua')
+dofile('crimson_doj/server_resources.lua')
+dofile('crimson_doj/server_live.lua')
+dofile('crimson_doj/server_tracking.lua')
+setmetatable(exports,{__call=function()end})
 dofile('crimson_doj/server.lua')
 local function request(action,data,id)sourceNumber=sourceNumber+1 saved[id or sourceNumber]=player return callback(id or sourceNumber,action,data or {})end
 local function check(value,label)assert(value,label)passed=passed+1 end

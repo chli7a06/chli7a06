@@ -84,6 +84,8 @@ Config.DojGrades=nil;Config.MDTJobs=nil;Config.ManagementMinGrade=0
 Config.Banking={provider='Renewed-Banking',accounts={}}
 dofile('crimson_doj/server_banking.lua')
 dofile('crimson_doj/server_extras.lua')
+dofile('crimson_doj/server_extensions.lua')
+dofile('crimson_doj/server_resources.lua')
 local api=CrimsonServices({reject=reject,clean=clean,integer=integer,decode=function(v)return type(v)=='table'and v or {}end,person=function()return true end,log=function(a,name,id)logEvents[#logEvents+1]=name end,ready=function()return true end})
 local function pay(version,src)return callbacks['crimson_doj:payInvoice'](src or 2,{id=1,version=version or 1})end
 check(api.offerInvoice(business,{id=1})==true,'business can offer invoice')

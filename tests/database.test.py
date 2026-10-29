@@ -21,7 +21,7 @@ try:
   time.sleep(.25)
  else:raise AssertionError('MariaDB failed readiness')
  schema=(root/'crimson_doj/schema.sql').read_text();sql(schema);sql(schema)
- check(sql('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE()'),'8','idempotent schema with all tables')
+ check(sql('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE()'),'16','idempotent schema with all tables')
  sql("""INSERT INTO crimson_mdt_entries(id,scope,kind,subject,title,body,details,owner,updated_by) VALUES
  (1,'justice','case','CIV','Case','Original','{}','STAFF','STAFF'),
  (2,'medical','medical','CIV','Medical','Private','{}','MEDIC','MEDIC'),
@@ -60,6 +60,21 @@ try:
  sql("INSERT INTO crimson_mdt_prints(ticket,record_id,snapshot,issued_by) VALUES('delivered-copy',102,'{}','STAFF');")
  check(sql(queue),'','successful print leaves the printer queue')
  check(sql("SELECT COUNT(*) FROM crimson_mdt_entries WHERE scope='justice' AND kind='document'"),'2','printed documents stay in MDT')
+ check(sql("INSERT IGNORE INTO crimson_mdt_entities(scope,kind,entity_id,data,updated_by) VALUES('justice','citizen','CIV','{\"wanted\":true}','STAFF');SELECT ROW_COUNT();"),'1','extended entity creation')
+ check(sql("UPDATE crimson_mdt_entities SET data='{\"wanted\":false}',version=version+1 WHERE scope='justice' AND kind='citizen' AND entity_id='CIV' AND version=1;SELECT ROW_COUNT();"),'1','extended optimistic revision')
+ check(sql("UPDATE crimson_mdt_entities SET data='{}' WHERE scope='justice' AND kind='citizen' AND entity_id='CIV' AND version=1;SELECT ROW_COUNT();"),'0','stale entity update rejected')
+ sql("CREATE TABLE players(citizenid VARCHAR(64) PRIMARY KEY,metadata LONGTEXT);INSERT INTO players VALUES('CIV','{\"licences\":{\"driver\":true},\"other\":7}');UPDATE players SET metadata=JSON_SET(COALESCE(metadata,'{}'),'$.licences.weapon',JSON_EXTRACT('true','$')) WHERE citizenid='CIV';")
+ check(sql("SELECT CONCAT(JSON_EXTRACT(metadata,'$.licences.weapon'),':',JSON_EXTRACT(metadata,'$.licences.driver'),':',JSON_EXTRACT(metadata,'$.other')) FROM players"),'true:true:7','offline native license merge preserves metadata')
+ check(sql("INSERT IGNORE INTO crimson_mdt_signatures(print_id,signer,signer_name) VALUES(1,'CIV','Citizen');SELECT ROW_COUNT();"),'1','printed signature claim')
+ check(sql("INSERT IGNORE INTO crimson_mdt_signatures(print_id,signer,signer_name) VALUES(1,'CIV','Changed');SELECT ROW_COUNT();"),'0','signature cannot be rewritten')
+ sql("INSERT INTO crimson_mdt_armory_stock(job,item,amount) VALUES('doj','radio',3);")
+ import concurrent.futures
+ with concurrent.futures.ThreadPoolExecutor(max_workers=2)as pool:
+  results=list(pool.map(lambda _:sql("UPDATE crimson_mdt_armory_stock SET amount=amount-2 WHERE job='doj' AND item='radio' AND amount>=2;SELECT ROW_COUNT();"),range(2)))
+ check(':'.join(sorted(results)),'0:1','concurrent stock claims cannot overspend')
+ sql("INSERT INTO crimson_mdt_armory_loans(ticket,item,citizenid,job,remaining,state) VALUES('LOAN','radio','CIV','doj',2,'returning');START TRANSACTION;UPDATE crimson_mdt_armory_stock SET amount=amount+2 WHERE job='doj' AND item='radio';UPDATE crimson_mdt_armory_loans SET state=IF(remaining-2>0,'active','returned'),remaining=remaining-2 WHERE ticket='LOAN' AND item='radio';COMMIT;")
+ check(sql("SELECT CONCAT(state,':',remaining) FROM crimson_mdt_armory_loans WHERE ticket='LOAN'"),'returned:0','return accounting and SQL assignment order')
+ check(sql("SELECT amount FROM crimson_mdt_armory_stock WHERE job='doj' AND item='radio'"),'3','stock restored after return')
  print(f'PASS {count} real MariaDB schema, isolation, migration, snapshot and journal checks')
 finally:
  subprocess.run(['docker','rm','-f',name],capture_output=True,timeout=15)
