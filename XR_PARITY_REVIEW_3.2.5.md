@@ -27,7 +27,7 @@ Result: the main DOJ sections are present, but Crimson is NOT a full functional 
 | Chief-issued DOJ ID item | Present | Custom display name, bound credential, exact /e idcard, Backspace and nearby presentation. This is a custom Crimson workflow, not proof of XR employee-badge parity. |
 | Rank permissions | Present with requested overrides | Supplied DOJ grades 0–14. Management >=10; Vehicle search / Businesses / Units accessible outside that gate as requested. |
 | Businesses registry | Partial | Configured jobs, license/note records and account inspection. No complete business owner/employee detail tabs, custom logo or legal/suspicious status editor. |
-| Business bank balance / history | Present | Apex / Renewed / qb-banking adapters with different capabilities. Apex is the deployed selection; phone company bridge was patched separately. qb-management/custom-read adapters are not full write integrations. |
+| Business bank balance / history | Present | Apex / Renewed / qb-banking adapters with different capabilities. Apex is the deployed selection; phone company bridge was patched separately. The generic custom-read adapter has no write integration; qb-management has no built-in adapter in this release. |
 | All businesses configured | Missing setup | Defaults list only mechanic and burgershot. The uploaded reference lists many more jobs, including mm3_mecano, pharmacy, casino, etc. Actual server job keys must be configured explicitly. |
 | Business licenses | Partial | Grant/status/expiry metadata; no timed automatic revocation. |
 | Units & opt-in GPS | Present | Duty/status directory and server-authorized opt-in location waypoint. |
