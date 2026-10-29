@@ -94,7 +94,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
  check(soundsPlayed.length===soundCount,'external sound URLs refused');
  await open({...base,grade:9,management:false});check(!$('[data-view="employees"]')&&!!$('[data-view="businesses"]'),'Management hidden but Businesses visible below grade ten');
  await open({...base,grade:14,management:true,canIssueBadge:true});await nav('employees');
- const issue=Array.from(d.querySelectorAll('#content button')).find(b=>b.textContent==='Issue DOJ badge');check(!!issue,'chief sees badge issuer');issue.click();await sleep(20);check($('#editor-title').textContent==='Issue DOJ badge','chief custom-name issuer dialog');$('#cancel').click();
+ const issue=Array.from(d.querySelectorAll('#content button')).find(b=>b.textContent==='Issue DOJ badge');check(!!issue,'chief sees badge issuer');issue.click();await sleep(20);check($('#editor-title').textContent==='Issue DOJ badge','chief custom-name issuer dialog');Array.from(d.querySelectorAll('#editor-fields button')).find(b=>b.textContent==='Use my citizen ID').click();await sleep(20);check($('#editor-fields input').value===base.citizenid,'chief can autofill actual citizen ID');$('#cancel').click();
  w.postMessage({action:'document',data:{title:'Image copy',body:'Saved text',imageUrl:'https://r2.fivemanage.com/test/page.jpg',department:'DOJ'}},'*');await sleep(25);
  check($('#printed-body img')?.getAttribute('src')==='https://r2.fivemanage.com/test/page.jpg','printed item renders hosted image snapshot');
  w.postMessage({action:'dojBadge',data:{name:'Chief',presentation:'dismiss-me'}},'*');await sleep(20);

@@ -149,7 +149,7 @@ function documentImage(url){
 function issueBadgeEditor(){
  clearError();$('#editor-title').textContent='Issue DOJ badge';const fields=$('#editor-fields');fields.replaceChildren();
  const cid=field('Recipient citizen ID','text',''),name=field('Name printed on badge','text','');cid.input.required=true;name.input.required=true;name.input.maxLength=80;
- fields.append(cid.label,name.label,node('p','Recipient must be on-duty DOJ and within 3 metres. Issued badges are bound to their character.','muted'));
+ fields.append(cid.label,button('Use my citizen ID',()=>{cid.input.value=session.citizenid;name.input.value=session.name||'';}),name.label,node('p','Recipient must be on-duty DOJ and within 3 metres. Issued badges are bound to their character.','muted'));
  $('#edit-form').onsubmit=async event=>{event.preventDefault();$('#save').disabled=true;try{const result=await nui('issueBadge',{citizenid:cid.input.value,name:name.input.value});if(!result.ok)throw Error(result.error);dialog.close();$('#message').hidden=false;$('#message').textContent='Badge issued to recipient inventory.';}catch(e){error(e);}finally{$('#save').disabled=false;}};
  dialog.showModal();
 }

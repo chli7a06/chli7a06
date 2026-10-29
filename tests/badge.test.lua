@@ -6,7 +6,7 @@ local players={[1]=chief,[2]=holder}
 local item,registry=nil,{}
 local adds=0
 Config={Jobs={doj={department='doj',read=0}},BadgeChiefMinGrade=13}
-exports={qbx_core={GetPlayer=function(_,id)return players[id] and {PlayerData=players[id]}end,GetPlayerByCitizenId=function(_,cid)if cid=='HOLDER' then return {PlayerData=holder}end end},ox_inventory={GetSlot=function()return item end,AddItem=function(_,id,name,count,meta)assert(id==2 and meta.owner=='HOLDER');item={name=name,metadata=meta};adds=adds+1;return true end}}
+exports={qbx_core={GetPlayer=function(_,id)return players[id] and {PlayerData=players[id]}end,GetPlayerByCitizenId=function(_,cid)if cid=='HOLDER' then return {PlayerData=holder}end end},ox_inventory={GetSlot=function()return item end,AddItem=function(_,id,name,count,meta)assert((id==2 and meta.owner=='HOLDER') or (id==1 and meta.owner=='CHIEF'));item={name=name,metadata=meta};adds=adds+1;return true end}}
 lib={callback={register=function(k,v)callbacks[k]=v end}}
 RegisterCommand=function(k,v)commands[k]=v end
 RegisterNetEvent=function(k,v)handlers[k]=v end
@@ -39,4 +39,10 @@ source=2;handlers['crimson_doj:hideBadge'](token);assert(#events==4 and events[3
 now=20000;item.metadata.owner='OTHER';assert(not show(2,1).ok,'transferred badge denied')
 item.metadata.owner='HOLDER';holder.job.onduty=false;assert(not show(2,1).ok,'off duty denied')
 holder.job.onduty=true;item.metadata.badge_ticket=nil;assert(not show(2,1).ok,'old self-issued credential rejected')
+now=30000
+assert(issue(1,{citizenid='  holder  ',name='Official Again'}).ok,'recipient ID trimmed and matched to canonical online ID')
+local missing=issue(1,{citizenid='NOTONLINE',name='Unknown'})
+assert(not missing.ok and missing.error:find('not found online',1,true),'missing ID has distinct diagnostic')
+now=40000
+assert(issue(1,{citizenid=' chief ',name='Chief Name'}).ok,'chief may issue own credential using canonical character ID')
 print('PASS badge authorization, chief issuance, database identity, audience and dismissal checks')

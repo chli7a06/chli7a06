@@ -31,10 +31,19 @@ lib.callback.register('crimson_doj:issueBadge',function(source,payload)
  if type(cid)~='string' or #cid>64 or type(name)~='string' then return {ok=false,error='Enter citizen ID and badge name'} end
  name=name:match('^%s*(.-)%s*$')
  if #name<2 or #name>80 or name:find('%c') then return {ok=false,error='Badge name must contain 2–80 characters'} end
- local target=exports.qbx_core:GetPlayerByCitizenId(cid)
- local targetId=target and target.PlayerData.source
- local holder=targetId and owner(targetId)
- if not holder or holder.citizenid~=cid or not nearby(source,targetId) then return {ok=false,error='Recipient must be on-duty DOJ and within 3 metres'} end
+ cid=cid:match('^%s*(.-)%s*$')
+ local targetId
+ if cid:lower()==p.citizenid:lower() then targetId=source
+ else
+  local target=exports.qbx_core:GetPlayerByCitizenId(cid)
+  if not target and cid~=cid:upper() then target=exports.qbx_core:GetPlayerByCitizenId(cid:upper()) end
+  targetId=target and tonumber(target.PlayerData.source)
+ end
+ if not targetId then return {ok=false,error='Citizen ID not found online. Copy the exact ID from Citizens, or use My citizen ID.'} end
+ local holder=owner(targetId)
+ if not holder then return {ok=false,error='Recipient must have DOJ as primary job and be on duty'} end
+ cid=holder.citizenid
+ if targetId~=source and not nearby(source,targetId) then return {ok=false,error='Recipient must be within 3 metres and in the same routing bucket'} end
  local now=GetGameTimer()
  if busy[cid] or (issued[p.citizenid] and now-issued[p.citizenid]<5000) then return {ok=false,error='Please wait before issuing again'} end
  busy[cid]=true;issued[p.citizenid]=now
@@ -45,7 +54,7 @@ lib.callback.register('crimson_doj:issueBadge',function(source,payload)
   if inserted==nil or inserted==false then error('Badge registry write failed') end
   local chief,chiefGrade=owner(source)
   local current=owner(targetId)
-  if not chief or chief.citizenid~=p.citizenid or chiefGrade<(Config.BadgeChiefMinGrade or 13) or not current or current.citizenid~=cid or not nearby(source,targetId) then
+  if not chief or chief.citizenid~=p.citizenid or chiefGrade<(Config.BadgeChiefMinGrade or 13) or not current or current.citizenid~=cid or (targetId~=source and not nearby(source,targetId)) then
    MySQL.update.await('DELETE FROM crimson_mdt_badges WHERE ticket=?',{ticket})
    error('Chief or recipient changed character, duty or location')
   end
