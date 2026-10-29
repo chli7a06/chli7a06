@@ -15,7 +15,7 @@ vector3=function(x,y,z)return {x=x,y=y,z=z}end
 local lastPayload
 lib={callback={await=function(_,_,action,payload)
  lastPayload=payload
- if action=='list' then return {ok=true,data={rows={{id=9,title='Court document'}}}}end
+ if action=='printerDocuments' then return {ok=true,data={rows={{id=9,title='Court document'}}}}end
  return {ok=true}
 end},notify=function()end,registerContext=function(c)contexts[#contexts+1]=c end,showContext=function()end}
 dofile('crimson_doj/client.lua')

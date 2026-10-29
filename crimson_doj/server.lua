@@ -336,6 +336,20 @@ local function run(a,action,payload)
  elseif action=='penalcode' then
   if a.department~='police' and a.department~='doj' then reject('Legal module required') end
   return Config.PenalCode
+ elseif action=='printerDocuments' then
+  if not Config.Printing or not Config.Printing.enabled or not a.write or not visible(a,'document') then reject('Document printing permission required') end
+  local printerId=integer(payload.printer,1,#Config.Printers)
+  local printer=printerId and Config.Printers[printerId]
+  if not printer or not printer.jobs or not printer.jobs[a.p.job.name] then reject('Printer access denied') end
+  local ped=GetPlayerPed(a.source)
+  if not ped or ped==0 then reject('Player position unavailable') end
+  local pos,c=GetEntityCoords(ped),printer.coords
+  if (pos.x-c.x)^2+(pos.y-c.y)^2+(pos.z-c.z)^2>(printer.radius or 2)^2 then reject('You must be next to your department printer') end
+  local rows=MySQL.query.await([[SELECT e.id,e.title FROM crimson_mdt_entries e
+   WHERE e.scope=? AND e.kind='document'
+   AND NOT EXISTS (SELECT 1 FROM crimson_mdt_prints p WHERE p.record_id=e.id)
+   ORDER BY e.id DESC LIMIT 30]],{a.scope})
+  return {rows=rows}
  elseif action=='printDocument' then
   local settings=Config.Printing
   if not settings or not settings.enabled or GetResourceState('ox_inventory')~='started' then reject('Document printing requires ox_inventory and the document item') end

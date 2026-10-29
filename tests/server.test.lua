@@ -209,4 +209,11 @@ for grade=0,14 do
  check(request('vehicles',{query='AA'}).ok,'vehicle search available for grade '..grade)
  check(request('businesses').ok,'business registry available for grade '..grade)
 end
+user('doj',14,true)
+check(request('printerDocuments',{printer=1}).ok,'authorized nearby printer queue')
+local queueQuery=queries[#queries]
+check(queueQuery.sql:find('NOT EXISTS',1,true) and queueQuery.args[1]=='justice','printer filtering remains server-side and scope-bound')
+user('doj',0,true);denied('printerDocuments',{printer=1},'read-only student cannot open printing queue')
+user('doj',14,true);GetEntityCoords=function()return {x=999,y=999,z=999}end
+denied('printerDocuments',{printer=1},'printer queue requires proximity')
 print('PASS '..passed..' authorization, isolation, privacy, validation, migration and concurrency checks')

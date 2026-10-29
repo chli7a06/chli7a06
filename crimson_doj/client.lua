@@ -167,7 +167,7 @@ local function openPrinter(index)
  local printer=Config.Printers[index]
  if not printer then return end
  printerBusy=true
- local ok,result=pcall(lib.callback.await,'crimson_doj:request',false,'list',{kind='document',page=1,query=''})
+ local ok,result=pcall(lib.callback.await,'crimson_doj:request',false,'printerDocuments',{printer=index})
  printerBusy=false
  if not ok or type(result)~='table' or not result.ok then
   lib.notify({description=type(result)=='table' and result.error or 'Printer unavailable',type='error'})
@@ -182,7 +182,7 @@ local function openPrinter(index)
    lib.notify({title='Crimson printer',description=done and 'Document added to your inventory' or (type(printed)=='table' and printed.error or 'Printer unavailable'),type=done and 'success' or 'error'})
   end}
  end
- if #options==0 then lib.notify({description='No saved documents. Create one in the MDT first.',type='inform'})
+ if #options==0 then lib.notify({description='No documents waiting to print. Printed documents remain in the MDT.',type='inform'})
  else lib.registerContext({id='crimson_printer',title=printer.label,options=options}) lib.showContext('crimson_printer') end
 end
 local function registerPrinterTargets()

@@ -1,3 +1,5 @@
+> Version 3.2.2: badge presentation uses your installed /e idcard command. The ox_target printer menu lists only documents without a previous printed copy; their records stay in MDT. See UPGRADE_3.2.2.md in the ZIP.
+
 > Version 3.2.1: DOJ credential is now an ID-style card with its own justice emblem. Vehicle search is in Operations and Businesses in Administration, visible to all permitted DOJ grades. Remaining Management access stays grade 10+. See UPGRADE_3.2.1.md in the ZIP.
 
 > Version 3.2.0: Management requires DOJ grade 10+. Chiefs (13+) issue named badges from Employees; /dojbadge is removed. Backspace dismisses badge presentation. Documents accept a validated hosted image URL for in-game printing. See UPGRADE_3.2.0.md in the release ZIP.
