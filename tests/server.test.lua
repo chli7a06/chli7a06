@@ -56,7 +56,7 @@ end},single={await=function(sql,args)
  return selectedRow
 end},insert={await=function(sql,args)inserts=inserts+1 if sql:find('INSERT INTO crimson_mdt_prints')then printSnapshot=args[3] end return 42 end},update={await=function(sql)if sql:find('UPDATE crimson_mdt_entries') then updates=updates+1 return oldVersionChanged and 0 or 1 end return 1 end},transaction={await=function(args)migrationArgs=args return true end},ready=function(fn)initializer=fn;fn()end}
 dofile('crimson_doj/permissions.lua')
-Config.DojGrades=nil;Config.MDTJobs=nil
+Config.DojGrades=nil;Config.MDTJobs=nil;Config.ManagementMinGrade=0
 Config.Banking={provider='Renewed-Banking',accounts={}}
 dofile('crimson_doj/server_banking.lua')
 dofile('crimson_doj/server_extras.lua')
@@ -183,4 +183,25 @@ user('doj',7,true);local seventh=request('bootstrap').data
 check(seventh.modules.warrant.status,'rank seven can revoke warrant')
 user('doj',8,true);local eighth=request('bootstrap').data
 check(not eighth.modules.warrant.status,'rank eight does not inherit rank seven warrant delete')
+Config.ManagementMinGrade=10
+for grade=0,14 do
+ user('doj',grade,true)
+ local info=request('bootstrap').data
+ check(info.management==(grade>=10),'Management visibility threshold '..grade)
+ local personnelPage=request('employees')
+ check(personnelPage.ok==(grade>=10),'Management RPC threshold '..grade)
+end
+user('doj',14,true)
+local url='https://r2.fivemanage.com/VNbtv8wpJdqEafjK3iz8n/LSPD_BCSO_Pistol_Confiscation_Announcement_page-0001.jpg'
+check(request('create',{kind='document',title='Image document',body='',subject='',details={imageUrl=url}}).ok,'provided hosted image URL accepted')
+denied('create',{kind='document',title='Bad image',body='',subject='',details={imageUrl='javascript:alert(1)'}},'unsafe image scheme denied')
+denied('create',{kind='document',title='Untrusted image',body='',subject='',details={imageUrl='https://example.com/image.jpg'}},'unapproved image host denied')
+Config.Printers[1].jobs.doj=true
+user('doj',14,true,'IMAGESTAFF')
+selectedRow={id=99,kind='document',title='Photo paper',body='Image contents',details={imageUrl=url},version=1,owner='IMAGESTAFF'}
+check(request('printDocument',{id=99,printer=1}).ok,'image document prints to inventory')
+check(printSnapshot.imageUrl==url,'printed snapshot retains validated image URL')
+selectedRow.details.imageUrl='https://r2.fivemanage.com/changed.jpg'
+heldDocument={name='crimson_document',metadata={print_id=42,print_ticket='test-print-ticket'}}
+check(readPrinted(20005,1).data.imageUrl==url,'source edits do not change printed URL snapshot')
 print('PASS '..passed..' authorization, isolation, privacy, validation, migration and concurrency checks')

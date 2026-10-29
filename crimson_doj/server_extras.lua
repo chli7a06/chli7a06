@@ -114,6 +114,7 @@ function CrimsonServices(h)
   }
  end
  function api.paymentStatus(a,payload)
+  if not CrimsonManagement(a) then reject('Management requires DOJ grade 10 or higher') end
   if not a.manage then reject('Management permission required') end
   return MySQL.query.await('SELECT p.* FROM crimson_mdt_payments p JOIN crimson_mdt_entries e ON e.id=p.entry_id WHERE e.scope=? ORDER BY p.updated_at DESC LIMIT 100',{a.scope})
  end
@@ -143,6 +144,7 @@ function CrimsonServices(h)
   return result
  end
  function api.businessFinance(a,payload)
+  if not CrimsonManagement(a) then reject('Management requires DOJ grade 10 or higher') end
   if a.department~='doj' or not CrimsonPermission(a,'business_view',a.manage) then reject('DOJ business view permission required') end
   local job=clean(payload.job,80,true)
   local configured=false
@@ -170,6 +172,7 @@ function CrimsonServices(h)
   return {provider=bank.name,account=job,available=available,balance=available and balance or nil,transactions=transactions}
  end
  function api.bankAccount(a)
+  if not CrimsonManagement(a) then reject('Management requires DOJ grade 10 or higher') end
   if not a.manage then reject('Management permission required') end
   local bank=requireBank()
   local account=a.p.job.name

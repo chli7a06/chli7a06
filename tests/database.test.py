@@ -21,7 +21,7 @@ try:
   time.sleep(.25)
  else:raise AssertionError('MariaDB failed readiness')
  schema=(root/'crimson_doj/schema.sql').read_text();sql(schema);sql(schema)
- check(sql('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE()'),'7','idempotent schema with all tables')
+ check(sql('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE()'),'8','idempotent schema with all tables')
  sql("""INSERT INTO crimson_mdt_entries(id,scope,kind,subject,title,body,details,owner,updated_by) VALUES
  (1,'justice','case','CIV','Case','Original','{}','STAFF','STAFF'),
  (2,'medical','medical','CIV','Medical','Private','{}','MEDIC','MEDIC'),

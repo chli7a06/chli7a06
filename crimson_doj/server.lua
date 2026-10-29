@@ -118,7 +118,7 @@ local function allowedDetails(a,kind,payload,old)
  end
  local fields={
  case={'evidence','charges'}, warrant={'reason','expires'},incident={'charges','evidence'},medical={'diagnosis','treatment','allergies'},
- document={'category'},vehicle_flag={'reason'},weapon={'serial','model'},business_license={'licenseType','expires'},business_note={},
+ document={'category','imageUrl'},vehicle_flag={'reason'},weapon={'serial','model'},business_license={'licenseType','expires'},business_note={},
  product={'category'},invoice={},note={},dispatch={'priority','location'},recording={'url'},
  }
  local input=payload.details
@@ -129,6 +129,7 @@ local function allowedDetails(a,kind,payload,old)
    if not details[key] then reject('Invalid '..key) end
   end
  end
+ if kind=='document' and details.imageUrl and details.imageUrl~='' and not CrimsonDocumentImage(details.imageUrl) then reject('Document image must be an allowed HTTPS JPG/PNG/WebP URL') end
  if details.expires and details.expires~='' and not details.expires:match('^%d%d%d%d%-%d%d%-%d%d$') then reject('Expiry must use YYYY-MM-DD') end
  if kind=='recording' and old and decode(old.details).storage=='local' then return decode(old.details) end
  if kind=='recording' and details.url and details.url~='' and not details.url:match('^https://') then reject('Recording URL must use HTTPS') end
@@ -177,12 +178,14 @@ local services=assert(CrimsonServices,'server_extras.lua must load before server
 })
 local function run(a,action,payload)
  if ({paymentStatus=true,businessFinance=true,bankAccount=true,offerInvoice=true,fine=true,jail=true,release=true,bodycamStart=true,bodycamStop=true,playRecording=true,deleteRecording=true})[action] then return services[action](a,payload) end
+ local managementActions={employees=true,employee=true,roster=true,shareGPS=true,unitWaypoint=true,unitStatus=true,vehicles=true,businesses=true,penalcode=true,audit=true,equipment=true,camera=true,armory=true}
+ if managementActions[action] and not CrimsonManagement(a) then reject('Management requires DOJ grade 10 or higher') end
  local actionPermissions={bootstrap='dashboard_view',search='profiles_view',profile='profiles_view',employees='employees_view',employee='employees_manage',vehicles='vehicles_view',businesses='business_view',threat='code_change'}
  local needed=actionPermissions[action]
  if needed and not CrimsonPermission(a,needed,true) then reject('Permission required: '..needed) end
  if action=='bootstrap' then
   if Config.RequireDuty and not a.p.job.onduty then
-   return {citizenid=a.p.citizenid,name=actorName(a.p),job=a.p.job.name,label=a.policy.label,department=a.department,grade=a.grade,canWrite=a.write,canManage=a.manage,permissions=a.permissions,gradeLabel=a.gradeLabel,onduty=false,modules=moduleList(a),counts={},recent={},threat='green',integrations=Config.Integrations}
+   return {citizenid=a.p.citizenid,name=actorName(a.p),job=a.p.job.name,label=a.policy.label,department=a.department,grade=a.grade,canWrite=a.write,canManage=a.manage,management=CrimsonManagement(a),canIssueBadge=a.department=='doj' and a.grade>=(Config.BadgeChiefMinGrade or 13),permissions=a.permissions,gradeLabel=a.gradeLabel,onduty=false,modules=moduleList(a),counts={},recent={},threat='green',integrations=Config.Integrations}
   end
   local counts=MySQL.query.await("SELECT kind,status,COUNT(*) AS total FROM crimson_mdt_entries WHERE scope=? AND (kind<>'note' OR owner=?) GROUP BY kind,status",{a.scope,a.p.citizenid})
   local state=MySQL.scalar.await('SELECT threat FROM crimson_mdt_state WHERE scope=?',{a.scope}) or 'green'
@@ -191,7 +194,7 @@ local function run(a,action,payload)
   local safeCounts,safeRecent={},{}
   for _,row in ipairs(counts) do if visible(a,row.kind) then safeCounts[#safeCounts+1]=row end end
   for _,row in ipairs(recent) do if visible(a,row.kind) then safeRecent[#safeRecent+1]=row end end
-  return {citizenid=a.p.citizenid,name=actorName(a.p),job=a.p.job.name,label=a.policy.label,department=a.department,grade=a.grade,canWrite=a.write,canManage=a.manage,permissions=a.permissions,gradeLabel=a.gradeLabel,onduty=a.p.job.onduty,modules=moduleList(a),counts=safeCounts,recent=safeRecent,threat=state,integrations=Config.Integrations}
+  return {citizenid=a.p.citizenid,name=actorName(a.p),job=a.p.job.name,label=a.policy.label,department=a.department,grade=a.grade,canWrite=a.write,canManage=a.manage,management=CrimsonManagement(a),canIssueBadge=a.department=='doj' and a.grade>=(Config.BadgeChiefMinGrade or 13),permissions=a.permissions,gradeLabel=a.gradeLabel,onduty=a.p.job.onduty,modules=moduleList(a),counts=safeCounts,recent=safeRecent,threat=state,integrations=Config.Integrations}
  elseif action=='duty' then
   if type(payload.enabled)~='boolean' then reject('Invalid duty state') end
   exports.qbx_core:SetJobDuty(a.source,payload.enabled)
@@ -351,7 +354,7 @@ local function run(a,action,payload)
   if not row then reject('Document not found') end
   local ticket=MySQL.scalar.await('SELECT UUID()')
   if type(ticket)~='string' then reject('Could not issue document copy') end
-  local snapshot={title=row.title,body=row.body,category=decode(row.details).category or '',recordId=row.id,version=row.version,author=row.owner,issuedBy=a.p.citizenid,issuerName=actorName(a.p),department=a.policy.label}
+  local snapshot={title=row.title,body=row.body,category=decode(row.details).category or '',imageUrl=CrimsonDocumentImage(decode(row.details).imageUrl),recordId=row.id,version=row.version,author=row.owner,issuedBy=a.p.citizenid,issuerName=actorName(a.p),department=a.policy.label}
   local printId=MySQL.insert.await('INSERT INTO crimson_mdt_prints(ticket,record_id,snapshot,issued_by) VALUES(?,?,?,?)',{ticket,row.id,json.encode(snapshot),a.p.citizenid})
   local holder=exports.qbx_core:GetPlayer(a.source)
   if not holder or holder.PlayerData.citizenid~=a.p.citizenid then
@@ -498,6 +501,7 @@ lib.callback.register('crimson_doj:readPrinted',function(source,slot)
   local copy=MySQL.single.await('SELECT snapshot,created_at FROM crimson_mdt_prints WHERE id=? AND ticket=?',{id,ticket})
   if not copy then reject('Document copy not found') end
   local data=decode(copy.snapshot)
+  data.imageUrl=CrimsonDocumentImage(data.imageUrl)
   data.printId=id data.printedAt=copy.created_at
   return data
  end)

@@ -34,3 +34,19 @@ function CrimsonModulePermission(a,kind,mode,fallback)
  local keys=modules[kind]
  return keys and a.permissions[keys[mode]]==true or false
 end
+
+Config.ManagementMinGrade = Config.ManagementMinGrade or 10
+Config.BadgeChiefMinGrade = Config.BadgeChiefMinGrade or 13
+Config.DocumentImageHosts = Config.DocumentImageHosts or {['r2.fivemanage.com']=true}
+function CrimsonManagement(a)
+ return a.department~='doj' or (tonumber(a.grade) or 0)>=(Config.ManagementMinGrade or 10)
+end
+function CrimsonDocumentImage(value)
+ if type(value)~='string' or #value>1000 or value:find('[%c%s]') then return end
+ local host,path=value:match('^https://([%w%.%-]+)/(.+)$')
+ if not host or not Config.DocumentImageHosts[host:lower()] then return end
+ path=path:match('^[^?#]+') or ''
+ local ext=path:lower():match('%.([a-z]+)$')
+ if not ({jpg=true,jpeg=true,png=true,webp=true})[ext or ''] then return end
+ return value
+end

@@ -261,11 +261,13 @@ exports('useBadge',function(data)
   if not result or not result.ok then lib.notify({title='DOJ badge',description=result and result.error or 'Badge unavailable',type='error'}) end
  end)
 end)
-RegisterNetEvent('crimson_doj:badge',function(data)
- SendNUIMessage({action='dojBadge',data=data,sounds=Config.Sounds})
-end)
 
 -- Close stale department information immediately when the job or duty changes.
 RegisterNetEvent('QBCore:Client:OnJobUpdate',function()close()end)
 RegisterNetEvent('QBCore:Client:OnPlayerUnload',function()close()end)
 RegisterNetEvent('QBCore:Client:SetDuty',function(onDuty)if not onDuty and Config.RequireDuty then close() end end)
+
+RegisterNUICallback('issueBadge',function(data,cb)
+ local ok,result=pcall(lib.callback.await,'crimson_doj:issueBadge',false,data)
+ cb(ok and result or {ok=false,error='Badge issuer unavailable'})
+end)
