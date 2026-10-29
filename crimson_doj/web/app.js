@@ -37,7 +37,7 @@ function hasPermission(key,fallback=false){return session?.permissions?session.p
 function nav(){
  const nav=$('#nav');nav.replaceChildren();
  const add=(key,label,icon)=>{const b=button('',()=>show(key));b.dataset.view=key;b.append(node('span',icon,'icon'),node('span',label));nav.append(b);};
- nav.append(node('div','OVERVIEW','nav-group'));add('dashboard','Dashboard','▦');add('citizens',session.department==='ems'?'Patients':session.department==='business'?'Clients':'Citizens','◎');
+ nav.append(node('div','OVERVIEW','nav-group'));add('dashboard','Dashboard','▦');add('citizens',session.department==='ems'?'Patients':session.department==='business'?'Clients':'Citizens','◎');if(session.department!=='business')add('roster',...extras.roster);
  for(const group of ['RECORDS','OPERATIONS','BUSINESS','DOCUMENTATION','ADMINISTRATION']){
   const list=Object.entries(modules).filter(([key,d])=>session.modules[key]&&d.group===group);
   const vehicles=group==='OPERATIONS'&&['police','doj'].includes(session.department)&&hasPermission('vehicles_view',true);
@@ -50,7 +50,6 @@ function nav(){
   nav.append(node('div','MANAGEMENT','nav-group'));
   if(hasPermission('employees_view',true))add('employees',...extras.employees);
   if(session.canManage){add('bank','Bank account','＄');add('payments','Payments log','≡');}
-  if(session.department!=='business')add('roster',...extras.roster);
   if(['police','doj'].includes(session.department))add('penalcode',...extras.penalcode);
   add('archive',...extras.archive);if(session.department!=='business')add('equipment',...extras.equipment);if(session.canManage)add('audit',...extras.audit);
  }
