@@ -95,6 +95,7 @@ RegisterNUICallback('waypoint', function(data, cb)
     else cb(result) end
 end)
 RegisterNUICallback('camera', function(data, cb)
+    if CrimsonBodycamView and CrimsonBodycamView.isActive()then cb({ok=false,error='Stop bodycam recording before viewing security cameras'});return end
     cameraEpoch = cameraEpoch + 1
     local ticket = cameraEpoch
     local result = requestWhileOpen(data.custom and 'cameraDefinition' or 'camera', {id=data.id})

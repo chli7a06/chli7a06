@@ -1,3 +1,7 @@
+# Crimson 4.0.2
+
+[Current upgrade guide](INSTALL/UPGRADE_4_0_2_AR.md): chest-mounted recording view, uploaded DOJ seal in MDT/badge, new DOJ rank names and Senior Judge Management gate. Existing 4.0 opening/focus remains the base; preserve your config/sounds/recordings while using the new manifest and permissions.
+
 # Crimson 4.0.1 — working 4.0 base
 
 Read [the current upgrade guide](INSTALL/STABLE_4_0_1_AR.md). This build preserves the original 4.0 UI/opening/focus code and adds only observed weapon serial search and editable department camera locations. No new SQL table or inventory item is required.

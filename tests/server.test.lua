@@ -163,6 +163,7 @@ local oldQuery=MySQL.query.await;MySQL.query.await=function()error('SENSITIVE SQ
 legacy=1;migrated=0;initializer();check(migrationArgs and #migrationArgs==2,'migration is transactional');check(migrationArgs[1].query:find('SELECT id,')~=nil,'migration preserves record IDs');check(not migrationArgs[1].query:find('DELETE'),'migration does not delete old table')
 -- Exact supplied DOJ ranks, including deliberately non-monotonic grants.
 dofile('crimson_doj/permissions.lua')
+Config.ManagementMinGrade=0 -- isolate per-rank action matrix; deployment gate is checked below
 user('mechanic',14,true);denied('bootstrap',nil,'mechanic denied even at high grade')
 user('burgershot',14,true);denied('bootstrap',nil,'business job denied')
 local personnel={[6]=true,[9]=true,[13]=true,[14]=true}
@@ -190,13 +191,13 @@ user('doj',7,true);local seventh=request('bootstrap').data
 check(seventh.modules.warrant.status,'rank seven can revoke warrant')
 user('doj',8,true);local eighth=request('bootstrap').data
 check(not eighth.modules.warrant.status,'rank eight does not inherit rank seven warrant delete')
-Config.ManagementMinGrade=10
+Config.ManagementMinGrade=12
 for grade=0,14 do
  user('doj',grade,true)
  local info=request('bootstrap').data
- check(info.management==(grade>=10),'Management visibility threshold '..grade)
+ check(info.management==(grade>=12),'Management visibility threshold '..grade)
  local personnelPage=request('employees')
- check(personnelPage.ok==(grade>=10),'Management RPC threshold '..grade)
+ check(personnelPage.ok==(grade>=12),'Management RPC threshold '..grade)
 end
 user('doj',14,true)
 local url='https://r2.fivemanage.com/VNbtv8wpJdqEafjK3iz8n/LSPD_BCSO_Pistol_Confiscation_Announcement_page-0001.jpg'

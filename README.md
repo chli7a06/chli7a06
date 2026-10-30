@@ -1,3 +1,15 @@
+# Crimson MDT 4.0.2 — stable opening, chest view, DOJ seal and ranks
+
+[Download complete 4.0.2 resource](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_4.0.2_doj_update.zip) · [التركيب بالدارجة](crimson_doj/INSTALL/UPGRADE_4_0_2_AR.md)
+
+Adds a chest-bone gameplay camera prepared before recording, with perspective cleanup on stop/failure/logout/resource stop; the exact uploaded DOJ PNG in MDT and badge; the requested 15 rank names; and Management from Senior Judge (12) upward. Existing native Qbox grade names are synchronized at runtime while retaining pay/boss/bank flags and without rewriting the Qbox jobs file. Missing native ranks are reported rather than invented.
+
+MDT opening/focus stays on the user-confirmed 4.0 implementation. The only app.js change is the badge image path. The inline native camera selector now rejects security-camera playback during a chest-view recording. There is no experimental 4.1 UI handshake or 8-second timeout. No new SQL table or inventory item is needed. The direct camera-delete fix and observed serial search are included. The player sees the chest camera during recording because screencapture captures the rendered game frame; game audio is still unavailable.
+
+Automated checks cover authorization, UI, chest-camera ownership/cleanup, capture preparation/failure and salary-preserving grade sync. In-engine acceptance of the new camera view still requires testing on the user's models/MLO/vehicles. Follow the guide and retain customized config/sounds/recordings; use the new permissions and manifest from this release.
+
+## Previous tested base
+
 # Crimson MDT 4.0.1 — working 4.0 base + cameras and serial search
 
 Camera deletion fix: [single-file update](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_camera_delete_fix.zip). Replace only crimson_doj/web/registry.js and restart crimson_doj. The Delete camera button now deletes directly without any confirmation popup, as requested. The button is disabled while processing and server permission/version checks remain enforced. No native focus/opening, manifest, database or permissions change is needed. The complete resource download below also includes this fix.

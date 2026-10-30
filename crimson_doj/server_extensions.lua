@@ -9,7 +9,7 @@ function CrimsonExtensions(h)
  local function allow(a,permission,fallback)
   if not CrimsonPermission(a,permission,fallback) then reject('Permission required: '..permission)end
  end
- local function management(a)if not CrimsonManagement(a)then reject('Management requires DOJ grade 10+')end end
+ local function management(a)if not CrimsonManagement(a)then reject('Management requires Senior Judge (DOJ grade 12)+')end end
  local function id(value)
   return clean(value,64,true) or reject('Valid citizen ID required')
  end

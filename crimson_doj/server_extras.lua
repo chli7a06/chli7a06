@@ -294,8 +294,16 @@ function CrimsonServices(h)
   if tonumber(count)+running>=Config.Bodycam.maxClips then reject('Recording storage limit reached; ask a manager to remove old clips') end
   local current=exports.qbx_core:GetPlayer(a.source)
   if not current or current.PlayerData.citizenid~=a.p.citizenid then reject('Recording player disconnected or changed character') end
+  local prepared,view=pcall(lib.callback.await,'crimson_doj:prepareBodycamView',a.source)
+  if not prepared or type(view)~='table'or not view.ok then reject(type(view)=='table'and view.error or 'Bodycam camera setup unavailable; check client update')end
+  current=exports.qbx_core:GetPlayer(a.source)
+  if not current or current.PlayerData.citizenid~=a.p.citizenid then
+   TriggerClientEvent('crimson_doj:bodycamStatus',a.source,{active=false,error='Character changed before capture'})
+   reject('Recording player disconnected or changed character')
+  end
   local capture={source=a.source,cid=a.p.citizenid}
   captures[a.p.citizenid]=capture
+  TriggerClientEvent('crimson_doj:bodycamStatus',a.source,{active=true,duration=Config.Bodycam.duration})
   local ok,id=pcall(function()
    return exports.screencapture:startVideoCapture(a.source,{duration=Config.Bodycam.duration,maxWidth=Config.Bodycam.width,maxHeight=Config.Bodycam.height},function(result)
     local stored
@@ -318,9 +326,12 @@ function CrimsonServices(h)
     end
    end)
   end)
-  if not ok or not id then captures[a.p.citizenid]=nil reject('Could not start screencapture; check provider version and console') end
+  if not ok or not id then
+   captures[a.p.citizenid]=nil
+   TriggerClientEvent('crimson_doj:bodycamStatus',a.source,{active=false,error='Could not start capture'})
+   reject('Could not start screencapture; check provider version and console')
+  end
   capture.id=id
-  TriggerClientEvent('crimson_doj:bodycamStatus',a.source,{active=true,duration=Config.Bodycam.duration})
   return {captureId=id}
  end
  function api.bodycamStop(a)

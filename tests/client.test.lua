@@ -110,4 +110,8 @@ commands.dojmdt();local late=pendingTablet;commands.mdtclose();late()
 check(props==1,'late animation loading cannot create tablet after closing')
 commands.dojmdt();pendingTablet();handlers.onResourceStop('crimson_doj')
 check(deletions==2,'resource stop deletes tablet prop')
+CrimsonBodycamView={isActive=function()return true end}
+local before=created;callbacks.camera({id=1},function(r)result=r end)
+check(not result.ok and created==before,'security camera cannot replace active chest view')
+CrimsonBodycamView=nil
 print('PASS '..n..' client focus, camera lifecycle and recovery checks')

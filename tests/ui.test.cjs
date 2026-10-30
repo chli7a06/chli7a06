@@ -122,7 +122,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
  check(groupOf('businesses')==='ADMINISTRATION','Businesses grouped under Administration for student');
  check(!Array.from(d.querySelectorAll('.nav-group')).some(el=>el.textContent==='MANAGEMENT'),'Management absent for student');
  w.postMessage({action:'dojBadge',data:{name:'Test Student',rank:'DOJ Student',number:'DOJ-123'}},'*');await sleep(20);
- check($('#doj-badge img').getAttribute('src')==='doj-logo.svg'&&!!$('#doj-badge .credential-head'),'DOJ identity card uses justice emblem');
+ check($('#doj-badge img').getAttribute('src')==='doj-logo.png'&&!!$('#doj-badge .credential-head'),'DOJ identity card uses justice emblem');
  extended=true;await open({...base,grade:14,management:true,canIssueBadge:true});
  await nav('statistics');check($('#content').textContent.includes('2.00')&&$('#content').textContent.includes('Custody activity'),'statistics shows measured duty and custody');
  await w.profile('CID001');check($('#content').textContent.includes('555-0100')&&$('#content').textContent.includes('Citizen memo'),'full citizen phone and annotations');

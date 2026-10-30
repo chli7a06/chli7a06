@@ -198,7 +198,7 @@ local function run(a,action,payload)
  if resources.actions[action] then return resources.actions[action](a,payload)end
  if ({paymentStatus=true,businessFinance=true,bankAccount=true,offerInvoice=true,fine=true,jail=true,release=true,bodycamStart=true,bodycamStop=true,playRecording=true,deleteRecording=true})[action] then return services[action](a,payload) end
  local managementActions={employees=true,employee=true,penalcode=true,audit=true,equipment=true,camera=true,armory=true}
- if managementActions[action] and not CrimsonManagement(a) then reject('Management requires DOJ grade 10 or higher') end
+ if managementActions[action] and not CrimsonManagement(a) then reject('Management requires Senior Judge (DOJ grade 12) or higher') end
  local actionPermissions={bootstrap='dashboard_view',search='profiles_view',profile='profiles_view',employees='employees_view',employee='employees_manage',vehicles='vehicles_view',businesses='business_view',threat='code_change'}
  local needed=actionPermissions[action]
  if needed and not CrimsonPermission(a,needed,true) then reject('Permission required: '..needed) end

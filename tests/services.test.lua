@@ -1,9 +1,12 @@
 dofile('crimson_doj/config.lua')
 local checks=0
+local viewReady=true
+local captureCalls=0
+local captureFailure=false
 local function check(value,label)assert(value,label)checks=checks+1 end
 local function deny(fn,label)local ok=pcall(fn)check(not ok,label)end
 local callbacks,events,logEvents={}, {},{}
-lib={callback={register=function(name,fn)callbacks[name]=fn end}}
+lib={callback={await=function()return {ok=viewReady,error=not viewReady and 'view unavailable'or nil}end,register=function(name,fn)callbacks[name]=fn end}}
 RegisterNetEvent=function(name,fn)events[name]=fn end
 AddEventHandler=function()end
 TriggerClientEvent=function(name,src,data)events.last={name=name,source=src,data=data}end
@@ -40,7 +43,7 @@ exportsTable['Renewed-Banking']={getAccountMoney=function(_,name)return accounts
  creditCalls=creditCalls+1;if creditMode=='reject' then return false end
  accounts[name]=accounts[name]+amount;if creditMode=='throw' then error('provider credit uncertainty')end return true end,getAccountTransactions=function()return {}end}
 exportsTable.qbx_prison={JailPlayer=function(_,src,minutes)payer.PlayerData.metadata.injail=minutes end,ReleasePlayer=function()payer.PlayerData.metadata.injail=0 end}
-exportsTable.screencapture={startVideoCapture=function(_,src,opts,cb)captureComplete=cb;return 'capture-123'end,stopVideoCapture=function(_,id)captureStopped=id end}
+exportsTable.screencapture={startVideoCapture=function(_,src,opts,cb)captureCalls=captureCalls+1;assert(events.last.data.active==true,'status switches to prepared view before provider starts');if captureFailure then return nil end;captureComplete=cb;return 'capture-123'end,stopVideoCapture=function(_,id)captureStopped=id end}
 exportsTable.crimson_doj={storeCapture=function(_,file,maxBytes,cb)storedCount=(storedCount or 0)+1;cb({ok=true,filename='00000000-0000-0000-0000-000000000000.webm',bytes=20})end,
 streamStored=function(_,src,file,maxBytes,cb)streamCount=(streamCount or 0)+1;cb({ok=true,ticket='stream-123'})end,
 deleteStored=function(_,name,cb)cb({ok=true})end,cancelStream=function()end}
@@ -115,6 +118,7 @@ check(api.release(legalActor,{id=10})==true and payer.PlayerData.metadata.injail
 deny(function()api.jail(legalActor,{id=10,minutes=999,reason='Test'})end,'sentence limit enforced')
 deny(function()api.jail(legalActor,{id=10,minutes=10,reason='Test'})end,'same case sentence not replayed')
 deny(function()api.bodycamStart(business)end,'business cannot bodycam')
+viewReady=false;deny(function()api.bodycamStart(legalActor)end,'capture cannot start without camera preparation');check(captureCalls==0,'unprepared view never starts provider');viewReady=true
 check(api.bodycamStart(legalActor).captureId=='capture-123','screencapture timed capture starts')
 deny(function()api.bodycamStart(legalActor)end,'duplicate capture denied')
 check(api.bodycamStop(legalActor)==true and captureStopped=='capture-123','capture stop uses owned ID')
@@ -123,6 +127,8 @@ check(storedCount==1 and entries[88].scope=='justice','capture privately stored 
 check(api.playRecording(legalActor,{id=88}).ticket=='stream-123'and streamCount==1,'recording playback authorized')
 deny(function()api.playRecording(actor('ems',true),{id=88})end,'other department cannot stream recording')
 check(api.deleteRecording(legalActor,{id=88})==true,'manager may remove stored video')
+captureFailure=true;deny(function()api.bodycamStart(legalActor)end,'provider startup failure rejected');check(events.last.data.active==false,'provider startup failure releases prepared view');captureFailure=false
+check(api.bodycamStart(legalActor).captureId=='capture-123','provider failure clears capture claim for retry');captureComplete({status='error'})
 resetPayment();creditMode='throw';pay();check(journal[1].state=='needs_review','review fixture created')
 local beforeDebit,beforeCredit=debitCalls,creditCalls
 check(api.resolvePayment(1,'paid','Verified both external accounts')==true,'console metadata reconciliation')

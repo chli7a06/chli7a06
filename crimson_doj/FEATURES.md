@@ -1,6 +1,8 @@
-# Current status — Crimson 4.0.1 (user-confirmed 4.0 base)
+# Current status — Crimson 4.0.2 (user-confirmed 4.0 opening base)
 
-Independent Qbox implementation. See repository XR_PARITY_REVIEW_4.0.md and INSTALL/UPGRADE_4_AR.md. The earlier 3.2.5 comparison is historical. Current installation: INSTALL/STABLE_4_0_1_AR.md.
+Independent Qbox implementation. See repository XR_PARITY_REVIEW_4.0.md and INSTALL/UPGRADE_4_AR.md. The earlier 3.2.5 comparison is historical. Current installation: INSTALL/UPGRADE_4_0_2_AR.md.
+
+New in 4.0.2: prepared chest-bone gameplay recording camera, exact uploaded DOJ seal in MDT/badge, new 15 DOJ rank names and Senior Judge (12+) Management gate, with salary-preserving native grade-name sync.
 
 New in 4.0.1: observed online-inventory weapon serial search with last holder name/CID, and persistent scoped/bucket-isolated camera creation, editing, viewing and deletion. Original 4.0 opening/cursor behavior is preserved; 4.1 experimental components are not loaded.
 
