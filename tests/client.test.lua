@@ -1,5 +1,6 @@
 local exported={}
 local emitted={}
+local autoUiReady=true
 local serverCalls=0
 local lastServerCallback
 exports=setmetatable({ox_inventory={useItem=function()end}},{__call=function(_,name,fn)exported[name]=fn end})
@@ -17,7 +18,7 @@ RegisterCommand=function(name,fn)commands[name]=fn end
 RegisterKeyMapping=function()end
 RegisterNUICallback=function(name,fn)callbacks[name]=fn end
 AddEventHandler=function(name,fn)handlers[name]=fn end
-SendNUIMessage=function(data)messages[#messages+1]=data end
+SendNUIMessage=function(data)messages[#messages+1]=data;if autoUiReady and(data.action=='open'or data.action=='document')then callbacks.uiReady({token=data.openToken},function()end)end end
 SetNuiFocus=function(a)focus=a end
 SetNuiFocusKeepInput=function(a)keepInput=a end
 GetCurrentResourceName=function()return 'crimson_doj'end
@@ -119,8 +120,12 @@ for _,data in ipairs({false,'bad',{},{action=3},{action='list',payload='invalid'
 end
 local nilReply;callbacks.request(nil,function(r)nilReply=r end)
 check(nilReply and not nilReply.ok and serverCalls==before,'empty request returns an error without invoking server')
+autoUiReady=false
 commands.dojmdt();local openToken=messages[#messages].openToken;local timeout=timers[#timers]
 check(type(openToken)=='number','open message carries UI session token')
+check(not focus,'no cursor capture before UI acknowledgement')
+callbacks.ui_state({},function(r)result=r end)
+check(result.ok and result.frame.openToken==openToken,'lost open event recoverable through local state endpoint')
 timeout();check(not focus and messages[#messages].action=='close','unresponsive UI releases cursor automatically')
 commands.dojmdt();openToken=messages[#messages].openToken;timeout=timers[#timers]
 callbacks.uiReady({token=openToken},function(r)result=r end);timeout()
@@ -129,4 +134,6 @@ callbacks.uiFailed({token=openToken-1,error='stale'},function(r)result=r end)
 check(not result.ok and focus,'stale UI failure cannot close new session')
 callbacks.uiFailed({token=openToken,error='test init failure'},function(r)result=r end)
 check(result.ok and not focus,'current initialization failure releases cursor')
+callbacks.ui_state({},function(r)result=r end)
+check(result.frame==nil,'closed state cannot replay an old authorized frame')
 print('PASS '..n..' client focus, camera lifecycle and recovery checks')

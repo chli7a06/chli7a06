@@ -5,6 +5,8 @@ local videoTicket = nil
 local bodycamActive = false
 local printedSlot=nil
 local uiAcknowledged=nil
+local uiFrame=nil
+local uiDiagnostics='no browser poll received'
 -- tablet2 pose and prop, independent of any emote-menu resource.
 local tabletProp, tabletPed
 local tabletDict = 'amb@world_human_seat_wall_tablet@female@base'
@@ -49,6 +51,7 @@ local function close()
     opened, opening = false, false
     printedSlot=nil
     uiAcknowledged=nil
+    uiFrame=nil
     stopCamera()
     stopTablet()
     SetNuiFocus(false, false)
@@ -58,13 +61,21 @@ end
 local function watchUi(token)
     SetTimeout(8000,function()
         if uiEpoch~=token or uiAcknowledged==token or not(opened or printedSlot)then return end
+        local diagnostics=uiDiagnostics
         close()
-        print('[crimson_doj] UI did not acknowledge opening. Check F8 for missing files or JavaScript errors.')
+        print('[crimson_doj] UI did not acknowledge opening: '..diagnostics)
         lib.notify({title='Crimson MDT',description=Config.Locale=='fr'and 'Interface indisponible : souris libérée. Consultez F8.'or 'UI unavailable: mouse released. Check F8.',type='error'})
     end)
 end
+RegisterNUICallback('ui_state',function(data,cb)
+    if type(data)=='table'then
+        local build=type(data.build)=='string'and data.build:sub(1,30)or 'unknown'
+        uiDiagnostics='browser='..build..', appReady='..tostring(data.appReady==true)
+    end
+    cb({ok=true,version='4.1.3',frame=(opened or printedSlot)and uiFrame or nil})
+end)
 RegisterNUICallback('uiReady',function(data,cb)
-    if type(data)=='table'and data.token==uiEpoch and(opened or printedSlot)then uiAcknowledged=uiEpoch;cb({ok=true})else cb({ok=false})end
+    if type(data)=='table'and data.token==uiEpoch and(opened or printedSlot)then uiAcknowledged=uiEpoch;SetNuiFocusKeepInput(false);SetNuiFocus(true,true);cb({ok=true})else cb({ok=false})end
 end)
 RegisterNUICallback('uiFailed',function(data,cb)
     if type(data)=='table'and data.token==uiEpoch and(opened or printedSlot)then
@@ -95,9 +106,10 @@ RegisterCommand(Config.Command, function()
         return
     end
     opened = true
+    uiDiagnostics='no browser poll received'
     SetNuiFocusKeepInput(false)
-    SetNuiFocus(true, true)
-    SendNUIMessage({ action = 'open', openToken=epoch, locale=Config.Locale, data = result.data, sounds = Config.Sounds })
+    uiFrame={action='open',openToken=epoch,locale=Config.Locale,data=result.data,sounds=Config.Sounds}
+    SendNUIMessage(uiFrame)
     watchUi(epoch)
     CreateThread(function() startTablet(epoch) end)
 end, false)
@@ -164,9 +176,9 @@ exports('useDocument',function(data,slot)
    return
   end
   SetNuiFocusKeepInput(false)
-  SetNuiFocus(true,true)
   printedSlot=used.slot
-  SendNUIMessage({action='document',openToken=epoch,locale=Config.Locale,data=result.data})
+  uiFrame={action='document',openToken=epoch,locale=Config.Locale,data=result.data}
+  SendNUIMessage(uiFrame)
   watchUi(epoch)
  end)
 end)
@@ -333,3 +345,5 @@ exports('useTrackingBand',function(data)
   lib.notify({description=result.ok and 'Tracking band attached' or result.error,type=result.ok and 'success'or 'error'})
  end)
 end)
+
+print('[crimson_doj] client UI bridge 4.1.3 loaded')

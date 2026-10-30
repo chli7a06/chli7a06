@@ -1,3 +1,9 @@
+# UI opening 4.1.3
+
+[Four-file opening update for 4.1.2](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_open_fix_4.1.3.zip) · [Complete resource](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_4.1.3_preview.zip) · [التركيب والتشخيص](crimson_doj/INSTALL/OPEN_4_1_3_AR.md)
+
+The six uploaded runtime/UI files match 4.1.2; the exact user-server failure is not established from them. Version 4.1.3 retains the authorized open frame for local NUI state recovery if a native open event is lost during startup. Cursor focus is granted only after the page acknowledges rendering. The 8-second cancellation stays enabled. Polling is local client/NUI traffic, with no server/database query or permission grant. Diagnostics distinguish an absent browser poll from an uninitialized app. Tests include fresh French startup with no native open event and explicit missing-script reporting; in-server validation is still required.
+
 # Recovery 4.1.2 — invisible UI / trapped cursor
 
 [Repair overlay for existing 4.x installs](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_repair_4.1.2.zip) · [Complete 4.1.2 resource](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_4.1.2_preview.zip)

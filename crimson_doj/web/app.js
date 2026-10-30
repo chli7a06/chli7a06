@@ -152,3 +152,5 @@ function issueBadgeEditor(){
  $('#edit-form').onsubmit=async event=>{event.preventDefault();$('#save').disabled=true;try{const result=await nui('issueBadge',{citizenid:cid.input.value,name:name.input.value});if(!result.ok)throw Error(result.error);dialog.close();$('#message').hidden=false;$('#message').textContent=crimsonT('Badge issued to recipient inventory.');}catch(e){error(e);}finally{$('#save').disabled=false;}};
  dialog.showModal();
 }
+
+window.__crimsonAppReady=true;
