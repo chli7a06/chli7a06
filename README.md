@@ -1,6 +1,12 @@
+# Correctif 4.1.1 — NUI française
+
+[Correctif léger pour une installation 4.1](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_hotfix_4.1.1.zip) · [Version complète corrigée](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_4.1.1_preview.zip)
+
+Fixes the French UI accidentally translating the HTTP POST method, which made FiveM NUI receive empty request data. POST/JSON transport stays fixed in every language; malformed Lua callback inputs now return an error without throwing. Existing configuration/database/items are unchanged. For an existing 4.1 install, overlay the three hotfix files (do not delete the resource directory), then restart crimson_doj. Regression tests validate HTTP method/content type during French workflows and empty/malformed callback handling.
+
 # Crimson MDT 4.1 preview — Qbox
 
-[Download 4.1 preview](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_4.1.0_preview.zip) · [التركيب من 4.0](crimson_doj/INSTALL/UPGRADE_4_1_AR.md)
+[Download corrected 4.1.1 preview](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_4.1.1_preview.zip) · [التركيب من 4.0](crimson_doj/INSTALL/UPGRADE_4_1_AR.md)
 
 French default UI; Mission Row helicopter issue/return with qbx_vehiclekeys; server-observed online weapon serial search; persistent scoped camera editor and viewer. Existing Apex, badge, printing and rank behavior are preserved. No new inventory item or schema table is required. User-provided documents/identity text are not translated. Automated checks pass; these new features still need FiveM multiplayer acceptance. This is not full XR parity or an Origen private-API integration.
 

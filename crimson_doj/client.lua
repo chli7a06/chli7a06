@@ -82,6 +82,10 @@ RegisterKeyMapping(Config.Command, 'Open Crimson MDT', 'keyboard', Config.Key)
 RegisterCommand('mdtclose', function() close() end, false)
 RegisterNUICallback('close', function(_, cb) close() cb({ok=true}) end)
 RegisterNUICallback('request', function(data, cb)
+    if type(data)~='table' or type(data.action)~='string' or (data.payload~=nil and type(data.payload)~='table') then
+        cb({ok=false,error='Invalid NUI request'})
+        return
+    end
     cb(requestWhileOpen(data.action, data.payload or {}))
 end)
 AddEventHandler('onResourceStop', function(resource)

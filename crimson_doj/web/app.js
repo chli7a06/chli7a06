@@ -23,7 +23,7 @@ function append(parent,...children){parent.append(...children.filter(Boolean));r
 function error(e){const target=dialog.open?$('#editor-message'):$('#message');target.hidden=false;target.textContent=crimsonT(e.message||String(e));}
 function clearError(){for(const selector of ['#message','#editor-message']){$(selector).hidden=true;$(selector).textContent='';}}
 function button(text,fn,cls=''){const b=node('button',text,cls);b.type='button';b.onclick=async()=>{if(b.disabled)return;b.disabled=true;clearError();try{await fn();}catch(e){error(e);}finally{b.disabled=false;}};return b;}
-async function nui(name,data={}){const r=await fetch(`https://${GetParentResourceName()}/${name}`,{method:crimsonT('POST'),headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});if(!r.ok)throw Error(crimsonT('Connection failed'));return r.json();}
+async function nui(name,data={}){const r=await fetch(`https://${GetParentResourceName()}/${name}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});if(!r.ok)throw Error(crimsonT('Connection failed'));return r.json();}
 async function request(action,payload={}){const r=await nui('request',{action,payload});if(!r.ok)throw Error(r.error||crimsonT('Request rejected'));if(['create','update'].includes(action))window.dispatchEvent(new Event('crimsonSaved'));return r.data;}
 function currency(n){return '$'+Number(n||0).toLocaleString(crimsonLocale==='fr'?'fr-FR':'en-US');}
 function stamp(v){if(v===undefined||v===null)return '—';if(typeof v==='number')return new Date(v).toLocaleString(crimsonLocale==='fr'?'fr-FR':'en-US');const s=String(v);return s.length>22?s.slice(0,19).replace('T',' '):s;}

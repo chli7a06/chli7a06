@@ -16,7 +16,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   w.Audio=class{constructor(src){this.src=src;}pause(){}play(){soundsPlayed.push({src:this.src,volume:this.volume});return Promise.resolve();}};
   w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.HTMLMediaElement.prototype.pause=function(){};w.HTMLMediaElement.prototype.load=function(){};w.GetParentResourceName=()=> 'crimson_doj';w.confirm=()=>true;
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
-  w.fetch=async(url,opts)=>{const data=JSON.parse(opts.body);lastRequest=data;calls.push(data);let result;
+  w.fetch=async(url,opts)=>{assert.equal(opts.method,'POST','NUI HTTP method must stay POST in every language');assert.equal(opts.headers['Content-Type'],'application/json','NUI JSON content type must not be localized');const data=JSON.parse(opts.body);lastRequest=data;calls.push(data);let result;
    if(data.action==='citizenExtra')result={data:{},version:0,warrants:[],convictions:[],canEdit:false};
    if(data.action==='bootstrap')result=bootstrap;
    if(data.action==='search')result=[citizen];

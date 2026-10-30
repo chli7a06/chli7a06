@@ -110,4 +110,11 @@ commands.dojmdt();local late=pendingTablet;commands.mdtclose();late()
 check(props==1,'late animation loading cannot create tablet after closing')
 commands.dojmdt();pendingTablet();handlers.onResourceStop('crimson_doj')
 check(deletions==2,'resource stop deletes tablet prop')
+local before=serverCalls
+for _,data in ipairs({false,'bad',{},{action=3},{action='list',payload='invalid'}})do
+ local reply;callbacks.request(data,function(r)reply=r end)
+ check(reply and reply.ok==false,'malformed NUI request fails without throwing')
+end
+local nilReply;callbacks.request(nil,function(r)nilReply=r end)
+check(nilReply and not nilReply.ok and serverCalls==before,'empty request returns an error without invoking server')
 print('PASS '..n..' client focus, camera lifecycle and recovery checks')
