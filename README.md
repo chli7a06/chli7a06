@@ -1,3 +1,9 @@
+# Recovery 4.1.2 — invisible UI / trapped cursor
+
+[Repair overlay for existing 4.x installs](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_repair_4.1.2.zip) · [Complete 4.1.2 resource](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_4.1.2_preview.zip)
+
+The latest reported invisible UI has not been diagnosed without its F8 JavaScript log. This release adds an independent UI startup/error reporter and session-bound acknowledgement. Lua releases focus and tablet props after 8 seconds if the UI cannot acknowledge. Missing scripts report their filename in F8. `mdtclose` remains the immediate manual recovery command. The overlay includes consistent runtime/web files, while excluding customized config.lua, permissions.lua, penal_code.lua, sounds and recordings; it does not change access policy or SQL schema. Overlay onto the existing resource folder rather than deleting it. Restart crimson_doj and capture F8 immediately if opening still fails. The displayed “You are not authorized to take this action” notification is not a string in Crimson source; its origin remains unconfirmed.
+
 # Correctif 4.1.1 — NUI française
 
 [Correctif léger pour une installation 4.1](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_hotfix_4.1.1.zip) · [Version complète corrigée](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_4.1.1_preview.zip)

@@ -4,6 +4,7 @@ local camera = nil
 local videoTicket = nil
 local bodycamActive = false
 local printedSlot=nil
+local uiAcknowledged=nil
 -- tablet2 pose and prop, independent of any emote-menu resource.
 local tabletProp, tabletPed
 local tabletDict = 'amb@world_human_seat_wall_tablet@female@base'
@@ -47,12 +48,33 @@ local function close()
     uiEpoch = uiEpoch + 1
     opened, opening = false, false
     printedSlot=nil
+    uiAcknowledged=nil
     stopCamera()
     stopTablet()
     SetNuiFocus(false, false)
     SetNuiFocusKeepInput(false)
     SendNUIMessage({ action = 'close' })
 end
+local function watchUi(token)
+    SetTimeout(8000,function()
+        if uiEpoch~=token or uiAcknowledged==token or not(opened or printedSlot)then return end
+        close()
+        print('[crimson_doj] UI did not acknowledge opening. Check F8 for missing files or JavaScript errors.')
+        lib.notify({title='Crimson MDT',description=Config.Locale=='fr'and 'Interface indisponible : souris libérée. Consultez F8.'or 'UI unavailable: mouse released. Check F8.',type='error'})
+    end)
+end
+RegisterNUICallback('uiReady',function(data,cb)
+    if type(data)=='table'and data.token==uiEpoch and(opened or printedSlot)then uiAcknowledged=uiEpoch;cb({ok=true})else cb({ok=false})end
+end)
+RegisterNUICallback('uiFailed',function(data,cb)
+    if type(data)=='table'and data.token==uiEpoch and(opened or printedSlot)then
+        local detail=type(data.error)=='string'and data.error:sub(1,500)or 'Unknown UI failure'
+        print('[crimson_doj] UI initialization failed: '..detail)
+        close()
+        lib.notify({title='Crimson MDT',description=Config.Locale=='fr'and 'Erreur interface : souris libérée. Consultez F8.'or 'UI error: mouse released. Check F8.',type='error'})
+        cb({ok=true})
+    else cb({ok=false})end
+end)
 local function requestWhileOpen(action, payload)
     if not opened then return {ok=false,error='Tablet closed'} end
     local epoch = uiEpoch
@@ -75,7 +97,8 @@ RegisterCommand(Config.Command, function()
     opened = true
     SetNuiFocusKeepInput(false)
     SetNuiFocus(true, true)
-    SendNUIMessage({ action = 'open', locale=Config.Locale, data = result.data, sounds = Config.Sounds })
+    SendNUIMessage({ action = 'open', openToken=epoch, locale=Config.Locale, data = result.data, sounds = Config.Sounds })
+    watchUi(epoch)
     CreateThread(function() startTablet(epoch) end)
 end, false)
 RegisterKeyMapping(Config.Command, 'Open Crimson MDT', 'keyboard', Config.Key)
@@ -143,7 +166,8 @@ exports('useDocument',function(data,slot)
   SetNuiFocusKeepInput(false)
   SetNuiFocus(true,true)
   printedSlot=used.slot
-  SendNUIMessage({action='document',locale=Config.Locale,data=result.data})
+  SendNUIMessage({action='document',openToken=epoch,locale=Config.Locale,data=result.data})
+  watchUi(epoch)
  end)
 end)
 local printerZones = {}

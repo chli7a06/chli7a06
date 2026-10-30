@@ -7,7 +7,7 @@ run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js
 assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS \d+ authorization/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim().split('\n').at(-1));
 run=spawnSync(process.execPath,['tests/ui.test.cjs'],{cwd:root,encoding:'utf8',timeout:20000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS 118 UI checks/);console.log(run.stdout.trim());
 
-run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/client.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS 43 client/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim());
+run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/client.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS 48 client/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim());
 
 run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/services.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS 57 service checks/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim());
 
@@ -27,7 +27,7 @@ run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js
 
 run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/badge-client.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS badge animation/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim());
 
-for(const f of ['crimson_doj/web/i18n.js','crimson_doj/web/operations.js','crimson_doj/web/extensions.js','crimson_doj/web/vendor/screencapture-live.js']){run=spawnSync(process.execPath,['--check',f],{cwd:root,encoding:'utf8'});assert.equal(run.status,0,run.stderr);}
+for(const f of ['crimson_doj/web/ui_health.js','crimson_doj/web/i18n.js','crimson_doj/web/operations.js','crimson_doj/web/extensions.js','crimson_doj/web/vendor/screencapture-live.js']){run=spawnSync(process.execPath,['--check',f],{cwd:root,encoding:'utf8'});assert.equal(run.status,0,run.stderr);}
 
 run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/extensions.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS .* extended profile/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim());
 
@@ -36,3 +36,4 @@ run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js
 run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/live.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS live bodycam configuration/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim());
 run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/origen-bridge.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS Origen bridge/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim());
 run=spawnSync(process.execPath,[require.resolve('fengari-node-cli/src/lua-cli.js'),'tests/operations.test.lua'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS .* air fleet authority/);assert.doesNotMatch(run.stderr,/stack traceback|assertion failed/);console.log(run.stdout.trim());
+run=spawnSync(process.execPath,['tests/ui-health.test.cjs'],{cwd:root,encoding:'utf8',timeout:15000});assert.equal(run.status,0,run.stderr);assert.match(run.stdout,/PASS independent UI acknowledgement/);console.log(run.stdout.trim());

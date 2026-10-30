@@ -6,6 +6,8 @@ exports=setmetatable({ox_inventory={useItem=function()end}},{__call=function(_,n
 Config={Command='dojmdt',Key='F12'}
 local commands,callbacks,handlers,messages={},{},{},{}
 local focus,keepInput,render,created,destroyed,hiddenText=false,false,false,0,0,0
+local timers={}
+SetTimeout=function(_,fn)timers[#timers+1]=fn end
 local delayed=false
 local response={ok=true,data={x=10,y=20,z=30,rx=0,ry=0,rz=0,fov=60}}
 lib={callback={await=function(name)serverCalls=serverCalls+1 lastServerCallback=name if delayed then coroutine.yield() end return response end},notify=function()end,hideTextUI=function()hiddenText=hiddenText+1 end,showTextUI=function()end}
@@ -117,4 +119,14 @@ for _,data in ipairs({false,'bad',{},{action=3},{action='list',payload='invalid'
 end
 local nilReply;callbacks.request(nil,function(r)nilReply=r end)
 check(nilReply and not nilReply.ok and serverCalls==before,'empty request returns an error without invoking server')
+commands.dojmdt();local openToken=messages[#messages].openToken;local timeout=timers[#timers]
+check(type(openToken)=='number','open message carries UI session token')
+timeout();check(not focus and messages[#messages].action=='close','unresponsive UI releases cursor automatically')
+commands.dojmdt();openToken=messages[#messages].openToken;timeout=timers[#timers]
+callbacks.uiReady({token=openToken},function(r)result=r end);timeout()
+check(result.ok and focus,'acknowledged UI stays open')
+callbacks.uiFailed({token=openToken-1,error='stale'},function(r)result=r end)
+check(not result.ok and focus,'stale UI failure cannot close new session')
+callbacks.uiFailed({token=openToken,error='test init failure'},function(r)result=r end)
+check(result.ok and not focus,'current initialization failure releases cursor')
 print('PASS '..n..' client focus, camera lifecycle and recovery checks')
