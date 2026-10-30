@@ -35,7 +35,7 @@ OPERATIONS → Camera network.
 - Add camera at my position: position كتتاخذ من السيرفر، متر فوق اللاعب. حدد الاسم وtilt وheading وFOV.
 - Edit camera: بدل الاسم والزاوية وFOV. إلا بغيتي تحركها، اختار Move camera to my current position؛ بلا هاد الخيار كتبقى فبلاصتها.
 - View camera ثم Esc للرجوع للـMDT.
-- Delete camera فيه confirmation وversion check. إلا شي حد سبق وعدلها، خاص refresh.
+- Delete camera كيحذف مباشرة بلا أي نافذة تأكيد، مع الصلاحيات وversion check فالسيرفر. إلا شي حد سبق وعدلها، خاص refresh.
 - الكاميرات محفوظة فـcrimson_mdt_entities حسبscope وrouting bucket. كتستمر بعدrestart. المواقع داخلMLO خاصها تكون مناسبة باش viewتبان مزيانة.
 
 Config.Cameras القديمة باقية فـEquipment & cameras. هاد الكاميرات هي native views ديال عالم اللعبة، ماشي recordings ولا livebodycam.
@@ -43,3 +43,7 @@ Config.Cameras القديمة باقية فـEquipment & cameras. هاد الك�
 ## التجربة
 
 أولاً جرّب فتح MDT والماوس والإغلاق كما فـ4.0. من بعد جرّب serial معروف فـinventory بعددقيقة. جرّب زيدكاميرا،شوفها،عدّلها وrestart باش تتأكد بقات محفوظة. الاختبارات الآلية دازت؛ الإضافتان باقي خاصهما قبول داخل FiveM عندك.
+
+## تصحيح تعليق زر الحذف
+
+إلا النسخة راك مركبها، خذ crimson_doj_camera_delete_fix.zip وبدل غير web/registry.js، سد MDT ودير restart crimson_doj. ما تبدل لاfxmanifest لاconfig. دابا Delete camera كيحذف مباشرة ويرجع للائحة بلا تأكيد. الزر كيتوقف أثناء المعالجة باش مايتصيفطش الطلب جوج مرات.

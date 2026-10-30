@@ -1,5 +1,7 @@
 # Crimson MDT 4.0.1 — working 4.0 base + cameras and serial search
 
+Camera deletion fix: [single-file update](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_camera_delete_fix.zip). Replace only crimson_doj/web/registry.js and restart crimson_doj. The Delete camera button now deletes directly without any confirmation popup, as requested. The button is disabled while processing and server permission/version checks remain enforced. No native focus/opening, manifest, database or permissions change is needed. The complete resource download below also includes this fix.
+
 [Download complete resource](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_4.0.1_cameras_serial.zip) · [التركيب والتجربة بالدارجة](crimson_doj/INSTALL/STABLE_4_0_1_AR.md) · [Feature status](crimson_doj/FEATURES.md)
 
 Built from the exact 4.0 ZIP the user uploaded and confirmed working. Adds only observed weapon-serial search (last holder name/CID) and persistent camera creation/edit/view/delete in MDT. The original app.js, permissions, schema, style and extension UI are byte-identical to the uploaded base. The only native client difference is the custom-camera selector. Existing MDT opening and cursor behavior are preserved; the experimental 4.1 localization, handshake, timeout and air-unit changes are not loaded in this release.
