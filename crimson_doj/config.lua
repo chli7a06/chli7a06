@@ -65,7 +65,7 @@ Config.Integrations.jail = 'qbx_prison'
 Config.Integrations.bodycam = 'screencapture'
 Config.Payments = { maxAmount=1000000, offerCooldown=15 }
 Config.Law = { maxFine=100000, maxJailMinutes=120, distance=10.0, fineAccount='doj' }
-Config.Bodycam = { duration=30, maxBytes=15728640, maxClips=200, width=1280, height=720 }
+Config.Bodycam = { duration=3600, maxBytes=536870912, maxClips=200, width=1280, height=720 }
 
 -- Apex treasury adapter for this deployment; other verified banks can be selected.
 Config.Banking = Config.Banking or { provider='apex_banking', accounts={} }

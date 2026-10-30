@@ -1,5 +1,5 @@
 const fs=require('node:fs/promises'),path=require('node:path'),crypto=require('node:crypto');
-const MAX_BYTES=15*1024*1024;
+const MAX_BYTES=512*1024*1024;
 const validName=name=>typeof name==='string'&&/^[a-f0-9-]{36}\.webm$/.test(name);
 async function resolveStored(root,name){if(!validName(name))throw Error('Invalid clip name');const realRoot=await fs.realpath(root);const full=await fs.realpath(path.join(realRoot,name));if(path.dirname(full)!==realRoot)throw Error('Clip path escapes storage');return full;}
 async function storeCapture(root,captureRoot,input,maxBytes=MAX_BYTES){
