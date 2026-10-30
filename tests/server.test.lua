@@ -66,6 +66,7 @@ dofile('crimson_doj/server_resources.lua')
 dofile('crimson_doj/server_live.lua')
 dofile('crimson_doj/server_tracking.lua')
 setmetatable(exports,{__call=function()end})
+dofile('crimson_doj/server_operations.lua')
 dofile('crimson_doj/server.lua')
 local function request(action,data,id)sourceNumber=sourceNumber+1 saved[id or sourceNumber]=player return callback(id or sourceNumber,action,data or {})end
 local function check(value,label)assert(value,label)passed=passed+1 end

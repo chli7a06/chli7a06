@@ -16,7 +16,7 @@ end
 RegisterNetEvent('crimson_doj:badge',function(data)
  stopPose()
  token,owned,expires=data.presentation,data.isOwner,GetGameTimer()+8000
- SendNUIMessage({action='dojBadge',data=data,sounds=Config.Sounds})
+ SendNUIMessage({action='dojBadge',locale=Config.Locale,data=data,sounds=Config.Sounds})
  if owned then
   emoteActive=true
   ExecuteCommand((Config.BadgeEmote and Config.BadgeEmote.command) or 'e idcard')

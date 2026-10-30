@@ -75,6 +75,12 @@ try:
  sql("INSERT INTO crimson_mdt_armory_loans(ticket,item,citizenid,job,remaining,state) VALUES('LOAN','radio','CIV','doj',2,'returning');START TRANSACTION;UPDATE crimson_mdt_armory_stock SET amount=amount+2 WHERE job='doj' AND item='radio';UPDATE crimson_mdt_armory_loans SET state=IF(remaining-2>0,'active','returned'),remaining=remaining-2 WHERE ticket='LOAN' AND item='radio';COMMIT;")
  check(sql("SELECT CONCAT(state,':',remaining) FROM crimson_mdt_armory_loans WHERE ticket='LOAN'"),'returned:0','return accounting and SQL assignment order')
  check(sql("SELECT amount FROM crimson_mdt_armory_stock WHERE job='doj' AND item='radio'"),'3','stock restored after return')
+ sql("INSERT INTO crimson_mdt_entities(scope,kind,entity_id,data,updated_by) VALUES('justice','weapon_seen','SER%_!','{}','inventory_sensor'),('justice','weapon_seen','SERABC','{}','inventory_sensor');")
+ operations=(root/'crimson_doj/server_operations.lua').read_text()
+ serial_query=re.search(r"\[\[(SELECT entity_id,data,updated_at FROM crimson_mdt_entities WHERE scope='justice'[^\n]+?)\]\]",operations).group(1)
+ check(sql(serial_query.replace('?',"'%SER!%!_!!%'",1)).split('\t')[0],'SER%_!','actual serial query treats wildcards literally')
+ sql("INSERT INTO crimson_mdt_entities(scope,kind,entity_id,data,updated_by) VALUES('justice','camera','CAM1','{\"x\":449.29,\"bucket\":0}','STAFF');")
+ check(sql("SELECT CONCAT(JSON_EXTRACT(data,'$.bucket'),':',version) FROM crimson_mdt_entities WHERE scope='justice' AND kind='camera' AND entity_id='CAM1'"),'0:1','camera metadata uses existing versioned scoped storage')
  print(f'PASS {count} real MariaDB schema, isolation, migration, snapshot and journal checks')
 finally:
  subprocess.run(['docker','rm','-f',name],capture_output=True,timeout=15)

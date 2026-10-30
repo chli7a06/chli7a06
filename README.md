@@ -1,3 +1,11 @@
+# Crimson MDT 4.1 preview — Qbox
+
+[Download 4.1 preview](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_4.1.0_preview.zip) · [التركيب من 4.0](crimson_doj/INSTALL/UPGRADE_4_1_AR.md)
+
+French default UI; Mission Row helicopter issue/return with qbx_vehiclekeys; server-observed online weapon serial search; persistent scoped camera editor and viewer. Existing Apex, badge, printing and rank behavior are preserved. No new inventory item or schema table is required. User-provided documents/identity text are not translated. Automated checks pass; these new features still need FiveM multiplayer acceptance. This is not full XR parity or an Origen private-API integration.
+
+## Previous release
+
 # Crimson MDT 4.0 preview — Qbox
 
 [Download 4.0 preview](https://github.com/chli7a06/chli7a06/raw/refs/heads/multi-department-preview/downloads/crimson_doj_4.0.0_preview.zip) · [التركيب والتحديث](crimson_doj/INSTALL/UPGRADE_4_AR.md) · [Current feature audit](XR_PARITY_REVIEW_4.0.md)

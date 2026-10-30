@@ -75,7 +75,7 @@ RegisterCommand(Config.Command, function()
     opened = true
     SetNuiFocusKeepInput(false)
     SetNuiFocus(true, true)
-    SendNUIMessage({ action = 'open', data = result.data, sounds = Config.Sounds })
+    SendNUIMessage({ action = 'open', locale=Config.Locale, data = result.data, sounds = Config.Sounds })
     CreateThread(function() startTablet(epoch) end)
 end, false)
 RegisterKeyMapping(Config.Command, 'Open Crimson MDT', 'keyboard', Config.Key)
@@ -97,7 +97,7 @@ end)
 RegisterNUICallback('camera', function(data, cb)
     cameraEpoch = cameraEpoch + 1
     local ticket = cameraEpoch
-    local result = requestWhileOpen('camera', {id=data.id})
+    local result = requestWhileOpen(data.custom and 'cameraDefinition' or 'camera', {id=data.id})
     if not result.ok then cb(result) return end
     if ticket ~= cameraEpoch then cb({ok=false,error='Camera request cancelled'}) return end
     stopCamera()
@@ -105,7 +105,7 @@ RegisterNUICallback('camera', function(data, cb)
     camera = CreateCamWithParams('DEFAULT_SCRIPTED_CAMERA',c.x+0.0,c.y+0.0,c.z+0.0,c.rx+0.0,c.ry+0.0,c.rz+0.0,c.fov+0.0,false,0)
     local handle = camera
     SetCamActive(camera,true)
-    lib.showTextUI('Security camera · [Esc] return to MDT')
+    lib.showTextUI(Config.Locale=='fr'and 'Caméra de sécurité · [Échap] retour au MDT'or 'Security camera · [Esc] return to MDT')
     RenderScriptCams(true,true,250,true,true)
     SetNuiFocus(false,false)
     SendNUIMessage({action='camera'})
@@ -139,7 +139,7 @@ exports('useDocument',function(data,slot)
   SetNuiFocusKeepInput(false)
   SetNuiFocus(true,true)
   printedSlot=used.slot
-  SendNUIMessage({action='document',data=result.data})
+  SendNUIMessage({action='document',locale=Config.Locale,data=result.data})
  end)
 end)
 local printerZones = {}

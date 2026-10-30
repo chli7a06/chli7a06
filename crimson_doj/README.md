@@ -1,3 +1,7 @@
+# Crimson 4.1 preview
+
+Read [the 4.1 upgrade guide](INSTALL/UPGRADE_4_1_AR.md). French UI is now the default; configured Mission Row air units need qbx_vehiclekeys. Weapon serial observations record possession rather than legal ownership. The camera editor saves server-verified positions in the existing database table.
+
 # Crimson 4.0 preview
 
 Read [the upgrade guide](INSTALL/UPGRADE_4_AR.md) and [current feature status](FEATURES.md) first. This resource includes new inventory, archive, tracking, staff and live-video workflows; preserve existing configuration and recordings. The Origen bridge is supplied separately in the download bundle.
