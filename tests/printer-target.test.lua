@@ -12,6 +12,8 @@ CreateThread=function(fn)threads[#threads+1]=fn end
 GetResourceState=function()return state end
 GetCurrentResourceName=function()return 'crimson_doj'end
 vector3=function(x,y,z)return {x=x,y=y,z=z}end
+local soundCount=0
+SendNUIMessage=function(msg)assert(msg.action=='printerSound');soundCount=soundCount+1 end
 local lastPayload
 lib={callback={await=function(_,_,action,payload)
  lastPayload=payload
@@ -26,6 +28,7 @@ assert(zones[2].options[1].canInteract())
 zones[2].options[1].onSelect()
 assert(#contexts==1 and contexts[1].title=='Second printer')
 contexts[1].options[1].onSelect()
+assert(soundCount==1,'successful printing plays local printer sound once')
 assert(lastPayload.id==9 and lastPayload.printer==2,'target keeps correct printer index')
 handlers.onClientResourceStart('ox_target');assert(#removed==2 and #zones==4,'target restart replaces zones without duplicates')
 handlers.onClientResourceStop('crimson_doj');assert(#removed==4,'resource shutdown removes target zones')

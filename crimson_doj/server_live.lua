@@ -4,6 +4,9 @@ function CrimsonLive(h)
  local function permitted(a)
   if not a or not a.write or a.department=='business'then h.reject('Bodycam permission required')end
  end
+ local function canWatch(a)
+  return a and a.write and a.department=='doj' and tonumber(a.grade)==12
+ end
  local function endpoint()
   local url=GetConvar('screencapture_live_endpoint','')
   if not Config.EnableLiveBodycam or not url:match('^https://')or GetResourceState('screencapture')~='started'then
@@ -21,9 +24,9 @@ function CrimsonLive(h)
   local ok=pcall(endpoint);local rows={}
   for cid,entry in pairs(active)do
    local host=h.identity(entry.source)
-   if host and host.p.citizenid==cid and host.scope==a.scope and entry.ready then rows[#rows+1]={citizenid=cid,source=entry.source,name=entry.name}end
+   if host and host.p.citizenid==cid and host.scope==a.scope and entry.ready and canWatch(a) then rows[#rows+1]={citizenid=cid,source=entry.source,name=entry.name}end
   end
-  return {configured=ok,rows=rows,audio=false}
+  return {configured=ok,rows=rows,audio=false,canWatch=canWatch(a)}
  end
  function api.liveStart(a)
   permitted(a);endpoint()
@@ -40,7 +43,7 @@ function CrimsonLive(h)
  end
  function api.liveStop(a)permitted(a);stop(a.p.citizenid);return true end
  function api.liveWatch(a,p)
-  permitted(a);local url=endpoint()
+  permitted(a);if not canWatch(a)then h.reject('Only Senior Judge may watch live bodycams')end;local url=endpoint()
   local item=active[p.citizenid];local host=item and h.identity(item.source)
   if not item or not item.ready or not host or host.scope~=a.scope or host.p.citizenid~=p.citizenid then h.reject('Live bodycam not available in your department')end
   local pending=promise.new();local resolved=false
@@ -48,7 +51,7 @@ function CrimsonLive(h)
   exports.screencapture:createLiveStreamViewerToken(item.id,function(grant)if not resolved then resolved=true;pending:resolve(grant)end end)
   local grant=Citizen.Await(pending)
   local current=h.identity(a.source)
-  if not current or not current.write or current.department=='business' or current.p.citizenid~=a.p.citizenid or current.scope~=a.scope then h.reject('Viewer access changed')end
+  if not canWatch(current) or current.p.citizenid~=a.p.citizenid or current.scope~=a.scope then h.reject('Viewer access changed')end
   host=h.identity(item.source)
   if active[p.citizenid]~=item or not host or not host.write or host.scope~=current.scope or host.p.citizenid~=p.citizenid then h.reject('Live bodycam access changed')end
   if type(grant)~='table' or grant.error or grant.streamId~=item.id or type(grant.viewerToken)~='string'then h.reject('Live viewer token unavailable')end
@@ -64,7 +67,7 @@ function CrimsonLive(h)
     local valid=host and host.write and host.department~='business' and host.p.citizenid==cid and host.scope==item.scope
     for src,viewer in pairs(viewers[item.id]or {})do
      local actor=h.identity(src)
-     if not actor or not actor.write or actor.department=='business' or actor.p.citizenid~=viewer or actor.scope~=item.scope then valid=false end
+     if not canWatch(actor) or actor.p.citizenid~=viewer or actor.scope~=item.scope then valid=false end
     end
     if not valid then stop(cid)end
    end

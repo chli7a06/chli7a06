@@ -71,7 +71,7 @@ Config.Bodycam = { duration=3600, maxBytes=536870912, maxClips=200, width=1280, 
 Config.Banking = Config.Banking or { provider='apex_banking', accounts={} }
 
 -- Put your own audio files here; names are relative to web/sounds/.
-Config.Sounds = {enabled=true,volume=0.35,open='open.ogg',close='close.ogg',click='click.ogg',notification='notification.ogg'}
+Config.Sounds = {enabled=true,volume=0.35,open='open.ogg',close='close.ogg',click='click.ogg',notification='notification.ogg',printer='printer.mp3'}
 -- Police/sheriff keep their Origen unit markers; DOJ receives their positions here.
 Config.JobBlips = {enabled=true,interval=3000,sprite=1,colour=1,scale=0.8,
  jobs={doj=true,police=true,sheriff=true}}

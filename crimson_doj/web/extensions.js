@@ -180,6 +180,7 @@ async function extLive(){
  const token=reset('Live bodycams','Owners explicitly start their own stream; department-scoped viewer grants');const data=await request('liveSources');if(token!==sequence)return;
  content.append(button('Start my live bodycam',async()=>{await request('liveStart');await extLive();},'primary'),button('Stop my live bodycam',async()=>{await request('liveStop');await extLive();}),button('Refresh streams',extLive));
  if(!data.configured)content.append(node('div','Live video needs the screencapture Cloudflare Worker endpoint and Config.EnableLiveBodycam. Stored recordings continue working without it.','info'));
+ if(!data.canWatch)content.append(node('p','Only Senior Judge may watch live bodycams.','info'));
  content.append(table(['OWNER',''],data.rows.map(row=>[row.name,button('Watch live',async()=>{
   const grant=await request('liveWatch',{citizenid:row.citizenid});disconnectLive();liveDialog.showModal();
   extViewer=new window.CrimsonLiveSDK.ScreenCaptureViewer(grant);await extViewer.connect();await extViewer.attach(liveVideo);

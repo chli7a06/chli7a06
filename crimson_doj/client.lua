@@ -168,6 +168,7 @@ local function openPrinter(index)
   options[#options+1]={title=record.title,description='Document #'..recordId,onSelect=function()
    local success,printed=pcall(lib.callback.await,'crimson_doj:request',false,'printDocument',{id=recordId,printer=index})
    local done=success and type(printed)=='table' and printed.ok
+   if done then SendNUIMessage({action='printerSound',sounds=Config.Sounds})end
    lib.notify({title='Crimson printer',description=done and 'Document added to your inventory' or (type(printed)=='table' and printed.error or 'Printer unavailable'),type=done and 'success' or 'error'})
   end}
  end

@@ -133,6 +133,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Backspace'&&!badgeCa
   const msg=event.data;if(msg?.sounds)settings=msg.sounds;
   if(msg?.action==='open'){active=true;play('open');}
   if(msg?.action==='close'&&active){active=false;play('close');}
+  if(msg?.action==='printerSound')play('printer');
   if(msg?.action==='dojBadge')play('notification');
  });
 })();
