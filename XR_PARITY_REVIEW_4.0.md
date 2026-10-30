@@ -1,4 +1,4 @@
-> Historical 4.0 audit. Version 4.1 adds French UI, a configured helicopter fleet, observed weapon serial search and persistent camera management. Read crimson_doj/INSTALL/UPGRADE_4_1_AR.md and FEATURES.md for current status; the remaining-boundaries paragraph below describes 4.0.
+> Current 4.0.1 release uses this user-confirmed 4.0 base plus observed serial search and persistent camera management. Experimental 4.1 UI/opening changes were reverted. Read crimson_doj/INSTALL/STABLE_4_0_1_AR.md for the current install.
 
 # Independent Crimson 4.0 preview — completion audit
 

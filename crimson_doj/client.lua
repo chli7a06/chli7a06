@@ -4,9 +4,6 @@ local camera = nil
 local videoTicket = nil
 local bodycamActive = false
 local printedSlot=nil
-local uiAcknowledged=nil
-local uiFrame=nil
-local uiDiagnostics='no browser poll received'
 -- tablet2 pose and prop, independent of any emote-menu resource.
 local tabletProp, tabletPed
 local tabletDict = 'amb@world_human_seat_wall_tablet@female@base'
@@ -50,42 +47,12 @@ local function close()
     uiEpoch = uiEpoch + 1
     opened, opening = false, false
     printedSlot=nil
-    uiAcknowledged=nil
-    uiFrame=nil
     stopCamera()
     stopTablet()
     SetNuiFocus(false, false)
     SetNuiFocusKeepInput(false)
     SendNUIMessage({ action = 'close' })
 end
-local function watchUi(token)
-    SetTimeout(8000,function()
-        if uiEpoch~=token or uiAcknowledged==token or not(opened or printedSlot)then return end
-        local diagnostics=uiDiagnostics
-        close()
-        print('[crimson_doj] UI did not acknowledge opening: '..diagnostics)
-        lib.notify({title='Crimson MDT',description=Config.Locale=='fr'and 'Interface indisponible : souris libérée. Consultez F8.'or 'UI unavailable: mouse released. Check F8.',type='error'})
-    end)
-end
-RegisterNUICallback('ui_state',function(data,cb)
-    if type(data)=='table'then
-        local build=type(data.build)=='string'and data.build:sub(1,30)or 'unknown'
-        uiDiagnostics='browser='..build..', appReady='..tostring(data.appReady==true)
-    end
-    cb({ok=true,version='4.1.3',frame=(opened or printedSlot)and uiFrame or nil})
-end)
-RegisterNUICallback('uiReady',function(data,cb)
-    if type(data)=='table'and data.token==uiEpoch and(opened or printedSlot)then uiAcknowledged=uiEpoch;SetNuiFocusKeepInput(false);SetNuiFocus(true,true);cb({ok=true})else cb({ok=false})end
-end)
-RegisterNUICallback('uiFailed',function(data,cb)
-    if type(data)=='table'and data.token==uiEpoch and(opened or printedSlot)then
-        local detail=type(data.error)=='string'and data.error:sub(1,500)or 'Unknown UI failure'
-        print('[crimson_doj] UI initialization failed: '..detail)
-        close()
-        lib.notify({title='Crimson MDT',description=Config.Locale=='fr'and 'Erreur interface : souris libérée. Consultez F8.'or 'UI error: mouse released. Check F8.',type='error'})
-        cb({ok=true})
-    else cb({ok=false})end
-end)
 local function requestWhileOpen(action, payload)
     if not opened then return {ok=false,error='Tablet closed'} end
     local epoch = uiEpoch
@@ -106,21 +73,15 @@ RegisterCommand(Config.Command, function()
         return
     end
     opened = true
-    uiDiagnostics='no browser poll received'
     SetNuiFocusKeepInput(false)
-    uiFrame={action='open',openToken=epoch,locale=Config.Locale,data=result.data,sounds=Config.Sounds}
-    SendNUIMessage(uiFrame)
-    watchUi(epoch)
+    SetNuiFocus(true, true)
+    SendNUIMessage({ action = 'open', data = result.data, sounds = Config.Sounds })
     CreateThread(function() startTablet(epoch) end)
 end, false)
 RegisterKeyMapping(Config.Command, 'Open Crimson MDT', 'keyboard', Config.Key)
 RegisterCommand('mdtclose', function() close() end, false)
 RegisterNUICallback('close', function(_, cb) close() cb({ok=true}) end)
 RegisterNUICallback('request', function(data, cb)
-    if type(data)~='table' or type(data.action)~='string' or (data.payload~=nil and type(data.payload)~='table') then
-        cb({ok=false,error='Invalid NUI request'})
-        return
-    end
     cb(requestWhileOpen(data.action, data.payload or {}))
 end)
 AddEventHandler('onResourceStop', function(resource)
@@ -144,7 +105,7 @@ RegisterNUICallback('camera', function(data, cb)
     camera = CreateCamWithParams('DEFAULT_SCRIPTED_CAMERA',c.x+0.0,c.y+0.0,c.z+0.0,c.rx+0.0,c.ry+0.0,c.rz+0.0,c.fov+0.0,false,0)
     local handle = camera
     SetCamActive(camera,true)
-    lib.showTextUI(Config.Locale=='fr'and 'Caméra de sécurité · [Échap] retour au MDT'or 'Security camera · [Esc] return to MDT')
+    lib.showTextUI('Security camera · [Esc] return to MDT')
     RenderScriptCams(true,true,250,true,true)
     SetNuiFocus(false,false)
     SendNUIMessage({action='camera'})
@@ -176,10 +137,9 @@ exports('useDocument',function(data,slot)
    return
   end
   SetNuiFocusKeepInput(false)
+  SetNuiFocus(true,true)
   printedSlot=used.slot
-  uiFrame={action='document',openToken=epoch,locale=Config.Locale,data=result.data}
-  SendNUIMessage(uiFrame)
-  watchUi(epoch)
+  SendNUIMessage({action='document',data=result.data})
  end)
 end)
 local printerZones = {}
@@ -345,5 +305,3 @@ exports('useTrackingBand',function(data)
   lib.notify({description=result.ok and 'Tracking band attached' or result.error,type=result.ok and 'success'or 'error'})
  end)
 end)
-
-print('[crimson_doj] client UI bridge 4.1.3 loaded')

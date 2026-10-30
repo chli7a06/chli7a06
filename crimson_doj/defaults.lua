@@ -31,11 +31,5 @@ Config.StockArmory = Config.StockArmory ~= false
 Config.RequireBodycamItem = Config.RequireBodycamItem ~= false
 Config.BodycamItem = Config.BodycamItem or 'crimson_bodycam'
 
--- Online inventory observation records possession, never legal ownership.
+-- Records the last observed online inventory holder, not verified legal ownership.
 Config.WeaponObservation = Config.WeaponObservation ~= false
-Config.AirUnits = Config.AirUnits or {
- mission_row={label='Mission Row air unit',jobs={doj=true,police=true,sheriff=true},grade=10,
-  model='polmav',livery=0,coords={x=449.2901,y=-981.1782,z=43.6913,w=86.4242},radius=12},
-}
-
-Config.Locale = Config.Locale or 'fr'

@@ -190,9 +190,9 @@ local extensions=CrimsonExtensions({identity=identity,reject=reject,clean=clean,
 local resources=CrimsonResources({identity=identity,reject=reject,clean=clean,integer=integer,decode=decode,person=person,log=log,ready=function()return ready end},extensions)
 CrimsonTracking({identity=identity,ready=function()return ready end})
 local live=CrimsonLive({identity=identity,reject=reject,log=log})
-local operations=CrimsonOperations({identity=identity,reject=reject,clean=clean,decode=decode,log=log,entities=extensions})
+local registry=CrimsonRegistry({identity=identity,reject=reject,clean=clean,decode=decode,log=log,entities=extensions})
 local function run(a,action,payload)
- if operations.actions[action]then return operations.actions[action](a,payload)end
+ if registry.actions[action]then return registry.actions[action](a,payload)end
  if ({liveStart=true,liveStop=true,liveSources=true,liveWatch=true})[action]then return live[action](a,payload)end
  if extensions.actions[action] then return extensions.actions[action](a,payload)end
  if resources.actions[action] then return resources.actions[action](a,payload)end
@@ -598,6 +598,9 @@ end)
 CreateThread(function()
  while true do
   Wait(60000)
-  if ready then local ok,err=pcall(operations.scanWeapons);if not ok then print('[Crimson weapons] '..tostring(err))end end
+  if ready then
+   local ok,err=pcall(registry.scanWeapons)
+   if not ok then print('[Crimson weapon observations] '..tostring(err))end
+  end
  end
 end)

@@ -1,14 +1,11 @@
 local exported={}
 local emitted={}
-local autoUiReady=true
 local serverCalls=0
 local lastServerCallback
 exports=setmetatable({ox_inventory={useItem=function()end}},{__call=function(_,name,fn)exported[name]=fn end})
 Config={Command='dojmdt',Key='F12'}
 local commands,callbacks,handlers,messages={},{},{},{}
 local focus,keepInput,render,created,destroyed,hiddenText=false,false,false,0,0,0
-local timers={}
-SetTimeout=function(_,fn)timers[#timers+1]=fn end
 local delayed=false
 local response={ok=true,data={x=10,y=20,z=30,rx=0,ry=0,rz=0,fov=60}}
 lib={callback={await=function(name)serverCalls=serverCalls+1 lastServerCallback=name if delayed then coroutine.yield() end return response end},notify=function()end,hideTextUI=function()hiddenText=hiddenText+1 end,showTextUI=function()end}
@@ -18,7 +15,7 @@ RegisterCommand=function(name,fn)commands[name]=fn end
 RegisterKeyMapping=function()end
 RegisterNUICallback=function(name,fn)callbacks[name]=fn end
 AddEventHandler=function(name,fn)handlers[name]=fn end
-SendNUIMessage=function(data)messages[#messages+1]=data;if autoUiReady and(data.action=='open'or data.action=='document')then callbacks.uiReady({token=data.openToken},function()end)end end
+SendNUIMessage=function(data)messages[#messages+1]=data end
 SetNuiFocus=function(a)focus=a end
 SetNuiFocusKeepInput=function(a)keepInput=a end
 GetCurrentResourceName=function()return 'crimson_doj'end
@@ -113,27 +110,4 @@ commands.dojmdt();local late=pendingTablet;commands.mdtclose();late()
 check(props==1,'late animation loading cannot create tablet after closing')
 commands.dojmdt();pendingTablet();handlers.onResourceStop('crimson_doj')
 check(deletions==2,'resource stop deletes tablet prop')
-local before=serverCalls
-for _,data in ipairs({false,'bad',{},{action=3},{action='list',payload='invalid'}})do
- local reply;callbacks.request(data,function(r)reply=r end)
- check(reply and reply.ok==false,'malformed NUI request fails without throwing')
-end
-local nilReply;callbacks.request(nil,function(r)nilReply=r end)
-check(nilReply and not nilReply.ok and serverCalls==before,'empty request returns an error without invoking server')
-autoUiReady=false
-commands.dojmdt();local openToken=messages[#messages].openToken;local timeout=timers[#timers]
-check(type(openToken)=='number','open message carries UI session token')
-check(not focus,'no cursor capture before UI acknowledgement')
-callbacks.ui_state({},function(r)result=r end)
-check(result.ok and result.frame.openToken==openToken,'lost open event recoverable through local state endpoint')
-timeout();check(not focus and messages[#messages].action=='close','unresponsive UI releases cursor automatically')
-commands.dojmdt();openToken=messages[#messages].openToken;timeout=timers[#timers]
-callbacks.uiReady({token=openToken},function(r)result=r end);timeout()
-check(result.ok and focus,'acknowledged UI stays open')
-callbacks.uiFailed({token=openToken-1,error='stale'},function(r)result=r end)
-check(not result.ok and focus,'stale UI failure cannot close new session')
-callbacks.uiFailed({token=openToken,error='test init failure'},function(r)result=r end)
-check(result.ok and not focus,'current initialization failure releases cursor')
-callbacks.ui_state({},function(r)result=r end)
-check(result.frame==nil,'closed state cannot replay an old authorized frame')
 print('PASS '..n..' client focus, camera lifecycle and recovery checks')
