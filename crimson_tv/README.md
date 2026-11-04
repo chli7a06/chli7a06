@@ -88,3 +88,5 @@ Build 2026-11-04-signed-target-3 accepts negative signed render-target IDs. The 
 
 ## Menu appearance (1.3.0)
 Hookah-reference styling: rounded charcoal rows, red selection, circular TV action icons, a rounded header with close button, descriptions and ESC hint. Panel anchors remain Top=66%, Right=8px and translateY(-50%) through the existing Config.Menu.Layout settings. Browser validation at 1920x1080 confirmed five actions, the same anchors, keyboard navigation and close callbacks. The temporary TV diagnostic command has been removed. Live FiveM appearance still requires client confirmation.
+
+Version 1.3.1 removes the header subtitle and fixes mouse clicks: hover/selection now updates classes on existing buttons instead of rebuilding the menu DOM during pointer interaction. Chromium validation clicked all five actions with pointer down/up, confirmed stable button nodes and callback indexes, and rechecked keyboard selection, close and the original panel anchors.

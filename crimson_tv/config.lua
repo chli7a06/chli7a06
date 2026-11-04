@@ -4,7 +4,6 @@ Config.TVRange = 50.0 -- Detection/render/audio range for TVs. Set to nil to use
 Config.LocationSpawnRange = Config.TVRange -- Spawn/despawn distance for TVs defined in Config.Locations.
 
 Config.Menu = {
-    Kicker = "CRIMSON EMPIRE",
     Title = "CRIMSON TV",
     OpenDistance = 5.0, -- Maximum distance allowed to open /tv controls.
     MinRange = 1.0, -- Lowest range players can set from /tv.
