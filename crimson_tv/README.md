@@ -63,11 +63,10 @@ Main configuration lives in `config.lua`.
 ## Crimson adaptation
 Adapted from the supplied ptelevision.zip; this is a renamed and branded version, not a new independent implementation. Events, runtime textures, DUI paths and NUI callback destinations use crimson_tv. Do not run the old resource alongside this one: both register /tv and /broadcast.
 
-The supplied manifest includes @WaveShield/resource/include.lua. This dependency is retained; start your configured WaveShield and ox_lib before crimson_tv. No framework-specific Qbox/ESX bridge is required by this code.
+Only ox_lib is required as a resource dependency. The optional anticheat include from the supplied example was removed; no WaveShield installation or framework-specific Qbox/ESX bridge is required.
 
 Installation in server.cfg:
 ```cfg
-ensure WaveShield
 ensure ox_lib
 ensure crimson_tv
 ```

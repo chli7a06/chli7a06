@@ -1,5 +1,3 @@
-shared_script '@WaveShield/resource/include.lua'
-
 fx_version "cerulean"
 game "gta5"
 name "crimson_tv"
@@ -35,4 +33,4 @@ server_scripts {
 
 lua54 'yes'
 
-dependencies { "ox_lib", "WaveShield" }
+dependency "ox_lib"
