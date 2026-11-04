@@ -1,5 +1,7 @@
 Config = {}
 
+Config.ScreenSwitchDistance = 2.0 -- Another TV must be this many meters closer before automatic switching.
+
 Config.TVRange = 50.0 -- Detection/render/audio range for TVs. Set to nil to use each model's Range value.
 Config.LocationSpawnRange = Config.TVRange -- Spawn/despawn distance for TVs defined in Config.Locations.
 

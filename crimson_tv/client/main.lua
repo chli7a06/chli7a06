@@ -8,7 +8,7 @@ CURRENT_SCREEN = nil
 local Locations = Config.Locations
 local screenGeneration = 0
 local readyDui = nil
-CRIMSON_TV_BUILD = "2026-11-04-signed-target-3"
+CRIMSON_TV_BUILD = "2026-11-04-stable-screen-4"
 print("[crimson_tv] BUILD " .. CRIMSON_TV_BUILD)
 
 local function Clamp(num, min, max)
@@ -246,18 +246,39 @@ function GetClosestScreen()
     return (closest.entity and closest or nil)
 end
 
+-- Keep the active TV unless another is meaningfully closer. Small movements
+-- between adjacent props must not repeatedly destroy the playing browser.
+function GetStableScreen()
+    local nearest = GetClosestScreen()
+    local current = CURRENT_SCREEN
+    if not current or not DoesEntityExist(current.entity) then return nearest end
+    local modelData = Config.Models[current.model]
+    if not modelData then return nearest end
+    local coords = GetEntityCoords(current.entity)
+    local distance = #(GetEntityCoords(PlayerPedId()) - coords)
+    local margin = math.max(0, tonumber(Config.ScreenSwitchDistance) or 2.0)
+    if distance > GetTVRange(modelData, coords) + margin then return nearest end
+    if nearest and nearest.entity ~= current.entity and nearest.dist + margin < distance then
+        return nearest
+    end
+    return current
+end
+
 Citizen.CreateThread(function()
     Citizen.Wait(2000)
     TriggerServerEvent("crimson_tv:requestUpdate")
-    while true do 
-        local wait = 2500
-        local data = GetClosestScreen()
-        if (data and not duiObj) then 
-            ShowScreen(data)
-        elseif CURRENT_SCREEN and (not data or CURRENT_SCREEN.entity ~= data.entity) then
+    while true do
+        local data = GetStableScreen()
+        if data then
+            if not duiObj or not CURRENT_SCREEN or CURRENT_SCREEN.entity ~= data.entity then
+                -- ShowScreen releases the old session and starts the replacement
+                -- in this iteration, avoiding the former blank polling interval.
+                ShowScreen(data)
+            end
+        elseif CURRENT_SCREEN then
             HideScreen()
         end
-        Citizen.Wait(wait)
+        Citizen.Wait(500)
     end
 end)
 
