@@ -191,36 +191,37 @@ function OpenTVMenu()
     RefreshTVMenu()
 end
 
+local function PrepareTVBrowser(resetURL)
+    local handle = duiObj
+    if not WaitForTVDui(handle) then return nil end
+    if resetURL and getDuiURL() ~= DEFAULT_URL then
+        waitForLoad = true
+        setDuiURL(DEFAULT_URL)
+        local deadline = GetGameTimer() + 10000
+        while waitForLoad do
+            if duiObj ~= handle or GetGameTimer() >= deadline then return nil end
+            Wait(10)
+        end
+    end
+    if duiObj ~= handle then return nil end
+    return handle
+end
+
 function PlayBrowser(data)
-    while not IsDuiAvailable(duiObj) do Wait(10) end
+    if not PrepareTVBrowser(false) then return end
     setDuiURL(data.url)
 end
 
 function PlayVideo(data)
-    while not IsDuiAvailable(duiObj) do Wait(10) end
-    if (getDuiURL() ~= DEFAULT_URL) then 
-        waitForLoad = true
-        setDuiURL(DEFAULT_URL)
-        while waitForLoad do Wait(10) end
-    end
-    SendDuiMessage(duiObj, json.encode({
-        setVideo = true,
-        data = data
-    }))
+    local handle = PrepareTVBrowser(true)
+    if not handle then return end
+    SendDuiMessage(handle, json.encode({setVideo = true, data = data}))
 end
 
 function ResetDisplay()
-    while not IsDuiAvailable(duiObj) do Wait(10) end
-
-    if (getDuiURL() ~= DEFAULT_URL) then
-        waitForLoad = true
-        setDuiURL(DEFAULT_URL)
-        while waitForLoad do Wait(10) end
-    end
-
-    SendDuiMessage(duiObj, json.encode({
-        turnOff = true
-    }))
+    local handle = PrepareTVBrowser(true)
+    if not handle then return end
+    SendDuiMessage(handle, json.encode({turnOff = true}))
 end
 
 function GetTelevisionLocal(coords)

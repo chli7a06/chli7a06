@@ -6,6 +6,7 @@ volume = 0.5
 CURRENT_SCREEN = nil
 
 local Locations = Config.Locations
+local screenGeneration = 0
 
 local function Clamp(num, min, max)
     num = tonumber(num) or min
@@ -60,9 +61,27 @@ function GetVolume(dist, range)
     return math.floor(Clamp(volumePercent, 0.0, 1.0) * 100)
 end
 
+-- Never poll a missing or retired DUI handle after a screen switch.
+function WaitForTVDui(handle)
+    if not handle or handle == 0 then return nil end
+    local deadline = GetGameTimer() + 10000
+    while duiObj == handle and GetGameTimer() < deadline do
+        local ok, available = pcall(IsDuiAvailable, handle)
+        if not ok then
+            print('[crimson_tv] DUI handle is invalid; cancelling pending display operation.')
+            return nil
+        end
+        if available then return handle end
+        Wait(10)
+    end
+    return nil
+end
+
 function setDuiURL(url)
-	duiUrl = url
-	SetDuiUrl(duiObj, duiUrl)
+    if not duiObj then return false end
+    duiUrl = url
+    SetDuiUrl(duiObj, duiUrl)
+    return true
 end
 
 local sfName = 'generic_texture_renderer'
@@ -85,16 +104,34 @@ function loadScaleform(scaleform)
 end
 
 function ShowScreen(data)
+    HideScreen()
+    local generation = screenGeneration
     CURRENT_SCREEN = data
-    sfHandle = loadScaleform(sfName)
+    local movie = loadScaleform(sfName)
+    if generation ~= screenGeneration then
+        SetScaleformMovieAsNoLongerNeeded(movie)
+        return
+    end
+    sfHandle = movie
     runtimeTxd = 'crimson_tv_b_dict'
 
     local txd = CreateRuntimeTxd('crimson_tv_b_dict')
-    duiObj = CreateDui(duiUrl, width, height)
-    local dui = GetDuiHandle(duiObj)
+    duiUrl = DEFAULT_URL
+    local handle = CreateDui(duiUrl, width, height)
+    if not handle or handle == 0 then
+        print('[crimson_tv] Could not create the TV browser.')
+        HideScreen()
+        return
+    end
+    duiObj = handle
+    if not WaitForTVDui(handle) then
+        if generation == screenGeneration then HideScreen() end
+        return
+    end
+    local dui = GetDuiHandle(handle)
     local tx = CreateRuntimeTextureFromDuiHandle(txd, 'crimson_tv_b_txd', dui)
     
-    Citizen.Wait(10)
+    if generation ~= screenGeneration then return end
 
     PushScaleformMovieFunction(sfHandle, 'SET_TEXTURE')
 
@@ -111,14 +148,14 @@ function ShowScreen(data)
         TriggerServerEvent("crimson_tv:requestSync", data.coords)
         local tvObj = data.entity
         local screenModel = Config.Models[data.model]
-        while duiObj do
+        while generation == screenGeneration and duiObj == handle do
             if (tvObj and sfHandle ~= nil and HasScaleformMovieLoaded(sfHandle)) then
                 local pos = GetEntityCoords(tvObj)
                 local scale = screenModel.Scale
                 local offset = GetOffsetFromEntityInWorldCoords(tvObj, screenModel.Offset.x, screenModel.Offset.y, screenModel.Offset.z)
                 if (screenModel.Target) then 
                     local id = CreateNamedRenderTargetForModel(screenModel.Target, data.model)
-                    if (id ~= -1) then
+                    if (id and id > 0) then
                         RenderScaleformTV(id, sfHandle, tvObj)
                     end
                 else
@@ -130,7 +167,7 @@ function ShowScreen(data)
         end
     end)
     Citizen.CreateThread(function()
-        local screen = CURRENT_SCREEN
+        local screen = data
         local modelData = Config.Models[screen.model]
         local coords = screen.coords
         local _, lstatus = GetTelevisionLocal(coords)
@@ -139,7 +176,7 @@ function ShowScreen(data)
         else
             SetVolume(coords, modelData.DefaultVolume)
         end
-        while duiObj do 
+        while generation == screenGeneration and duiObj == handle do
             local range = GetTVRange(modelData, coords)
             local pcoords = GetEntityCoords(PlayerPedId())
             local dist = #(coords - pcoords)
@@ -153,16 +190,15 @@ function ShowScreen(data)
 end
 
 function HideScreen()
+    screenGeneration = screenGeneration + 1
     CURRENT_SCREEN = nil
-    if CloseTVMenu then
-        CloseTVMenu()
-    end
-    if (duiObj) then 
-        DestroyDui(duiObj)
-        SetScaleformMovieAsNoLongerNeeded(sfHandle)
-        duiObj = nil
-        sfHandle = nil 
-    end
+    shouldDraw = false
+    waitForLoad = false
+    if CloseTVMenu then CloseTVMenu() end
+    local oldDui, oldMovie = duiObj, sfHandle
+    duiObj, sfHandle = nil, nil
+    if oldDui and oldDui ~= 0 then DestroyDui(oldDui) end
+    if oldMovie then SetScaleformMovieAsNoLongerNeeded(oldMovie) end
 end
 
 function GetClosestScreen()
@@ -192,7 +228,7 @@ Citizen.CreateThread(function()
         local data = GetClosestScreen()
         if (data and not duiObj) then 
             ShowScreen(data)
-        elseif ((not data or #(v3(CURRENT_SCREEN.coords) - v3(data.coords)) > 0.01 ) and duiObj) then
+        elseif CURRENT_SCREEN and (not data or CURRENT_SCREEN.entity ~= data.entity) then
             HideScreen()
         end
         Citizen.Wait(wait)
@@ -213,7 +249,7 @@ Citizen.CreateThread(function()
                 SetEntityHeading(Locations[i].obj, data.Position.w)
                 FreezeEntityPosition(Locations[i].obj, true)
             elseif Locations[i].obj and dist > spawnRange then
-                DeleteEntity(Locations[i].obj)
+                if Locations[i].obj then DeleteEntity(Locations[i].obj) end
                 Locations[i].obj = nil
             end
         end
@@ -227,14 +263,15 @@ RegisterNetEvent("crimson_tv:requestUpdate", function(data)
 end)
 
 RegisterNetEvent("crimson_tv:requestSync", function(coords, data)
-    local tvObj = data.entity
-        
+    local screen = CURRENT_SCREEN
+    if not screen or not duiObj or #(v3(screen.coords) - v3(coords)) > 0.01 then return end
+    local generation = screenGeneration
     local _, status = GetTelevision(coords)
-    local screenModel = Config.Models[data.model]
     if status and status["ptv_status"] then
         local update_time = status.update_time 
         local status = status["ptv_status"]
         Citizen.Wait(1000)
+        if generation ~= screenGeneration then return end
         if status.type == "play" then
             if (status.channel and Channels[status.channel]) then 
                 PlayVideo({url = Channels[status.channel].url, channel = status.channel})
@@ -261,7 +298,7 @@ AddEventHandler('onResourceStop', function(name)
     if name == GetCurrentResourceName() then
         HideScreen()
         for i=1, #Locations do 
-            DeleteEntity(Locations[i].obj)
+            if Locations[i].obj then DeleteEntity(Locations[i].obj) end
         end
     end
 end)

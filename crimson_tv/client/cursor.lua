@@ -22,7 +22,8 @@ function SetInteractScreen(bool)
             RequestTextureDictionary('fib_pc')
             
             -- Update controls while active
-            while shouldDraw do
+            local handle = duiObj
+            while shouldDraw and handle and duiObj == handle do
                 nX = GetControlNormal(0, 239) * screenWidth
                 nY = GetControlNormal(0, 240) * screenHeight
                 DisableControlAction(0, 1, true) -- Disable looking horizontally
@@ -49,7 +50,7 @@ function SetInteractScreen(bool)
                     if not (mY < 545) then 
                         mY = 545
                     end
-                    SendDuiMouseMove(duiObj, math.floor(duiX), math.floor(duiY))
+                    SendDuiMouseMove(handle, math.floor(duiX), math.floor(duiY))
                 end
                 DrawSprite('fib_pc', 'arrow', mX / screenWidth, mY / screenHeight, 0.005, 0.01, 0.0, 255, 255, 255, 255)
         
@@ -60,20 +61,20 @@ function SetInteractScreen(bool)
                     OpenTVMenu()
                 end -- scroll up
                 if IsControlPressed(0, 172) then
-                    SendDuiMouseWheel(duiObj, 10, 0) end -- scroll up
+                    SendDuiMouseWheel(handle, 10, 0) end -- scroll up
                 if IsControlPressed(0, 173) then
-                    SendDuiMouseWheel(duiObj, -10, 0) end -- scroll down
+                    SendDuiMouseWheel(handle, -10, 0) end -- scroll down
         
                 if IsDisabledControlJustPressed(0, 24) then
-                    SendDuiMouseDown(duiObj, 'left')
+                    SendDuiMouseDown(handle, 'left')
                 elseif IsDisabledControlJustReleased(0, 24) then
-                    SendDuiMouseUp(duiObj, 'left')
-                    SendDuiMouseUp(duiObj, "right")
+                    SendDuiMouseUp(handle, 'left')
+                    SendDuiMouseUp(handle, "right")
                 end
                 if IsDisabledControlJustPressed(0, 25) then
-                    SendDuiMouseDown(duiObj, "right")
+                    SendDuiMouseDown(handle, "right")
                 elseif IsDisabledControlJustReleased(0, 24) then
-                    SendDuiMouseUp(duiObj, "right")
+                    SendDuiMouseUp(handle, "right")
                 end
         
                 Wait(0)
