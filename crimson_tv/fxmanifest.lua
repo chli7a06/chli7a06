@@ -2,7 +2,7 @@ fx_version "cerulean"
 game "gta5"
 name "crimson_tv"
 description "Crimson TV — television and broadcast controls for FiveM."
-version "1.3.3"
+version "1.3.4"
 ui_page "html/blank.html"
 
 files {
@@ -11,7 +11,6 @@ files {
 	"html/index.html",
 	"html/style.css",
 	"html/main.js",
-	"html/VCR_OSD_MONO_1.001.ttf",
 }
 
 shared_scripts {

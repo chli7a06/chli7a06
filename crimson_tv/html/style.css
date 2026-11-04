@@ -1,10 +1,5 @@
-@font-face {
-    font-family: 'BodyCam';
-    src: url('VCR_OSD_MONO_1.001.ttf')  format('truetype') /* Safari, Android, iOS */
-}
-  
 * {
-    font-family: BodyCam;
+    font-family: Consolas, "Courier New", monospace;
     color:white;
 }
 
