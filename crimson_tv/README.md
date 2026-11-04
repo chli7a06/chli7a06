@@ -73,15 +73,18 @@ ensure crimson_tv
 
 Validation: local JavaScript and Lua syntax checks only. Lua syntax checks substitute FiveM backtick hash literals in temporary copies because ordinary Lua cannot parse that FiveM extension. No live FiveM, media playback, synchronization or browser rendering validation was performed. Verify /tv near a supported prop, playback, volume, /broadcast with two players, and restart cleanup on a development server. YouTube/Twitch embedding depends on their current platform policies and client connectivity. The supplied server event permission hooks remain permissive; review Config.Events before public deployment.
 
-## TV detection troubleshooting
-The /tv command refreshes the closest supported TV before opening controls. If a TV is not detected, stand next to it, run /tvdebug and inspect the [crimson_tv] lines in F8. They list nearby model hashes, distances and whether each model is configured. Custom/map TV models require verified Config.Models render settings; proximity alone does not make every prop renderable.
+## TV detection
+Supported map models are configured in Config.Models. Custom models need the correct render target or scaleform settings.
 
 Model 777010715 is enabled based on the in-game aimed-object diagnostic. It uses the standard tvscreen render target provisionally. Detection/configuration checks pass locally; its actual model render-target mapping still requires in-game validation. If controls open but the display stays blank, report F8 errors and the model asset/name so the render mapping can be checked.
 
 DUI lifecycle fix: pending operations stop when a TV browser is absent or replaced, readiness waits are bounded, and render/audio workers belong to their own screen session. Mocked regression checks: from the repository root run `texlua tests/crimson_tv_dui.test.lua` and `texlua tests/crimson_tv_menu.test.lua`. These do not validate FiveM native implementations or the provisional model render target.
 
-Build 2026-11-04-dui-handshake-1 uses the local TV page pageLoaded callback for initial browser readiness rather than polling IS_DUI_AVAILABLE (native 7aac3b4c). F8 prints BUILD on startup and /tvdebug, TV page ready on acknowledgement, or a timeout if the page fails to load. Mocked tests cover acknowledgement, screen switch cancellation and timeout; actual client rendering remains unverified.
+Build 2026-11-04-dui-handshake-1 uses the local TV page pageLoaded callback for initial browser readiness rather than polling IS_DUI_AVAILABLE (native 7aac3b4c). F8 prints BUILD on startup, TV page ready on acknowledgement, or a timeout if the page fails to load. Mocked tests cover acknowledgement, screen switch cancellation and timeout; actual client rendering remains unverified.
 
 Build 2026-11-04-target-renderer-2: named render targets draw the DUI texture directly without loading generic_texture_renderer. Previously its unbounded load could stall browser creation if that external scaleform was absent. Models without a named target still require this scaleform, with a 10-second timeout. Run `texlua tests/crimson_tv_renderer.test.lua` for the mocked regression test. F8 now reports Opening TV and render-target linkage to diagnose actual model mapping.
 
 Build 2026-11-04-signed-target-3 accepts negative signed render-target IDs. The user reported a linked tvscreen with ID -1994970322; the previous positive-only check incorrectly skipped drawing. The regression test now exercises that exact signed ID and verifies the render function is reached. In-game visual confirmation remains pending.
+
+## Menu appearance (1.3.0)
+Hookah-reference styling: rounded charcoal rows, red selection, circular TV action icons, a rounded header with close button, descriptions and ESC hint. Panel anchors remain Top=66%, Right=8px and translateY(-50%) through the existing Config.Menu.Layout settings. Browser validation at 1920x1080 confirmed five actions, the same anchors, keyboard navigation and close callbacks. The temporary TV diagnostic command has been removed. Live FiveM appearance still requires client confirmation.

@@ -40,10 +40,10 @@ local function RefreshTVMenu()
         branding = Config.Menu,
         selected = tvMenuSelected,
         items = {
-            {label = 'Videos', description = 'Play a video or stream on the screen.'},
-            {label = 'Set Volume', description = 'Sets your TV\'s volume (For yourself).'},
-            {label = 'Set Range', description = 'Sets how far this TV can be seen and heard by you.'},
-            {label = 'Turn Off TV', description = 'Return the display to the Crimson standby screen.'},
+            {label = 'Videos', description = 'Play a video or stream.'},
+            {label = 'Set Volume', description = 'Adjust your local volume.'},
+            {label = 'Set Range', description = 'Set screen and audio range.'},
+            {label = 'Turn Off TV', description = 'Return to the standby screen.'},
             {label = 'Close Menu', description = 'Close the television controls.'},
         }
     })
@@ -167,7 +167,7 @@ function OpenTVMenu()
     -- Resolve again on command: the background renderer polls less frequently.
     local screen = GetClosestScreen()
     if not screen then
-        lib.notify({title = 'Crimson TV', description = 'No supported TV detected nearby. Use /tvdebug to inspect the TV model.', type = 'error'})
+        lib.notify({title = 'Crimson TV', description = 'No supported TV detected nearby.', type = 'error'})
         return
     end
     if not IsCloseEnoughForTVMenu(screen) then
@@ -347,48 +347,3 @@ end)
 RegisterCommand("broadcast", function(source, args, raw)
     BroadcastMenu()
 end)
-
--- Inspect map props without adding unknown models with unverified render settings.
-RegisterCommand('tvdebug', function()
-    print('[crimson_tv] BUILD ' .. tostring(CRIMSON_TV_BUILD))
-    -- Read the actual object under the camera crosshair rather than guessing
-    -- which of the nearby furniture props is a television.
-    local origin = GetGameplayCamCoord()
-    local rotation = GetGameplayCamRot(2)
-    local pitch, yaw = math.rad(rotation.x), math.rad(rotation.z)
-    local direction = vector3(-math.sin(yaw) * math.cos(pitch), math.cos(yaw) * math.cos(pitch), math.sin(pitch))
-    local destination = origin + direction * 20.0
-    local probe = StartShapeTestRay(origin.x, origin.y, origin.z, destination.x, destination.y, destination.z, 16, PlayerPedId(), 7)
-    local state, hit, entity
-    for attempt = 1, 50 do
-        local hitCoords, normal
-        state, hit, hitCoords, normal, entity = GetShapeTestResult(probe)
-        if state ~= 1 then break end
-        Wait(0)
-    end
-    if state == 2 and (hit == 1 or hit == true) and entity and entity ~= 0 and IsEntityAnObject(entity) then
-        local model = GetEntityModel(entity)
-        print(('[crimson_tv] AIMED OBJECT model=%s supported=%s'):format(model, tostring(Config.Models[model] ~= nil)))
-    else
-        print('[crimson_tv] AIMED OBJECT not detected. Aim the camera centre at the TV screen and retry /tvdebug.')
-    end
-    local playerCoords = GetEntityCoords(PlayerPedId())
-    local objects = GetGamePool('CObject')
-    local nearby = {}
-    for _, entity in ipairs(objects) do
-        local distance = #(playerCoords - GetEntityCoords(entity))
-        if distance <= 10.0 then
-            local model = GetEntityModel(entity)
-            nearby[#nearby + 1] = {distance = distance, model = model, supported = Config.Models[model] ~= nil}
-        end
-    end
-    table.sort(nearby, function(a, b) return a.distance < b.distance end)
-    print('[crimson_tv] Nearby objects (closest first):')
-    for i = 1, math.min(#nearby, 15) do
-        local object = nearby[i]
-        print(('[crimson_tv] model=%s distance=%.2fm supported=%s'):format(object.model, object.distance, tostring(object.supported)))
-    end
-    local screen = GetClosestScreen()
-    print(('[crimson_tv] Selected supported TV: %s; menu distance limit: %s m'):format(screen and tostring(screen.model) or 'none', (Config.Menu and Config.Menu.OpenDistance) or 3.0))
-    lib.notify({title = 'Crimson TV', description = 'TV diagnostics printed in F8. Send the [crimson_tv] lines for model setup.', type = 'inform'})
-end, false)
