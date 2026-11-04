@@ -1,5 +1,9 @@
 Config = {}
 
+Config.Debug = false -- Enable detailed client diagnostics only when troubleshooting.
+Config.PinActiveScreen = true -- Keep playback on this TV until leaving range or explicitly using /tv elsewhere.
+Config.ScreenStreamGraceMs = 5000 -- Preserve the browser briefly while the same map prop streams back in.
+
 Config.ScreenSwitchDistance = 2.0 -- Another TV must be this many meters closer before automatic switching.
 
 Config.TVRange = 50.0 -- Detection/render/audio range for TVs. Set to nil to use each model's Range value.

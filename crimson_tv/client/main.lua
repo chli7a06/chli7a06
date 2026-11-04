@@ -8,8 +8,12 @@ CURRENT_SCREEN = nil
 local Locations = Config.Locations
 local screenGeneration = 0
 local readyDui = nil
-CRIMSON_TV_BUILD = "2026-11-04-stable-screen-4"
+CRIMSON_TV_BUILD = "2026-11-04-pinned-screen-5"
 print("[crimson_tv] BUILD " .. CRIMSON_TV_BUILD)
+
+local function DebugLog(message)
+    if Config.Debug then print(message) end
+end
 
 local function Clamp(num, min, max)
     num = tonumber(num) or min
@@ -116,7 +120,7 @@ function ShowScreen(data)
     local generation = screenGeneration
     CURRENT_SCREEN = data
     local screenModel = Config.Models[data.model]
-    print(('[crimson_tv] Opening TV model=%s renderer=%s'):format(data.model, screenModel.Target or sfName))
+    DebugLog(('[crimson_tv] Opening TV model=%s renderer=%s'):format(data.model, screenModel.Target or sfName))
     local movie
     -- Named targets draw the DUI texture directly and do not use a scaleform.
     if not screenModel.Target then
@@ -166,14 +170,14 @@ function ShowScreen(data)
     end
     Citizen.CreateThread(function()
         TriggerServerEvent("crimson_tv:requestSync", data.coords)
-        local tvObj = data.entity
         local screenModel = Config.Models[data.model]
         local targetId
         if screenModel.Target then
             targetId = CreateNamedRenderTargetForModel(screenModel.Target, data.model)
-            print(('[crimson_tv] Render target %s model=%s linked=%s id=%s'):format(screenModel.Target, data.model, tostring(IsNamedRendertargetLinked(data.model)), tostring(targetId)))
+            DebugLog(('[crimson_tv] Render target %s model=%s linked=%s id=%s'):format(screenModel.Target, data.model, tostring(IsNamedRendertargetLinked(data.model)), tostring(targetId)))
         end
         while generation == screenGeneration and duiObj == handle do
+            local tvObj = data.entity -- A streamed map prop can get a new handle.
             if tvObj and DoesEntityExist(tvObj) and (screenModel.Target or (movie and HasScaleformMovieLoaded(movie))) then
                 local pos = GetEntityCoords(tvObj)
                 local scale = screenModel.Scale
@@ -251,13 +255,33 @@ end
 function GetStableScreen()
     local nearest = GetClosestScreen()
     local current = CURRENT_SCREEN
-    if not current or not DoesEntityExist(current.entity) then return nearest end
+    if not current then return nearest end
     local modelData = Config.Models[current.model]
     if not modelData then return nearest end
-    local coords = GetEntityCoords(current.entity)
+    local coords = current.coords
     local distance = #(GetEntityCoords(PlayerPedId()) - coords)
     local margin = math.max(0, tonumber(Config.ScreenSwitchDistance) or 2.0)
     if distance > GetTVRange(modelData, coords) + margin then return nearest end
+
+    local valid = DoesEntityExist(current.entity)
+        and GetEntityModel(current.entity) == current.model
+        and #(GetEntityCoords(current.entity) - coords) < 0.25
+    if not valid then
+        -- Rebind the same physical TV instead of destroying its playing DUI.
+        for _, entity in ipairs(GetGamePool('CObject')) do
+            if GetEntityModel(entity) == current.model and #(GetEntityCoords(entity) - coords) < 0.25 then
+                current.entity = entity
+                current.missingSince = nil
+                return current
+            end
+        end
+        current.missingSince = current.missingSince or GetGameTimer()
+        local grace = math.max(0, tonumber(Config.ScreenStreamGraceMs) or 5000)
+        if GetGameTimer() - current.missingSince < grace then return current end
+        return nearest
+    end
+    current.missingSince = nil
+    if Config.PinActiveScreen ~= false then return current end
     if nearest and nearest.entity ~= current.entity and nearest.dist + margin < distance then
         return nearest
     end
@@ -338,7 +362,7 @@ end)
 
 RegisterNUICallback("pageLoaded", function(_, cb)
     readyDui = duiObj
-    print("[crimson_tv] TV page ready (" .. CRIMSON_TV_BUILD .. ")")
+    DebugLog("[crimson_tv] TV page ready (" .. CRIMSON_TV_BUILD .. ")")
     waitForLoad = false
     if cb then cb(1) end
 end)
