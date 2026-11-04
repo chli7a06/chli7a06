@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8'?>
+<CMapTypes>
+  <extensions />
+  <archetypes>
+    <Item type="CBaseArchetypeDef">
+      <lodDist value="100" />
+      <flags value="32" />
+      <specialAttribute value="0" />
+      <bbMin x="-0.09861054" y="-0.049" z="-0.20896165" />
+      <bbMax x="0.99221355" y="0.049" z="0.15748963" />
+      <bsCentre x="0.4468015" y="0.0" z="-0.025736012" />
+      <bsRadius value="0.57744867" />
+      <hdTextureDist value="5" />
+      <name>crimson_pressure_washer</name>
+      <textureDictionary>crimson_pressure_washer</textureDictionary>
+      <clipDictionary />
+      <drawableDictionary />
+      <physicsDictionary />
+      <assetType>ASSET_TYPE_DRAWABLE</assetType>
+      <assetName>crimson_pressure_washer</assetName>
+      <extensions />
+    </Item>
+    <Item type="CBaseArchetypeDef">
+      <lodDist value="100" />
+      <flags value="32" />
+      <specialAttribute value="0" />
+      <bbMin x="-2.7013724" y="-0.007928891" z="-0.77691996" />
+      <bbMax x="-0.07457988" y="0.4150096" z="-0.11228103" />
+      <bsCentre x="-1.3879762" y="0.20354035" z="-0.4446005" />
+      <bsRadius value="1.3711913" />
+      <hdTextureDist value="5" />
+      <name>crimson_pressure_hose</name>
+      <textureDictionary>crimson_pressure_hose</textureDictionary>
+      <clipDictionary />
+      <drawableDictionary />
+      <physicsDictionary />
+      <assetType>ASSET_TYPE_DRAWABLE</assetType>
+      <assetName>crimson_pressure_hose</assetName>
+      <extensions />
+    </Item>
+  </archetypes>
+  <name>crimson_lavage</name>
+  <dependencies />
+  <compositeEntityTypes />
+</CMapTypes>
