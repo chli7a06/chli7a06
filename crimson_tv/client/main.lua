@@ -9,7 +9,6 @@ local Locations = Config.Locations
 local screenGeneration = 0
 local readyDui = nil
 CRIMSON_TV_BUILD = "2026-11-04-pinned-screen-5"
-print("[crimson_tv] BUILD " .. CRIMSON_TV_BUILD)
 
 local function DebugLog(message)
     if Config.Debug then print(message) end
@@ -79,7 +78,7 @@ function WaitForTVDui(handle)
         Wait(10)
     end
     if duiObj == handle then
-        print('[crimson_tv] TV page did not acknowledge loading within 10 seconds. Check NUI console and html/index.html dependencies.')
+        DebugLog('[crimson_tv] TV page did not acknowledge loading within 10 seconds. Check NUI console and html/index.html dependencies.')
     end
     return nil
 end
@@ -107,7 +106,7 @@ function loadScaleform(scaleform)
     while not HasScaleformMovieLoaded(scaleformHandle) do
         if GetGameTimer() >= deadline then
             SetScaleformMovieAsNoLongerNeeded(scaleformHandle)
-            print('[crimson_tv] Missing scaleform: ' .. scaleform .. '. This is required only by models without a named render target.')
+            DebugLog('[crimson_tv] Missing scaleform: ' .. scaleform .. '. This is required only by models without a named render target.')
             return nil
         end
         Citizen.Wait(0)
@@ -141,7 +140,7 @@ function ShowScreen(data)
     duiUrl = DEFAULT_URL
     local handle = CreateDui(duiUrl, width, height)
     if not handle or handle == 0 then
-        print('[crimson_tv] Could not create the TV browser.')
+        DebugLog('[crimson_tv] Could not create the TV browser.')
         HideScreen()
         return
     end

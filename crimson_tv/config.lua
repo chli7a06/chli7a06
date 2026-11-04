@@ -1,6 +1,6 @@
 Config = {}
 
-Config.Debug = false -- Enable detailed client diagnostics only when troubleshooting.
+Config.Debug = false -- Enable client console messages only when troubleshooting.
 Config.PinActiveScreen = true -- Keep playback on this TV until leaving range or explicitly using /tv elsewhere.
 Config.ScreenStreamGraceMs = 5000 -- Preserve the browser briefly while the same map prop streams back in.
 
