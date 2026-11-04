@@ -8,7 +8,7 @@ CURRENT_SCREEN = nil
 local Locations = Config.Locations
 local screenGeneration = 0
 local readyDui = nil
-CRIMSON_TV_BUILD = "2026-11-04-target-renderer-2"
+CRIMSON_TV_BUILD = "2026-11-04-signed-target-3"
 print("[crimson_tv] BUILD " .. CRIMSON_TV_BUILD)
 
 local function Clamp(num, min, max)
@@ -180,7 +180,7 @@ function ShowScreen(data)
                 local offset = GetOffsetFromEntityInWorldCoords(tvObj, screenModel.Offset.x, screenModel.Offset.y, screenModel.Offset.z)
                 if (screenModel.Target) then 
                     local id = targetId
-                    if (id and id > 0) then
+                    if id and id ~= 0 and id ~= -1 then
                         RenderScaleformTV(id, sfHandle, tvObj)
                     end
                 else
