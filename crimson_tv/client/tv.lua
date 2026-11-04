@@ -350,6 +350,7 @@ end)
 
 -- Inspect map props without adding unknown models with unverified render settings.
 RegisterCommand('tvdebug', function()
+    print('[crimson_tv] BUILD ' .. tostring(CRIMSON_TV_BUILD))
     -- Read the actual object under the camera crosshair rather than guessing
     -- which of the nearby furniture props is a television.
     local origin = GetGameplayCamCoord()

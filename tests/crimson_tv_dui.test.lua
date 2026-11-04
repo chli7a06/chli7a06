@@ -2,28 +2,33 @@ Config={Locations={},Menu={}}
 Citizen={CreateThread=function() end}
 GetCurrentResourceName=function() return 'crimson_tv' end
 RegisterNetEvent=function() end
-RegisterNUICallback=function() end
+local callbacks={}
+RegisterNUICallback=function(name,callback) callbacks[name]=callback end
 RegisterCommand=function() end
 AddEventHandler=function() end
-GetGameTimer=function() return 0 end
-local nativeCalls=0
-IsDuiAvailable=function(handle) assert(handle~=nil and handle~=0);nativeCalls=nativeCalls+1;return true end
+local clock=0
+GetGameTimer=function() return clock end
+IsDuiAvailable=function() error('legacy native must never be polled') end
 dofile('crimson_tv/client/main.lua')
 dofile('crimson_tv/client/tv.lua')
-assert(WaitForTVDui(nil)==nil and WaitForTVDui(0)==nil and nativeCalls==0)
-duiObj=10;assert(WaitForTVDui(9)==nil and nativeCalls==0)
-assert(WaitForTVDui(10)==10 and nativeCalls==1)
-IsDuiAvailable=function() return false end
-Wait=function() duiObj=11 end
-assert(WaitForTVDui(10)==nil,'retired handle must cancel wait')
-IsDuiAvailable=function() error('invalid handle') end
-assert(WaitForTVDui(11)==nil,'invalid native handle must not crash callback')
+assert(WaitForTVDui(nil)==nil and WaitForTVDui(0)==nil)
+duiObj=10;assert(WaitForTVDui(9)==nil)
+Wait=function() clock=clock+10; callbacks.pageLoaded({},function() end) end
+assert(WaitForTVDui(10)==10,'must wait for actual page acknowledgement')
+HideScreen=function() end -- restore real teardown below via a fresh load
+-- Another handle cannot inherit a prior page acknowledgement.
+duiObj=11
+Wait=function() clock=clock+10;duiObj=12 end
+assert(WaitForTVDui(11)==nil,'screen switch must cancel pending work')
+duiObj=13
+Wait=function() clock=clock+1000 end
+assert(WaitForTVDui(13)==nil,'missing page must time out')
 duiObj=nil
 SendDuiMessage=function() error('must not send to absent DUI') end
 PlayVideo({url='test'});ResetDisplay();PlayBrowser({url='test'})
--- A retired handle must be detached before its destroy native runs.
+dofile('crimson_tv/client/main.lua')
 duiObj=42
 DestroyDui=function(handle) assert(handle==42 and duiObj==nil) end
 HideScreen();assert(duiObj==nil and CURRENT_SCREEN==nil)
 for _,path in ipairs({'crimson_tv/client/main.lua','crimson_tv/client/tv.lua','crimson_tv/client/cursor.lua','crimson_tv/client/dui.lua'}) do assert(loadfile(path)) end
-print('PASS: nil/zero, retired, ready, cancelled and invalid DUI handles; absent playback; teardown ordering; Lua syntax')
+print('PASS: missing/retired handles, page handshake, cancellation, timeout, absent playback, teardown and syntax')

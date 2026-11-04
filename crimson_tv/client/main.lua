@@ -7,6 +7,9 @@ CURRENT_SCREEN = nil
 
 local Locations = Config.Locations
 local screenGeneration = 0
+local readyDui = nil
+CRIMSON_TV_BUILD = "2026-11-04-dui-handshake-1"
+print("[crimson_tv] BUILD " .. CRIMSON_TV_BUILD)
 
 local function Clamp(num, min, max)
     num = tonumber(num) or min
@@ -66,13 +69,13 @@ function WaitForTVDui(handle)
     if not handle or handle == 0 then return nil end
     local deadline = GetGameTimer() + 10000
     while duiObj == handle and GetGameTimer() < deadline do
-        local ok, available = pcall(IsDuiAvailable, handle)
-        if not ok then
-            print('[crimson_tv] DUI handle is invalid; cancelling pending display operation.')
-            return nil
-        end
-        if available then return handle end
+        -- The local player page confirms readiness via pageLoaded. Do not call
+        -- IS_DUI_AVAILABLE: the user's runtime reports invalid handle there.
+        if readyDui == handle then return handle end
         Wait(10)
+    end
+    if duiObj == handle then
+        print('[crimson_tv] TV page did not acknowledge loading within 10 seconds. Check NUI console and html/index.html dependencies.')
     end
     return nil
 end
@@ -193,6 +196,7 @@ function HideScreen()
     screenGeneration = screenGeneration + 1
     CURRENT_SCREEN = nil
     shouldDraw = false
+    readyDui = nil
     waitForLoad = false
     if CloseTVMenu then CloseTVMenu() end
     local oldDui, oldMovie = duiObj, sfHandle
@@ -290,6 +294,8 @@ end)
 
 
 RegisterNUICallback("pageLoaded", function(_, cb)
+    readyDui = duiObj
+    print("[crimson_tv] TV page ready (" .. CRIMSON_TV_BUILD .. ")")
     waitForLoad = false
     if cb then cb(1) end
 end)
