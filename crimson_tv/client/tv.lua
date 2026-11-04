@@ -349,6 +349,27 @@ end)
 
 -- Inspect map props without adding unknown models with unverified render settings.
 RegisterCommand('tvdebug', function()
+    -- Read the actual object under the camera crosshair rather than guessing
+    -- which of the nearby furniture props is a television.
+    local origin = GetGameplayCamCoord()
+    local rotation = GetGameplayCamRot(2)
+    local pitch, yaw = math.rad(rotation.x), math.rad(rotation.z)
+    local direction = vector3(-math.sin(yaw) * math.cos(pitch), math.cos(yaw) * math.cos(pitch), math.sin(pitch))
+    local destination = origin + direction * 20.0
+    local probe = StartShapeTestRay(origin.x, origin.y, origin.z, destination.x, destination.y, destination.z, 16, PlayerPedId(), 7)
+    local state, hit, entity
+    for attempt = 1, 50 do
+        local hitCoords, normal
+        state, hit, hitCoords, normal, entity = GetShapeTestResult(probe)
+        if state ~= 1 then break end
+        Wait(0)
+    end
+    if state == 2 and (hit == 1 or hit == true) and entity and entity ~= 0 and IsEntityAnObject(entity) then
+        local model = GetEntityModel(entity)
+        print(('[crimson_tv] AIMED OBJECT model=%s supported=%s'):format(model, tostring(Config.Models[model] ~= nil)))
+    else
+        print('[crimson_tv] AIMED OBJECT not detected. Aim the camera centre at the TV screen and retry /tvdebug.')
+    end
     local playerCoords = GetEntityCoords(PlayerPedId())
     local objects = GetGamePool('CObject')
     local nearby = {}
