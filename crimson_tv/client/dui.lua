@@ -6,7 +6,7 @@ function CreateNamedRenderTargetForModel(name, model)
 	if not IsNamedRendertargetLinked(model) then
 		LinkNamedRendertarget(model)
 	end
-	if IsNamedRendertargetRegistered(name) then
+	if IsNamedRendertargetRegistered(name) and IsNamedRendertargetLinked(model) then
 		handle = GetNamedRendertargetRenderId(name)
 	end
 	return handle

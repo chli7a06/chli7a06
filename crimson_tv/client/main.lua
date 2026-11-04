@@ -8,7 +8,7 @@ CURRENT_SCREEN = nil
 local Locations = Config.Locations
 local screenGeneration = 0
 local readyDui = nil
-CRIMSON_TV_BUILD = "2026-11-04-dui-handshake-1"
+CRIMSON_TV_BUILD = "2026-11-04-target-renderer-2"
 print("[crimson_tv] BUILD " .. CRIMSON_TV_BUILD)
 
 local function Clamp(num, min, max)
@@ -99,9 +99,14 @@ local txdHasBeenSet = false
 function loadScaleform(scaleform)
     local scaleformHandle = RequestScaleformMovie(scaleform)
 
-    while not HasScaleformMovieLoaded(scaleformHandle) do 
-        scaleformHandle = RequestScaleformMovie(scaleform)
-        Citizen.Wait(0) 
+    local deadline = GetGameTimer() + 10000
+    while not HasScaleformMovieLoaded(scaleformHandle) do
+        if GetGameTimer() >= deadline then
+            SetScaleformMovieAsNoLongerNeeded(scaleformHandle)
+            print('[crimson_tv] Missing scaleform: ' .. scaleform .. '. This is required only by models without a named render target.')
+            return nil
+        end
+        Citizen.Wait(0)
     end
     return scaleformHandle
 end
@@ -110,9 +115,19 @@ function ShowScreen(data)
     HideScreen()
     local generation = screenGeneration
     CURRENT_SCREEN = data
-    local movie = loadScaleform(sfName)
+    local screenModel = Config.Models[data.model]
+    print(('[crimson_tv] Opening TV model=%s renderer=%s'):format(data.model, screenModel.Target or sfName))
+    local movie
+    -- Named targets draw the DUI texture directly and do not use a scaleform.
+    if not screenModel.Target then
+        movie = loadScaleform(sfName)
+        if not movie then
+            if generation == screenGeneration then HideScreen() end
+            return
+        end
+    end
     if generation ~= screenGeneration then
-        SetScaleformMovieAsNoLongerNeeded(movie)
+        if movie then SetScaleformMovieAsNoLongerNeeded(movie) end
         return
     end
     sfHandle = movie
@@ -136,7 +151,8 @@ function ShowScreen(data)
     
     if generation ~= screenGeneration then return end
 
-    PushScaleformMovieFunction(sfHandle, 'SET_TEXTURE')
+    if movie then
+    PushScaleformMovieFunction(movie, 'SET_TEXTURE')
 
     PushScaleformMovieMethodParameterString('crimson_tv_b_dict')
     PushScaleformMovieMethodParameterString('crimson_tv_b_txd')
@@ -147,17 +163,23 @@ function ShowScreen(data)
     PushScaleformMovieFunctionParameterInt(height)
 
     PopScaleformMovieFunctionVoid()
+    end
     Citizen.CreateThread(function()
         TriggerServerEvent("crimson_tv:requestSync", data.coords)
         local tvObj = data.entity
         local screenModel = Config.Models[data.model]
+        local targetId
+        if screenModel.Target then
+            targetId = CreateNamedRenderTargetForModel(screenModel.Target, data.model)
+            print(('[crimson_tv] Render target %s model=%s linked=%s id=%s'):format(screenModel.Target, data.model, tostring(IsNamedRendertargetLinked(data.model)), tostring(targetId)))
+        end
         while generation == screenGeneration and duiObj == handle do
-            if (tvObj and sfHandle ~= nil and HasScaleformMovieLoaded(sfHandle)) then
+            if tvObj and DoesEntityExist(tvObj) and (screenModel.Target or (movie and HasScaleformMovieLoaded(movie))) then
                 local pos = GetEntityCoords(tvObj)
                 local scale = screenModel.Scale
                 local offset = GetOffsetFromEntityInWorldCoords(tvObj, screenModel.Offset.x, screenModel.Offset.y, screenModel.Offset.z)
                 if (screenModel.Target) then 
-                    local id = CreateNamedRenderTargetForModel(screenModel.Target, data.model)
+                    local id = targetId
                     if (id and id > 0) then
                         RenderScaleformTV(id, sfHandle, tvObj)
                     end
