@@ -27,6 +27,15 @@ Config.Menu = {
 }
 
 Config.Models = { -- Any TV Models used on the map or in locations must be defined here.
+    -- TV identified by the user's in-game camera raycast.
+    -- Standard tvscreen target; visual mapping must be checked in FiveM.
+    [777010715] = {
+        DefaultVolume = 0.5,
+        Range = 20.0,
+        Target = "tvscreen",
+        Scale = 0.085,
+        Offset = vector3(-1.02, -0.055, 1.04),
+    },
     [`des_tvsmash_start`] = {
         DefaultVolume = 0.5,
         Range = 20.0,

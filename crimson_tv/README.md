@@ -75,3 +75,5 @@ Validation: local JavaScript and Lua syntax checks only. Lua syntax checks subst
 
 ## TV detection troubleshooting
 The /tv command refreshes the closest supported TV before opening controls. If a TV is not detected, stand next to it, run /tvdebug and inspect the [crimson_tv] lines in F8. They list nearby model hashes, distances and whether each model is configured. Custom/map TV models require verified Config.Models render settings; proximity alone does not make every prop renderable.
+
+Model 777010715 is enabled based on the in-game aimed-object diagnostic. It uses the standard tvscreen render target provisionally. Detection/configuration checks pass locally; its actual model render-target mapping still requires in-game validation. If controls open but the display stays blank, report F8 errors and the model asset/name so the render mapping can be checked.
