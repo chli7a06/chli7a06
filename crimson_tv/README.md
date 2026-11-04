@@ -72,3 +72,6 @@ ensure crimson_tv
 ```
 
 Validation: local JavaScript and Lua syntax checks only. Lua syntax checks substitute FiveM backtick hash literals in temporary copies because ordinary Lua cannot parse that FiveM extension. No live FiveM, media playback, synchronization or browser rendering validation was performed. Verify /tv near a supported prop, playback, volume, /broadcast with two players, and restart cleanup on a development server. YouTube/Twitch embedding depends on their current platform policies and client connectivity. The supplied server event permission hooks remain permissive; review Config.Events before public deployment.
+
+## TV detection troubleshooting
+The /tv command refreshes the closest supported TV before opening controls. If a TV is not detected, stand next to it, run /tvdebug and inspect the [crimson_tv] lines in F8. They list nearby model hashes, distances and whether each model is configured. Custom/map TV models require verified Config.Models render settings; proximity alone does not make every prop renderable.

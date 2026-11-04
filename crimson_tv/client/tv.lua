@@ -164,8 +164,12 @@ function TurnOffTV()
 end
 
 function OpenTVMenu() 
-    local screen = CURRENT_SCREEN
-    if not screen then return end
+    -- Resolve again on command: the background renderer polls less frequently.
+    local screen = GetClosestScreen()
+    if not screen then
+        lib.notify({title = 'Crimson TV', description = 'No supported TV detected nearby. Use /tvdebug to inspect the TV model.', type = 'error'})
+        return
+    end
     if not IsCloseEnoughForTVMenu(screen) then
         CloseTVMenu()
         lib.notify({
@@ -174,6 +178,11 @@ function OpenTVMenu()
             type = 'error'
         })
         return
+    end
+
+    if not CURRENT_SCREEN or CURRENT_SCREEN.entity ~= screen.entity then
+        HideScreen()
+        ShowScreen(screen)
     end
 
     lib.hideMenu()
@@ -337,3 +346,26 @@ end)
 RegisterCommand("broadcast", function(source, args, raw)
     BroadcastMenu()
 end)
+
+-- Inspect map props without adding unknown models with unverified render settings.
+RegisterCommand('tvdebug', function()
+    local playerCoords = GetEntityCoords(PlayerPedId())
+    local objects = GetGamePool('CObject')
+    local nearby = {}
+    for _, entity in ipairs(objects) do
+        local distance = #(playerCoords - GetEntityCoords(entity))
+        if distance <= 10.0 then
+            local model = GetEntityModel(entity)
+            nearby[#nearby + 1] = {distance = distance, model = model, supported = Config.Models[model] ~= nil}
+        end
+    end
+    table.sort(nearby, function(a, b) return a.distance < b.distance end)
+    print('[crimson_tv] Nearby objects (closest first):')
+    for i = 1, math.min(#nearby, 15) do
+        local object = nearby[i]
+        print(('[crimson_tv] model=%s distance=%.2fm supported=%s'):format(object.model, object.distance, tostring(object.supported)))
+    end
+    local screen = GetClosestScreen()
+    print(('[crimson_tv] Selected supported TV: %s; menu distance limit: %s m'):format(screen and tostring(screen.model) or 'none', (Config.Menu and Config.Menu.OpenDistance) or 3.0))
+    lib.notify({title = 'Crimson TV', description = 'TV diagnostics printed in F8. Send the [crimson_tv] lines for model setup.', type = 'inform'})
+end, false)
