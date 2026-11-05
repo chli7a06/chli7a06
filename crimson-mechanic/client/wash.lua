@@ -139,6 +139,37 @@ local function addHose(v, data, isCurrent)
     updateHose(v)
 end
 
+-- The source model points along +X with +Z up. Place it in world space
+-- from the chest, then solve both arms to actual model-space grips. This
+-- avoids aiming backwards when a hand/weapon bone rotates during a clip.
+local function updateWasherPose(v)
+    local tool = W.tools[v.toolKey]
+    local pose = tool and tool.pose
+    if not pose or v.destroyed or not v.tool or not DoesEntityExist(v.tool) or not DoesEntityExist(v.ped) then return end
+    local stance = v.aiming and pose.spray or pose.carry
+    local heading = GetEntityHeading(v.ped)
+    local h = math.rad(heading)
+    local pitch = v.aiming and math.max(-55.0,math.min(45.0,v.pitch or 0.0)) or (stance.pitch or -20.0)
+    local yaw = v.aiming and math.max(-65.0,math.min(65.0,v.yaw or 0.0)) or 0.0
+    local a,p=math.rad(heading+yaw),math.rad(pitch)
+    local dx,dy,dz=-math.sin(a)*math.cos(p),math.cos(a)*math.cos(p),math.sin(p)
+    local sx,sy=-math.cos(a),-math.sin(a)
+    local ux,uy,uz=-dz*sy,dz*sx,math.cos(p)
+    local chest=GetPedBoneCoords(v.ped,pose.chestBone,0.0,0.0,0.0)
+    local grip=vec3(chest.x+math.cos(h)*stance.right-math.sin(h)*stance.forward,
+        chest.y+math.sin(h)*stance.right+math.cos(h)*stance.forward,chest.z-stance.down)
+    local g=pose.rightGrip
+    local position=vec3(grip.x-dx*g.x-sx*g.y-ux*g.z,
+        grip.y-dy*g.x-sy*g.y-uy*g.z,grip.z-dz*g.x-uz*g.z)
+    SetEntityRotation(v.tool,0.0,-pitch,heading+yaw+90.0,2,true)
+    SetEntityCoordsNoOffset(v.tool,position.x,position.y,position.z,false,false,false)
+    -- SET_IK_TARGET arm indexes: 3 = left arm, 4 = right arm. The requests
+    -- expire after one update; no persistent player flags or weapons are changed.
+    SetIkTarget(v.ped,4,0,-1,grip.x,grip.y,grip.z,16,0,100)
+    local left=pose.leftGrip
+    SetIkTarget(v.ped,3,v.tool,-1,left.x,left.y,left.z,16,0,100)
+end
+
 local function createVisual(ped, data, isCurrent, onCreated)
     local tool = W.tools[data.tool]
     if not tool then return end
@@ -157,7 +188,12 @@ local function createVisual(ped, data, isCurrent, onCreated)
     SetEntityAsMissionEntity(v.tool, true, true)
     SetEntityCollision(v.tool, false, false)
     if tool.hidden then SetEntityAlpha(v.tool, 0, false) end
-    attachTool(v.tool, ped, tool.hand)
+    if tool.pose then
+        SetEntityHasGravity(v.tool, false)
+        updateWasherPose(v)
+    else
+        attachTool(v.tool, ped, tool.hand)
+    end
     onCreated(v) -- Register partial visuals before any yielding hose setup.
     if tool.hose then addHose(v, data, isCurrent) end
     if not isCurrent() then destroyVisual(v); return end
@@ -213,6 +249,7 @@ end
 --- Jet on (fx = key in Config.Wash.effects) or off (fx = nil).
 local function setJet(v, fx, pitch, yaw)
     if not v or v.destroyed or not DoesEntityExist(v.ped) then return end
+    v.aiming, v.pitch, v.yaw = fx ~= nil, pitch or 0.0, yaw or 0.0
     if v.fxKey ~= fx then stopJet(v) end
     local effect = fx and W.effects[fx]
     if not effect then return end
@@ -314,6 +351,10 @@ CreateThread(function()
         for _, entry in pairs(visuals) do
             local v = entry.visual
             if v and not v.destroyed and DoesEntityExist(v.ped) then
+                if W.tools[v.toolKey] and W.tools[v.toolKey].pose then
+                    activeHose = true
+                    updateWasherPose(v)
+                end
                 if v.fx then activeJet = true; aimJet(v) end
                 if v.rope then activeHose = true; updateHose(v) end
                 if v.hoseMesh then activeHose = true; drawRubberHose(v) end

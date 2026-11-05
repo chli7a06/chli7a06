@@ -115,7 +115,15 @@ Config.Wash = {
             muzzle = vec3(0.990, 0.0, 0.041), -- model-space tip, shared by local/remote jets and aiming
             hand = { bone = 28422, pos = vec3(0.0, 0.0, 0.0), rot = vec3(180.0, 0.0, 90.0), rotOrder = 2 },
             anim = { dict = 'move_weapon@rifle@generic', clip = 'idle' },
-            aimAnim = { dict = 'combat@aim_turns@rifle', clip = 'r_0' },
+            aimAnim = { dict = 'move_weapon@rifle@generic', clip = 'idle' },
+            -- Live two-hand IK and model orientation replace hand-bone rotation guesses.
+            pose = {
+                chestBone = 24818,
+                rightGrip = vec3(-0.04, 0.0, -0.025),
+                leftGrip = vec3(0.22, 0.0, 0.095),
+                carry = { forward = 0.32, right = 0.18, down = 0.28, pitch = -20.0 },
+                spray = { forward = 0.42, right = 0.13, down = 0.13 },
+            },
         },
         sponge = {
             model = 'prop_sponge_01',

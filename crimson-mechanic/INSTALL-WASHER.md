@@ -48,3 +48,13 @@ The gun now has separate carry and spray clips: `move_weapon@rifle@generic` / `i
 The default near hose has 16 spans and 8 sides (256 triangles); distant hoses use fewer spans and the render distance is 35m. Geometry tables and circle samples are reused. Tune `hose.segments`, `.sides`, `.radius` and `.renderDistance` if many wash sessions are visible. Native-rope fallback remains available through `hose.renderer = 'native'` and is regression-tested.
 
 Mocked checks cover both rendering modes, finite mesh coordinates including vertical endpoints, near-black material colors, idle/spray animation selection, local/remote muzzle offsets and cleanup. **No live render/performance, ped-animation or collision testing was possible here.** Do not treat the animation-list check as proof of an exact screenshot match. Install the updated config and client wash file together; no CodeWalker reconversion is needed.
+
+## Chest-relative two-hand IK revision (1.3.5)
+
+The prior screenshots showed that clip selection plus a weapon-bone attachment still produced a backwards/upward model and incorrect arms. The gun now uses an optional `tools.gun.pose` controller instead: it is positioned from the chest in world space, its source +X axis points forward with camera pitch/yaw while spraying, and its +Z orientation keeps the bottle below the lance. Carry and spray have separate chest-relative grip targets.
+
+The controller requests right-arm IK (native part 4) toward the model grip and left-arm IK (part 3) toward the front support point on the gun. Requests are refreshed every frame and expire on their own after the session ends; no real weapon or persistent IK player flags are created/changed. The walking base clip remains the verified `move_weapon@rifle@generic` idle for both states; arm placement is controlled by IK rather than the previous aim-turn clip. Physics/gravity are disabled on the local visual gun; it is no longer attached to the rotating weapon-hand bone when `pose` is set. Other tools retain their normal attachment and animations.
+
+**This is still not a live-verified custom animation.** Mocked tests verify the forward/down carry direction, forward/up spray direction, both IK target indexes, the grip-height change and cleanup. They cannot verify the game's actual IK solver, hand orientation, finger closure, shoulder appearance or exact resemblance to the reference video. Ped-dependent tuning remains under `pose.carry`, `.spray`, `.rightGrip` and `.leftGrip`.
+
+Install the updated `client/wash.lua` and the new `Config.Wash.tools.gun.pose` config together. Keeping only the old hand settings will retain the old attachment behavior. WaveShield, server billing, UI and the black rubber hose renderer remain unchanged.
