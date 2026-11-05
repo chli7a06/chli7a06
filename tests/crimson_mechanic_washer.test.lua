@@ -8,6 +8,7 @@ vec4=function(x,y,z,w) return {x=x,y=y,z=z,w=w} end
 local function close(a,b) return math.abs(a-b)<.00001 end
 Lang={wash={}};cache={ped=1,serverId=11,playerId=0}
 dofile('crimson-mechanic/config.lua')
+Config.Wash.hose.renderer='native' -- Retain fallback coverage before exercising rubber renderer.
 assert(Config.Wash.tools.gun.model=='crimson_pressure_washer' and not Config.Wash.tools.gun.hidden)
 local threads={};CreateThread=function(fn) threads[#threads+1]=fn end
 AddStateBagChangeHandler=function() end
@@ -61,7 +62,7 @@ SetParticleFxLoopedOffsets=function() end
 local f=assert(io.open('crimson-mechanic/client/wash.lua'));local src=f:read('*a');f:close()
 src=src:gsub('`[^`]+`','0')
 src=src:sub(1,assert(src:find('%-%- Dirt level while being washed'))-1)
-local api=assert(load(src..'\nreturn {refresh=refreshVisual,stop=stopVisual,nozzle=nozzleOffset,jet=setJet,visuals=visuals,destroy=destroyVisual,updateHose=updateHose}'))()
+local api=assert(load(src..'\nreturn {refresh=refreshVisual,stop=stopVisual,nozzle=nozzleOffset,jet=setJet,visuals=visuals,destroy=destroyVisual,updateHose=updateHose,drawHose=drawRubberHose,animation=washAnimation}'))()
 local function data(id,tool) return {id=id,tool=tool or 'gun',ax=10,ay=0,az=2,len=12} end
 local function build(serverId,ped,d)
  state[serverId]=d;api.refresh(serverId,d,ped);threads[#threads]()
@@ -96,4 +97,26 @@ lib.requestNamedPtfxAsset=function() api.stop(11) end
 api.jet(v,'water',0,0);assert(fxCreated==fx0)
 api.stop(22);local d0=deleted;api.destroy(v);assert(deleted==d0,'cleanup must be idempotent')
 assert(created==deleted,'all test-created props must be removed')
-print('PASS: custom model, pinned hose endpoints and dynamic slack, local/remote muzzle, sponge transition, cancelled model/rope/effect loads, no leaked props')
+-- Smooth black hose must not create a braided native rope or an anchor prop.
+Config.Wash.hose.renderer='rubber';lib.requestNamedPtfxAsset=function() end
+local ropesBefore=rope;local objectsBefore=created
+local rubber=assert(build(11,1,data(6)))
+assert(rubber.hoseMesh and not rubber.rope and not rubber.anchor)
+assert(created==objectsBefore+1 and rope==ropesBefore,'rubber mode must create only the gun')
+GetGroundZFor_3dCoord=function() return false,0 end
+local polygons=0
+DrawPoly=function(...)
+ local args={...};polygons=polygons+1
+ for i=1,9 do assert(args[i]==args[i] and math.abs(args[i])<10000,'mesh coordinates must be finite') end
+ assert(args[10]<30 and args[13]==255,'hose must be opaque near-black')
+end
+api.drawHose(rubber);assert(polygons==Config.Wash.hose.segments*Config.Wash.hose.sides*2)
+-- Vertical hose endpoints must not divide by zero.
+positions[rubber.tool]=vec3(10,0,3);api.drawHose(rubber)
+assert(api.animation(Config.Wash.tools.gun,false)==Config.Wash.tools.gun.anim)
+assert(api.animation(Config.Wash.tools.gun,true)==Config.Wash.tools.gun.aimAnim)
+assert(api.animation(Config.Wash.tools.sponge,false)==nil)
+assert(api.animation(Config.Wash.tools.sponge,true)==Config.Wash.tools.sponge.anim)
+api.stop(11);assert(created==deleted,'rubber-mode cleanup must remove gun')
+
+print('PASS: native fallback and rubber hose, finite black tube geometry, idle/aim states, local/remote muzzle, sponge transitions and cancellation cleanup')

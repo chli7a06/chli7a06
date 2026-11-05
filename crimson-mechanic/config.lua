@@ -78,6 +78,11 @@ Config.Wash = {
     timeout = 300,                -- seconds before an unfinished wash is dropped
 
     hose = {
+        renderer = 'rubber',      -- smooth black tube; 'native' keeps the GTA rope fallback
+        radius = 0.008,           -- same 8mm radius as the Blender hose source
+        segments = 16,
+        sides = 8,
+        renderDistance = 35.0,
         ropeType = 3,             -- 1-4 thick ropes, 5-7 thin cables (3 = fuel pump hose). Debug: /washrope 1-7
         slack = 6.0,              -- hose length = anchor-to-bay distance + this
         maxLength = 20.0,
@@ -108,8 +113,9 @@ Config.Wash = {
         gun = {
             model = 'crimson_pressure_washer', hose = true, hidden = false,
             muzzle = vec3(0.990, 0.0, 0.041), -- model-space tip, shared by local/remote jets and aiming
-            hand = { bone = 28422, pos = vec3(0.0, 0.0, 0.0), rot = vec3(0.0, 0.0, 90.0), rotOrder = 2 },
-            anim = { dict = 'anim@move_m@security_guard', clip = 'idle' },
+            hand = { bone = 28422, pos = vec3(0.0, 0.0, 0.0), rot = vec3(180.0, 0.0, 90.0), rotOrder = 2 },
+            anim = { dict = 'move_weapon@rifle@generic', clip = 'idle' },
+            aimAnim = { dict = 'combat@aim_turns@rifle', clip = 'r_0' },
         },
         sponge = {
             model = 'prop_sponge_01',

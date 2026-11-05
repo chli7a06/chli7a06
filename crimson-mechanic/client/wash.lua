@@ -63,7 +63,7 @@ local function destroyVisual(v)
     if v.rope and DoesRopeExist(v.rope) then DeleteRope(v.rope) end
     if v.tool and DoesEntityExist(v.tool) then DeleteEntity(v.tool) end
     if v.anchor and DoesEntityExist(v.anchor) then DeleteEntity(v.anchor) end
-    v.rope, v.tool, v.anchor = nil, nil, nil
+    v.rope, v.tool, v.anchor, v.hoseMesh = nil, nil, nil, nil
 end
 
 -- ox_lib asset requests may yield or raise on timeout. Check native readiness,
@@ -100,6 +100,13 @@ local function updateHose(v)
 end
 
 local function addHose(v, data, isCurrent)
+    if W.hose.renderer == 'rubber' then
+        if not isCurrent() then return end
+        v.hoseMesh = true
+        v.hoseAnchor = vec3(data.ax, data.ay, data.az)
+        v.hoseMaxLength = data.len
+        return
+    end
     local model = joaat(W.hose.anchorModel)
     if not requestModel(model) then return end
     if not isCurrent() then SetModelAsNoLongerNeeded(model); return end
@@ -154,10 +161,14 @@ local function createVisual(ped, data, isCurrent, onCreated)
     onCreated(v) -- Register partial visuals before any yielding hose setup.
     if tool.hose then addHose(v, data, isCurrent) end
     if not isCurrent() then destroyVisual(v); return end
-    if tool.hose and not v.rope and not v.remote then
+    if tool.hose and not v.rope and not v.hoseMesh and not v.remote then
         notify('Unable to create the wash hose. Check the station anchor and rope textures.', 'error')
     end
     return v
+end
+
+local function washAnimation(tool, pressing)
+    return pressing and tool.aimAnim or ((pressing or tool.hose) and tool.anim or nil)
 end
 
 --- Effect APIs take a ped-local offset. Convert the model's actual muzzle
@@ -225,6 +236,77 @@ local function setJet(v, fx, pitch, yaw)
 end
 
 
+-- The Blender hose is a static curved mesh. Its binary YDR cannot be
+-- stretched by a rope native. Draw a round rubber tube along a live curve
+-- using the same source radius, without replacing global GTA rope textures.
+local function drawRubberHose(v)
+    if not v.hoseMesh or not v.tool or not DoesEntityExist(v.tool) then return end
+    local a = v.hoseAnchor
+    local t = W.hose.tip
+    local b = GetOffsetFromEntityInWorldCoords(v.tool, t.x, t.y, t.z)
+    local midpoint = vec3((a.x+b.x)*0.5, (a.y+b.y)*0.5, (a.z+b.z)*0.5)
+    local viewDistance = #(GetEntityCoords(cache.ped) - midpoint)
+    if viewDistance > (W.hose.renderDistance or 35.0) then return end
+    local segments = math.max(4, math.min(24, math.floor(W.hose.segments or 16)))
+    if viewDistance > 12 then segments = math.min(segments, 8) end
+    local sides = math.max(6, math.min(10, math.floor(W.hose.sides or 8)))
+    local radius = math.max(0.003, math.min(0.02, W.hose.radius or 0.008))
+    local dx, dy, dz = b.x-a.x, b.y-a.y, b.z-a.z
+    local distance = math.sqrt(dx*dx+dy*dy+dz*dz)
+    if distance < 0.02 then return end
+    local horizontal = math.sqrt(dx*dx+dy*dy)
+    local sideX, sideY = 1.0, 0.0
+    if horizontal > 0.001 then sideX, sideY = -dy/horizontal, dx/horizontal end
+    local sag = math.min(0.9, distance*0.15)
+    local now = GetGameTimer()
+    if not v.groundCheckedAt or now-v.groundCheckedAt > 500 then
+        v.groundCheckedAt = now
+        local found, ground = GetGroundZFor_3dCoord(midpoint.x, midpoint.y, math.max(a.z,b.z)+5.0, false)
+        v.hoseGround = found and ground or nil
+    end
+    if not v.hoseCircle or #v.hoseCircle ~= sides then
+        v.hoseCircle = {}
+        for j=0,sides-1 do
+            local angle=j*math.pi*2/sides
+            v.hoseCircle[j+1]={c=math.cos(angle),s=math.sin(angle)}
+        end
+    end
+    local rings = v.hoseRings or {}
+    v.hoseRings = rings
+    for i=0,segments do
+        local u = i/segments
+        local x,y,z = a.x+dx*u, a.y+dy*u, a.z+dz*u-4*sag*u*(1-u)
+        if i>0 and i<segments and v.hoseGround then z=math.max(z,v.hoseGround+radius) end
+        local tangentZ = dz-4*sag*(1-2*u)
+        local tangentLength = math.sqrt(dx*dx+dy*dy+tangentZ*tangentZ)
+        local tx,ty,tz = 0.0,0.0,1.0
+        if tangentLength > 0.0001 then tx,ty,tz=dx/tangentLength,dy/tangentLength,tangentZ/tangentLength end
+        local ux,uy,uz = -tz*sideY,tz*sideX,tx*sideY-ty*sideX
+        local upLength = math.sqrt(ux*ux+uy*uy+uz*uz)
+        if upLength < 0.001 then ux,uy,uz,upLength=0,1,0,1 end
+        ux,uy,uz=ux/upLength,uy/upLength,uz/upLength
+        local ring=rings[i+1] or {}
+        for j=1,sides do
+            local circle=v.hoseCircle[j]
+            local c,s=circle.c*radius,circle.s*radius
+            local vertex=ring[j] or {}
+            vertex.x,vertex.y,vertex.z=x+sideX*c+ux*s,y+sideY*c+uy*s,z+uz*s
+            ring[j]=vertex
+        end
+        rings[i+1]=ring
+    end
+    for i=1,segments do
+        for j=1,sides do
+            local nextJ=j%sides+1
+            local p,q,r,s=rings[i][j],rings[i][nextJ],rings[i+1][nextJ],rings[i+1][j]
+            -- A subtle cylindrical highlight, with no braided rope texture.
+            local shade=12+math.floor(6*math.max(0,math.sin(j*math.pi*2/sides)))
+            DrawPoly(p.x,p.y,p.z,q.x,q.y,q.z,r.x,r.y,r.z,shade,shade+1,shade+2,255)
+            DrawPoly(p.x,p.y,p.z,r.x,r.y,r.z,s.x,s.y,s.z,shade,shade+1,shade+2,255)
+        end
+    end
+end
+
 -- Keep particles at the muzzle and adjust hose slack as the player moves.
 CreateThread(function()
     while true do
@@ -234,6 +316,7 @@ CreateThread(function()
             if v and not v.destroyed and DoesEntityExist(v.ped) then
                 if v.fx then activeJet = true; aimJet(v) end
                 if v.rope then activeHose = true; updateHose(v) end
+                if v.hoseMesh then activeHose = true; drawRubberHose(v) end
             end
         end
         Wait((activeJet or activeHose) and 0 or 250)
@@ -485,7 +568,10 @@ end
 local function runStage(session, stage, index)
     local veh = session.vehicle
     local tool = W.tools[stage.tool]
-    for _, anim in ipairs({ tool.anim, tool.sideAnim }) do lib.requestAnimDict(anim.dict, 2000) end
+    local animations = { tool.anim }
+    if tool.aimAnim then animations[#animations+1] = tool.aimAnim end
+    if tool.sideAnim then animations[#animations+1] = tool.sideAnim end
+    for _, anim in ipairs(animations) do lib.requestAnimDict(anim.dict, 2000) end
     local playing -- anim currently looping
     local progress = { front = 0, left = 0, right = 0, rear = 0 }
     local from = session.dirt * (index == 1 and 1.0 or W.stages[index - 1].dirt)
@@ -521,7 +607,7 @@ local function runStage(session, stage, index)
         local pressing = IsDisabledControlPressed(0, 24) and not stretched
         local zone, jet
         -- the hose is gripped the whole time; the sponge only moves while scrubbing
-        local anim = (pressing or tool.hose) and tool.anim or nil
+        local anim = washAnimation(tool, pressing)
         if pressing and stage.fx then
             ShowHudComponentThisFrame(14)
             local dir, at, entity = aimAt(ped)
@@ -546,7 +632,7 @@ local function runStage(session, stage, index)
         if zone then progress[zone] = math.min(stage.zoneTime, progress[zone] + dt) end
 
         -- animation + jet on/off
-        if anim ~= playing then
+        if anim ~= playing or (anim and not IsEntityPlayingAnim(ped, anim.dict, anim.clip, 3)) then
             if playing then StopAnimTask(ped, playing.dict, playing.clip, 1.0) end
             if anim then TaskPlayAnim(ped, anim.dict, anim.clip, 4.0, -4.0, -1, 49, 0.0, false, false, false) end
             playing = anim
@@ -579,7 +665,7 @@ local function runStage(session, stage, index)
     end
 
     if playing then StopAnimTask(cache.ped, playing.dict, playing.clip, 1.0) end
-    for _, anim in ipairs({ tool.anim, tool.sideAnim }) do RemoveAnimDict(anim.dict) end
+    for _, anim in ipairs(animations) do RemoveAnimDict(anim.dict) end
     return outcome, reason
 end
 
