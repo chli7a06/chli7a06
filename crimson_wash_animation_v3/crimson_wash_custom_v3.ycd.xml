@@ -1,0 +1,1263 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ClipDictionary>
+  <Clips>
+    <Item>
+      <Hash>carry</Hash>
+      <Name>pack:/crimson_wash_custom_v3/carry.clip</Name>
+      <Type value="Animation" />
+      <Unknown30 value="0" />
+      <Tags />
+      <Properties />
+      <AnimationHash>crimson_wash_v3_carry</AnimationHash>
+      <StartTime value="0" />
+      <EndTime value="1" />
+      <Rate value="1" />
+    </Item>
+    <Item>
+      <Hash>spray</Hash>
+      <Name>pack:/crimson_wash_custom_v3/spray.clip</Name>
+      <Type value="Animation" />
+      <Unknown30 value="0" />
+      <Tags />
+      <Properties />
+      <AnimationHash>crimson_wash_v3_spray</AnimationHash>
+      <StartTime value="0" />
+      <EndTime value="1" />
+      <Rate value="1" />
+    </Item>
+  </Clips>
+  <Animations>
+    <Item>
+      <Hash>crimson_wash_v3_carry</Hash>
+      <Unknown10 value="0" />
+      <FrameCount value="31" />
+      <SequenceFrameLimit value="61" />
+      <Duration value="1" />
+      <Unknown1C>hash_1DC464A0</Unknown1C>
+      <BoneIds>
+        <Item>
+          <BoneId value="18905" />
+          <Track value="0" />
+          <Unk0 value="0" />
+        </Item>
+        <Item>
+          <BoneId value="28252" />
+          <Track value="0" />
+          <Unk0 value="0" />
+        </Item>
+        <Item>
+          <BoneId value="57005" />
+          <Track value="0" />
+          <Unk0 value="0" />
+        </Item>
+        <Item>
+          <BoneId value="61163" />
+          <Track value="0" />
+          <Unk0 value="0" />
+        </Item>
+        <Item>
+          <BoneId value="4089" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4090" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4137" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4138" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4153" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4154" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4169" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4170" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4185" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4186" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="10706" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="18905" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="23553" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="24816" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="24817" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="24818" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="26610" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="26611" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="26612" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="26613" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="26614" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="28252" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="40269" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="45509" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="57005" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="58866" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="58867" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="58868" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="58869" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="58870" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="61163" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64016" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64017" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64064" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64065" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64080" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64081" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64096" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64097" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64112" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64113" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64729" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+      </BoneIds>
+      <Sequences>
+        <Item>
+          <Hash>hash_00000000</Hash>
+          <FrameCount value="31" />
+          <SequenceData>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticVector3" />
+                  <Value x="0.259194046" y="-7.00820237e-08" z="-2.98023224e-08" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticVector3" />
+                  <Value x="0.274172008" y="-3.7252903e-09" z="7.68341124e-09" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticVector3" />
+                  <Value x="0.259193957" y="1.86264515e-09" z="3.25962901e-08" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticVector3" />
+                  <Value x="0.274172008" y="-7.82310963e-08" z="-2.04890966e-08" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.00215409137" y="0.0128278267" z="-0.387165636" w="0.921918452" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.000510576938" y="0.0101232296" z="-0.319517523" w="0.947526276" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.00214065402" y="-0.000520376954" z="-0.622143269" w="0.782900333" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.0235920772" y="-0.0147443675" z="-0.566725075" w="0.823437154" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.0126501732" y="-0.0214955695" z="-0.700454652" w="0.713260949" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.0161392521" y="-0.0151254404" z="-0.461312979" w="0.886961699" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.00269457418" y="-0.0352482274" z="-0.616469383" w="0.786584914" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.00166866067" y="-0.0115677118" z="-0.488958985" w="0.872228503" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.000272511388" y="-0.0167793594" z="-0.584889174" w="0.81093961" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.00457501039" y="-0.0325132534" z="-0.547942221" w="0.835871637" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.119501062" y="0.779033542" z="-0.100879982" w="0.607165098" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.64509517" y="-0.36611259" z="-0.349632233" w="0.572338343" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="4.13673176e-12" y="8.6784635e-11" z="-0.0476105101" w="0.998865962" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-4.99540465e-06" y="-2.12646498e-07" z="0.0443878919" w="0.999014378" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="4.99790895e-06" y="-1.38637503e-07" z="-0.0238453709" w="0.999715686" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-1.99399074e-06" y="-1.98864285e-07" z="0.033285968" w="0.999445975" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.0276818406" y="-0.161441401" z="0.113035679" w="0.979996681" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.611316264" y="-0.213306293" z="-0.216207102" w="0.730785429" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.656973541" y="-0.267181098" z="-0.2895087" w="0.642794549" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.753457308" y="-0.218235865" z="-0.286017567" w="0.550335467" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.825948358" y="-0.132839918" z="-0.241000235" w="0.492018312" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.0629158542" y="0.710858345" z="0.259339094" w="0.650742173" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.0142934341" y="0.471423656" z="0.284405679" w="0.834666908" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.0761090741" y="-0.57037586" z="0.517348289" w="0.633426785" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.223088801" y="-0.57476908" z="0.10367883" w="0.780463219" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.0711101443" y="0.147556111" z="0.378779411" w="0.91087687" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.757227182" y="0.0860226229" z="0.103912681" w="0.63906908" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.642794013" y="0.289508104" z="0.267181724" w="0.656974077" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.550334811" y="0.286017299" z="0.218235925" w="0.753457904" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.492016345" y="0.241000891" z="0.132839933" w="0.825949311" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.0238904133" y="-0.175497279" z="0.169622049" w="0.969462931" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.00810144283" y="-0.0101769511" z="0.108331725" w="0.994029701" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.00365576707" y="-0.00947002042" z="0.0934995934" w="0.99556756" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.0021408454" y="-0.000521426497" z="0.622143805" w="0.782899916" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.0235914551" y="-0.0147450278" z="0.566725075" w="0.823437154" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.0126500688" y="-0.0214950312" z="0.70045495" w="0.713260651" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.0161390211" y="-0.0151251592" z="0.461313546" w="0.88696146" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.0111423442" y="-0.0335497186" z="0.407866329" w="0.912357032" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.00345776044" y="-0.0111642601" z="0.34649232" w="0.937979996" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.000272977457" y="-0.0167794693" z="0.584888399" w="0.810940206" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.00457507605" y="-0.0325129852" z="0.547942698" w="0.835871339" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.119502857" y="-0.779033422" z="-0.100883849" w="0.607164323" />
+                </Item>
+              </Channels>
+            </Item>
+          </SequenceData>
+        </Item>
+      </Sequences>
+    </Item>
+    <Item>
+      <Hash>crimson_wash_v3_spray</Hash>
+      <Unknown10 value="0" />
+      <FrameCount value="31" />
+      <SequenceFrameLimit value="61" />
+      <Duration value="1" />
+      <Unknown1C>hash_81344309</Unknown1C>
+      <BoneIds>
+        <Item>
+          <BoneId value="18905" />
+          <Track value="0" />
+          <Unk0 value="0" />
+        </Item>
+        <Item>
+          <BoneId value="28252" />
+          <Track value="0" />
+          <Unk0 value="0" />
+        </Item>
+        <Item>
+          <BoneId value="57005" />
+          <Track value="0" />
+          <Unk0 value="0" />
+        </Item>
+        <Item>
+          <BoneId value="61163" />
+          <Track value="0" />
+          <Unk0 value="0" />
+        </Item>
+        <Item>
+          <BoneId value="4089" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4090" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4137" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4138" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4153" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4154" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4169" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4170" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4185" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="4186" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="10706" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="18905" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="23553" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="24816" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="24817" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="24818" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="26610" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="26611" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="26612" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="26613" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="26614" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="28252" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="40269" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="45509" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="57005" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="58866" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="58867" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="58868" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="58869" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="58870" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="61163" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64016" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64017" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64064" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64065" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64080" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64081" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64096" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64097" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64112" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64113" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+        <Item>
+          <BoneId value="64729" />
+          <Track value="1" />
+          <Unk0 value="1" />
+        </Item>
+      </BoneIds>
+      <Sequences>
+        <Item>
+          <Hash>hash_00000000</Hash>
+          <FrameCount value="31" />
+          <SequenceData>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticVector3" />
+                  <Value x="0.259193897" y="-7.40983523e-08" z="-3.91155481e-08" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticVector3" />
+                  <Value x="0.274171978" y="-1.49011612e-08" z="-7.54371285e-08" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticVector3" />
+                  <Value x="0.259193957" y="-1.49011612e-08" z="4.00468707e-08" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticVector3" />
+                  <Value x="0.274172068" y="-8.56816769e-08" z="3.7252903e-09" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.00215408322" y="0.0128278174" z="-0.387165636" w="0.921918452" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.00051058887" y="0.0101232165" z="-0.319517523" w="0.947526276" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.0021406305" y="-0.000520351809" z="-0.622143269" w="0.782900333" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.0235920511" y="-0.0147444094" z="-0.566725075" w="0.823437154" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.0126502151" y="-0.0214955639" z="-0.700454652" w="0.713260949" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.0161392689" y="-0.0151254516" z="-0.461313039" w="0.886961699" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.0026945977" y="-0.0352482162" z="-0.616469383" w="0.786584914" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.00166864099" y="-0.0115677118" z="-0.488958955" w="0.872228503" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.000272508507" y="-0.0167793632" z="-0.584889174" w="0.81093961" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.00457500573" y="-0.0325132161" z="-0.547942221" w="0.835871577" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.119501062" y="0.779033542" z="-0.100879982" w="0.607165098" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.701801658" y="-0.270574659" z="-0.370296896" w="0.545109272" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="4.13673176e-12" y="8.6784635e-11" z="-0.0476105101" w="0.998865962" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-4.99540465e-06" y="-2.12646498e-07" z="0.0443878919" w="0.999014378" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="4.99790895e-06" y="-1.38637503e-07" z="-0.0238453709" w="0.999715686" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-1.99399074e-06" y="-1.98864285e-07" z="0.033285968" w="0.999445975" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.0276818406" y="-0.161441386" z="0.113035694" w="0.979996622" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.611316323" y="-0.213306323" z="-0.216207087" w="0.730785489" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.656973541" y="-0.267181098" z="-0.2895087" w="0.64279449" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.753457308" y="-0.21823585" z="-0.286017597" w="0.550335526" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.825948298" y="-0.132839888" z="-0.24100019" w="0.492018193" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.122631148" y="0.678742647" z="0.46494329" w="0.555065632" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.0290872678" y="0.450278223" z="0.382153988" w="0.806450129" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.152900726" y="-0.463157445" z="0.661728799" w="0.569404662" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.299455404" y="-0.561337531" z="-0.0125564411" w="0.771407306" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.0711101368" y="0.147556081" z="0.378779411" w="0.91087687" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.757227182" y="0.0860226154" z="0.103912704" w="0.63906914" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.642794013" y="0.289508104" z="0.267181724" w="0.656974077" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.550334811" y="0.286017299" z="0.21823594" w="0.753457904" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.492016375" y="0.241000891" z="0.132839933" w="0.825949311" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.0777727515" y="-0.200837389" z="0.313929856" w="0.924696624" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.00810141861" y="-0.0101769315" z="0.108331747" w="0.994029701" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.00365577475" y="-0.00947002601" z="0.0934995934" w="0.99556756" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.00214082049" y="-0.000521425449" z="0.622143745" w="0.782899916" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.0235914402" y="-0.0147450157" z="0.566725075" w="0.823437154" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="-0.0126500586" y="-0.0214950293" z="0.70045495" w="0.713260651" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.0161390081" y="-0.0151251629" z="0.461313576" w="0.88696146" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.0111423545" y="-0.0335497223" z="0.407866359" w="0.912357032" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.00345774554" y="-0.011164262" z="0.34649232" w="0.937979996" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.000272982026" y="-0.0167794786" z="0.584888279" w="0.810940266" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.00457506906" y="-0.0325129852" z="0.547942638" w="0.835871339" />
+                </Item>
+              </Channels>
+            </Item>
+            <Item>
+              <Channels>
+                <Item>
+                  <Type value="StaticQuaternion" />
+                  <Value x="0.119502857" y="-0.779033422" z="-0.100883849" w="0.607164323" />
+                </Item>
+              </Channels>
+            </Item>
+          </SequenceData>
+        </Item>
+      </Sequences>
+    </Item>
+  </Animations>
+</ClipDictionary>
