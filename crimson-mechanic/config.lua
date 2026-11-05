@@ -78,9 +78,11 @@ Config.Wash = {
     timeout = 300,                -- seconds before an unfinished wash is dropped
 
     hose = {
-        ropeType = 4,             -- 1-4 thick ropes, 5-7 thin cables (3 = fuel pump hose). Debug: /washrope 1-7
+        ropeType = 3,             -- 1-4 thick ropes, 5-7 thin cables (3 = fuel pump hose). Debug: /washrope 1-7
         slack = 6.0,              -- hose length = anchor-to-bay distance + this
         maxLength = 20.0,
+        pinEnds = true,          -- pin to world endpoints; the custom gun has no collision body
+        visibleSlack = 0.75,      -- visible cable slack; total walking reach still uses station length
         anchorModel = 'prop_cs_fuel_nozle', -- invisible prop the hose hangs from
         tip = vec3(-0.07, 0.0, -0.18),       -- connector under the custom washer grip
     },
@@ -106,8 +108,8 @@ Config.Wash = {
         gun = {
             model = 'crimson_pressure_washer', hose = true, hidden = false,
             muzzle = vec3(0.990, 0.0, 0.041), -- model-space tip, shared by local/remote jets and aiming
-            hand = { bone = 57005, pos = vec3(0.10, 0.02, -0.02), rot = vec3(0.0, -90.0, 0.0), rotOrder = 2 },
-            anim = { dict = 'amb@world_human_car_park_attendant@male@base', clip = 'base' },
+            hand = { bone = 28422, pos = vec3(0.0, 0.0, 0.0), rot = vec3(0.0, 0.0, 90.0), rotOrder = 2 },
+            anim = { dict = 'anim@move_m@security_guard', clip = 'idle' },
         },
         sponge = {
             model = 'prop_sponge_01',

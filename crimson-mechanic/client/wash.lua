@@ -79,14 +79,35 @@ local function attachTool(entity, ped, hand)
         true, true, false, true, hand.rotOrder or 0, true)
 end
 
+local function updateHose(v)
+    if not v or v.destroyed or not v.rope or not DoesRopeExist(v.rope)
+        or not DoesEntityExist(v.tool) or not DoesEntityExist(v.anchor) then return end
+    local t = W.hose.tip
+    local tip = GetOffsetFromEntityInWorldCoords(v.tool, t.x, t.y, t.z)
+    local anchor = GetEntityCoords(v.anchor)
+    local length = math.max(0.5, math.min(v.hoseMaxLength, #(tip - anchor) + (W.hose.visibleSlack or 0.75)))
+    if not v.hoseLength or math.abs(v.hoseLength - length) > 0.1 then
+        RopeForceLength(v.rope, length)
+        v.hoseLength = length
+    end
+    if W.hose.pinEnds ~= false then
+        local count = GetRopeVertexCount(v.rope)
+        if count > 1 then
+            PinRopeVertex(v.rope, 0, tip.x, tip.y, tip.z)
+            PinRopeVertex(v.rope, count - 1, anchor.x, anchor.y, anchor.z)
+        end
+    end
+end
+
 local function addHose(v, data, isCurrent)
     local model = joaat(W.hose.anchorModel)
     if not requestModel(model) then return end
     if not isCurrent() then SetModelAsNoLongerNeeded(model); return end
     local a = vec3(data.ax, data.ay, data.az)
-    v.anchor = CreateObject(model, a.x, a.y, a.z, false, false, false)
+    v.anchor = CreateObjectNoOffset(model, a.x, a.y, a.z, false, false, false)
     SetModelAsNoLongerNeeded(model)
     if v.anchor == 0 then v.anchor = nil return end
+    SetEntityAsMissionEntity(v.anchor, true, true)
     SetEntityCollision(v.anchor, false, false)
     SetEntityAlpha(v.anchor, 0, false)
     FreezeEntityPosition(v.anchor, true)
@@ -97,13 +118,18 @@ local function addHose(v, data, isCurrent)
     while not RopeAreTexturesLoaded() and GetGameTimer() < timeout do Wait(50) end
     if not isCurrent() or not RopeAreTexturesLoaded() or not DoesEntityExist(v.tool) then return end
 
-    local length = data.len
-    local rope = AddRope(a.x, a.y, a.z, 0.0, 0.0, 0.0, length, W.hose.ropeType, length, 0.5, 1.0, false, false, false, 1.0, false, 0)
-    if not rope or not DoesRopeExist(rope) then return end
-    v.rope = rope
     local t = W.hose.tip
     local tip = GetOffsetFromEntityInWorldCoords(v.tool, t.x, t.y, t.z)
-    AttachEntitiesToRope(rope, v.tool, v.anchor, tip.x, tip.y, tip.z, a.x, a.y, a.z, length, false, false, nil, nil)
+    local length = math.max(0.5, math.min(data.len, #(tip - a) + (W.hose.visibleSlack or 0.75)))
+    local rope = AddRope(a.x, a.y, a.z, 0.0, 0.0, 0.0, length, W.hose.ropeType, length, 0.5, 1.0, false, false, false, 1.0, false, 0)
+    if not rope or not DoesRopeExist(rope) then return end
+    v.rope, v.hoseMaxLength = rope, data.len
+    -- A custom YDR without a collision body is not a reliable physics anchor.
+    -- Pin both endpoints directly; they are refreshed from the animated prop.
+    if W.hose.pinEnds == false then
+        AttachEntitiesToRope(rope, v.tool, v.anchor, tip.x, tip.y, tip.z, a.x, a.y, a.z, length, false, false, nil, nil)
+    end
+    updateHose(v)
 end
 
 local function createVisual(ped, data, isCurrent, onCreated)
@@ -121,12 +147,16 @@ local function createVisual(ped, data, isCurrent, onCreated)
         destroyVisual(v)
         return
     end
+    SetEntityAsMissionEntity(v.tool, true, true)
     SetEntityCollision(v.tool, false, false)
     if tool.hidden then SetEntityAlpha(v.tool, 0, false) end
     attachTool(v.tool, ped, tool.hand)
     onCreated(v) -- Register partial visuals before any yielding hose setup.
     if tool.hose then addHose(v, data, isCurrent) end
     if not isCurrent() then destroyVisual(v); return end
+    if tool.hose and not v.rope and not v.remote then
+        notify('Unable to create the wash hose. Check the station anchor and rope textures.', 'error')
+    end
     return v
 end
 
@@ -195,18 +225,18 @@ local function setJet(v, fx, pitch, yaw)
 end
 
 
--- Keeps every jet (ours and other players') glued to the hand as it moves.
+-- Keep particles at the muzzle and adjust hose slack as the player moves.
 CreateThread(function()
     while true do
-        local any = false
+        local activeJet, activeHose = false, false
         for _, entry in pairs(visuals) do
             local v = entry.visual
-            if v and v.fx and DoesEntityExist(v.ped) then
-                any = true
-                aimJet(v)
+            if v and not v.destroyed and DoesEntityExist(v.ped) then
+                if v.fx then activeJet = true; aimJet(v) end
+                if v.rope then activeHose = true; updateHose(v) end
             end
         end
-        Wait(any and 0 or 250)
+        Wait((activeJet or activeHose) and 0 or 250)
     end
 end)
 

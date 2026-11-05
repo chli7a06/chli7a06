@@ -30,3 +30,11 @@ Mocked integration tests run real visual functions for custom model/rope creatio
 Tests: `texlua tests/crimson_mechanic_washer.test.lua` from the repository root. The test is outside this distributable resource folder.
 
 **No live FiveM/Qbox/MySQL server was available.** Rope physics, in-game hand pose, multiplayer visuals, washing completion, cancellation and billing still need validation on your development server. No live-runtime or payment test is claimed. The original server/UI source files remain byte-for-byte identical to the uploaded archive. Existing original documentation is retained; this file describes the added washer integration.
+
+## Grip and hose revision (1.3.3)
+
+The gun now uses the weapon-hand prop bone, a corrected model-axis rotation, and the `anim@move_m@security_guard` / `idle` armed-guard holding clip. The dictionary/clip pair was checked against the GTA animation list; its actual appearance with this prop still requires in-game hand-offset calibration. No real weapon is granted or removed.
+
+The rope uses type 3, pins its endpoints directly to the animated gun connector and the station anchor, and limits visible slack separately from the allowed wash reach. Direct pinning avoids relying on a physics attachment to the custom YDR, which has no collision body. The length is explicitly forced after creation and updated when endpoint distance changes. Set `Config.Wash.hose.pinEnds = false` only to test the alternative entity-attachment behavior. A failed local hose creation shows an in-game notification, not routine F8 logging.
+
+Replace/merge the updated gun hand/animation and hose configuration as well as `client/wash.lua`; keeping the previous config retains the old pose. Cancel an active wash before restarting. Mocked tests cover pinned connector position, length changes, local/remote nozzle positioning and cancellation cleanup. Neither this revision nor the earlier attachment values were calibrated on a live FiveM client here.
