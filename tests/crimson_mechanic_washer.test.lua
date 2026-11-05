@@ -124,6 +124,9 @@ api.stop(11);assert(created==deleted,'rubber-mode cleanup must remove gun')
 -- while both IK arms target the model grips without creating a real weapon.
 Config.Wash.tools.gun.pose=configuredPose
 local targets={}
+local armsEnabled=false
+SetPedCanArmIk=function(_,enabled) armsEnabled=enabled end
+SetPedCanTorsoIk=function() end
 SetEntityHasGravity=function() end
 local rotations={}
 SetEntityRotation=function(entity,x,y,z) rotations[entity]={x=x,y=y,z=z} end
@@ -132,6 +135,16 @@ SetIkTarget=function(ped,part,entity,bone,x,y,z)
  targets[part]={entity=entity,pos=vec3(x,y,z)}
 end
 local posed=assert(build(11,1,data(7)))
+assert(armsEnabled,'arm IK must be enabled before applying targets')
+local actualHand=GetPedBoneCoords(1,57005,0,0,0)
+local origin=positions[posed.tool]
+local g=configuredPose.rightGrip
+local p=math.rad(-20)
+-- At heading zero the source +X points north and +Z points up/back.
+local gx=origin.x-g.y
+local gy=origin.y+math.cos(p)*g.x-math.sin(p)*g.z
+local gz=origin.z+math.sin(p)*g.x+math.cos(p)*g.z
+assert(close(gx,actualHand.x) and close(gy,actualHand.y) and close(gz,actualHand.z),'prop grip must follow actual palm even if IK does not move it')
 assert(targets[3].entity==posed.tool and targets[4].entity==0,'both arms must target actual grip positions')
 assert(close(rotations[posed.tool].z,90) and close(rotations[posed.tool].y,20),'carry gun must point forward and down')
 posed.aiming=true;posed.pitch=10;posed.yaw=0;api.pose(posed)

@@ -119,6 +119,7 @@ Config.Wash = {
             -- Live two-hand IK and model orientation replace hand-bone rotation guesses.
             pose = {
                 chestBone = 24818,
+                handBone = 57005,
                 rightGrip = vec3(-0.04, 0.0, -0.025),
                 leftGrip = vec3(0.22, 0.0, 0.095),
                 carry = { forward = 0.32, right = 0.18, down = 0.28, pitch = -20.0 },

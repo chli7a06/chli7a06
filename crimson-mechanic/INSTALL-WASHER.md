@@ -58,3 +58,9 @@ The controller requests right-arm IK (native part 4) toward the model grip and l
 **This is still not a live-verified custom animation.** Mocked tests verify the forward/down carry direction, forward/up spray direction, both IK target indexes, the grip-height change and cleanup. They cannot verify the game's actual IK solver, hand orientation, finger closure, shoulder appearance or exact resemblance to the reference video. Ped-dependent tuning remains under `pose.carry`, `.spray`, `.rightGrip` and `.leftGrip`.
 
 Install the updated `client/wash.lua` and the new `Config.Wash.tools.gun.pose` config together. Keeping only the old hand settings will retain the old attachment behavior. WaveShield, server billing, UI and the black rubber hose renderer remain unchanged.
+
+## Actual-palm anchoring correction (1.3.6)
+
+The user's subsequent screenshots showed that the IK targets alone did not make the arms reach the chest-relative prop. The model placement now follows the actual right-hand bone, with a model-grip correction, even when IK is blending or fails to move the arm. Arm and torso IK are explicitly enabled before targets are submitted; the non-physical local gun is frozen while script transforms update it. Both IK requests still expire normally; the enable flags are not forcibly disabled at cleanup, which could interfere with normal aiming or other scripts.
+
+The regression test deliberately leaves the mocked hand unmoved and verifies that the model grip still coincides with the actual palm. This tests the attachment math, not the visual success of the GTA IK solver. **Exact two-hand posture, finger alignment and the reference animation remain unverified on a live client.** If the pose is still wrong, an in-game calibrated/custom animation is required; the mocked tests must not be presented as animation validation.

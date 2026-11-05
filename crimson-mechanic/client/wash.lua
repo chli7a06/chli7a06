@@ -158,13 +158,19 @@ local function updateWasherPose(v)
     local chest=GetPedBoneCoords(v.ped,pose.chestBone,0.0,0.0,0.0)
     local grip=vec3(chest.x+math.cos(h)*stance.right-math.sin(h)*stance.forward,
         chest.y+math.sin(h)*stance.right+math.cos(h)*stance.forward,chest.z-stance.down)
+    -- Keep the model in the actual palm even while IK is blending or blocked
+    -- by a ped/animation. The chest-relative target drives the arm, not a
+    -- floating prop position disconnected from the currently rendered hand.
+    local hand=GetPedBoneCoords(v.ped,pose.handBone or 57005,0.0,0.0,0.0)
     local g=pose.rightGrip
-    local position=vec3(grip.x-dx*g.x-sx*g.y-ux*g.z,
-        grip.y-dy*g.x-sy*g.y-uy*g.z,grip.z-dz*g.x-uz*g.z)
+    local position=vec3(hand.x-dx*g.x-sx*g.y-ux*g.z,
+        hand.y-dy*g.x-sy*g.y-uy*g.z,hand.z-dz*g.x-uz*g.z)
     SetEntityRotation(v.tool,0.0,-pitch,heading+yaw+90.0,2,true)
     SetEntityCoordsNoOffset(v.tool,position.x,position.y,position.z,false,false,false)
     -- SET_IK_TARGET arm indexes: 3 = left arm, 4 = right arm. The requests
     -- expire after one update; no persistent player flags or weapons are changed.
+    SetPedCanArmIk(v.ped,true)
+    SetPedCanTorsoIk(v.ped,true)
     SetIkTarget(v.ped,4,0,-1,grip.x,grip.y,grip.z,16,0,100)
     local left=pose.leftGrip
     SetIkTarget(v.ped,3,v.tool,-1,left.x,left.y,left.z,16,0,100)
@@ -190,6 +196,7 @@ local function createVisual(ped, data, isCurrent, onCreated)
     if tool.hidden then SetEntityAlpha(v.tool, 0, false) end
     if tool.pose then
         SetEntityHasGravity(v.tool, false)
+        FreezeEntityPosition(v.tool, true)
         updateWasherPose(v)
     else
         attachTool(v.tool, ped, tool.hand)
