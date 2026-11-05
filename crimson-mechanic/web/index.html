@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crimson Mechanic</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="wash.css">
+</head>
+<body>
+    <div id="tuner" hidden>
+        <div class="orbit" aria-label="Drag to rotate vehicle"></div>
+
+        <aside class="module left">
+            <header>
+                <div class="brand"><div><strong>CRIMSON</strong><span>MECHANIC DIVISION</span></div><button id="t-close" aria-label="Close and cancel changes">×</button></div>
+                <div class="heading">
+                    <small id="t-mode"></small>
+                    <h1 id="t-title"></h1>
+                    <p id="t-subtitle"></p>
+                </div>
+            </header>
+            <nav id="t-tabs" class="tabs" aria-label="Categories"></nav>
+            <div id="t-list" class="list" aria-label="Vehicle parts"></div>
+        </aside>
+
+        <div class="rotation">
+            <button id="t-left" aria-label="Rotate left">‹</button>
+            <span id="t-rotate"></span>
+            <button id="t-right" aria-label="Rotate right">›</button>
+        </div>
+
+        <section class="module editor">
+            <div class="editor-head">
+                <span id="t-item" class="label"></span>
+                <span id="t-price" class="price"></span>
+            </div>
+            <div id="t-editor" class="editor-body"></div>
+        </section>
+
+        <aside class="module right">
+            <span id="t-cart-title" class="label"></span>
+            <ul id="t-cart" class="cart"></ul>
+            <div class="total"><span id="t-total-label"></span><strong id="t-total"></strong></div>
+            <div class="actions">
+                <button id="t-confirm" class="primary"></button>
+                <button id="t-cancel" class="ghost"></button>
+            </div>
+            <p id="t-status" role="status"></p>
+        </aside>
+    </div>
+    <aside id="washHud" class="wash-hud" hidden>
+        <div class="wash-hud__header">
+            <span class="wash-hud__signal">
+                <svg id="washIconHose" class="icon" viewBox="0 0 24 24"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+                <svg id="washIconAuto" class="icon" viewBox="0 0 24 24" hidden><path d="M5 17h14l-1.5-5.5A2 2 0 0 0 15.6 10H8.4a2 2 0 0 0-1.9 1.5z"/><path d="M5 17v2M19 17v2"/><path d="M8 6c0-1 1-1 1-2M12 6c0-1 1-1 1-2M16 6c0-1 1-1 1-2"/></svg>
+            </span>
+            <div class="wash-hud__brand">
+                <strong id="washTitle"></strong>
+                <span id="washSub" class="wash-hud__sub"></span>
+            </div>
+            <span class="wash-hud__pct"><b id="washPct">0</b><small>%</small></span>
+        </div>
+        <div class="wash-hud__progress"><i id="washBar"></i></div>
+        <div id="washList" class="wash-hud__list"></div>
+    </aside>
+
+    <script src="icons.js"></script>
+    <script src="app.js"></script>
+    <script src="wash.js"></script>
+</body>
+</html>
