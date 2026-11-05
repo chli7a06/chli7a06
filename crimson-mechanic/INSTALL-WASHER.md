@@ -74,3 +74,11 @@ The user converted `crimson_wash_custom.ycd.xml` with CodeWalker and supplied th
 Update the entire resource or merge the new gun config, `client/wash.lua` and the YCD stream file together. **Do not keep an old `gun.pose` config or override file from the experimental builds.** Cancel an active wash before restart. Keep WaveShield and all original dependencies running. Stop the separate `crimson_lavage` prototype to avoid duplicate prop/archetype registrations.
 
 Local tests pass for custom clip selection, derived attachment config, absence of runtime IK/weapon grants, hose renderers, nozzle positions, sponge transitions and cleanup. All Lua files parsed; original server/billing/UI/mechanic source remains unmodified. **The compiled YCD has not yet been executed in FiveM here.** Verify male freemode carry/spray poses, hand contact, movement, transitions to sponge and cancellation in-game. No exact reference-video match, female-ped retargeting or live anti-cheat compatibility is claimed.
+
+## Compiled V2 grip refinement (1.4.1)
+
+The user supplied the CodeWalker-compiled `crimson_wash_custom_v2.ycd`. It is installed unmodified in stream, and the older `crimson_wash_custom.ycd` is removed from this package. Header version 46, raw-deflate payload and carry/spray names were verified; the file differs from V1.
+
+Both animation references now use `crimson_wash_custom_v2`. The V2 hand attachment is position (0.085, 0.025, -0.040), rotation (-90, 0, 0), bone 57005/order 2. V1's attachment values are incompatible with the revised right-palm orientation. Update the config and YCD together. Remove the old stream file from an existing installation rather than merging folders blindly, and remove any manually added custom_washer_config.lua override that references V1.
+
+The V2 source corrects mirrored right-finger bend direction and includes explicit forearm/hand position channels. Source importer round-trip checks passed, along with integration/muzzle/hose/cleanup tests. **These are not live FiveM animation or skinning tests.** Confirm carry and spray poses on the supplied male freemode skeleton, hand contact, sponge transitions and remote-player appearance before treating the refinement as complete. Mechanics/server billing/UI and WaveShield remain unchanged.

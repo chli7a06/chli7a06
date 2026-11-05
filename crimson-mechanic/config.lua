@@ -114,9 +114,9 @@ Config.Wash = {
             model = 'crimson_pressure_washer', hose = true, hidden = false,
             muzzle = vec3(0.990, 0.0, 0.041), -- model-space tip, shared by local/remote jets and aiming
             -- Rigid attachment derived from the authored male freemode clips.
-            hand = { bone = 57005, pos = vec3(0.085, -0.025, 0.040), rot = vec3(90.0, 0.0, 0.0), rotOrder = 2 },
-            anim = { dict = 'crimson_wash_custom', clip = 'carry' },
-            aimAnim = { dict = 'crimson_wash_custom', clip = 'spray' },
+            hand = { bone = 57005, pos = vec3(0.085, 0.025, -0.040), rot = vec3(-90.0, 0.0, 0.0), rotOrder = 2 },
+            anim = { dict = 'crimson_wash_custom_v2', clip = 'carry' },
+            aimAnim = { dict = 'crimson_wash_custom_v2', clip = 'spray' },
         },
         sponge = {
             model = 'prop_sponge_01',
