@@ -8,8 +8,6 @@ vec4=function(x,y,z,w) return {x=x,y=y,z=z,w=w} end
 local function close(a,b) return math.abs(a-b)<.00001 end
 Lang={wash={}};cache={ped=1,serverId=11,playerId=0}
 dofile('crimson-mechanic/config.lua')
-local configuredPose=Config.Wash.tools.gun.pose
-Config.Wash.tools.gun.pose=nil
 Config.Wash.hose.renderer='native' -- Retain fallback coverage before exercising rubber renderer.
 assert(Config.Wash.tools.gun.model=='crimson_pressure_washer' and not Config.Wash.tools.gun.hidden)
 local threads={};CreateThread=function(fn) threads[#threads+1]=fn end
@@ -64,7 +62,7 @@ SetParticleFxLoopedOffsets=function() end
 local f=assert(io.open('crimson-mechanic/client/wash.lua'));local src=f:read('*a');f:close()
 src=src:gsub('`[^`]+`','0')
 src=src:sub(1,assert(src:find('%-%- Dirt level while being washed'))-1)
-local api=assert(load(src..'\nreturn {refresh=refreshVisual,stop=stopVisual,nozzle=nozzleOffset,jet=setJet,visuals=visuals,destroy=destroyVisual,updateHose=updateHose,drawHose=drawRubberHose,animation=washAnimation,pose=updateWasherPose}'))()
+local api=assert(load(src..'\nreturn {refresh=refreshVisual,stop=stopVisual,nozzle=nozzleOffset,jet=setJet,visuals=visuals,destroy=destroyVisual,updateHose=updateHose,drawHose=drawRubberHose,animation=washAnimation}'))()
 local function data(id,tool) return {id=id,tool=tool or 'gun',ax=10,ay=0,az=2,len=12} end
 local function build(serverId,ped,d)
  state[serverId]=d;api.refresh(serverId,d,ped);threads[#threads]()
@@ -120,37 +118,12 @@ assert(api.animation(Config.Wash.tools.gun,true)==Config.Wash.tools.gun.aimAnim)
 assert(api.animation(Config.Wash.tools.sponge,false)==nil)
 assert(api.animation(Config.Wash.tools.sponge,true)==Config.Wash.tools.sponge.anim)
 api.stop(11);assert(created==deleted,'rubber-mode cleanup must remove gun')
--- World-space gun orientation must point forward and keep the bottle below,
--- while both IK arms target the model grips without creating a real weapon.
-Config.Wash.tools.gun.pose=configuredPose
-local targets={}
-local armsEnabled=false
-SetPedCanArmIk=function(_,enabled) armsEnabled=enabled end
-SetPedCanTorsoIk=function() end
-SetEntityHasGravity=function() end
-local rotations={}
-SetEntityRotation=function(entity,x,y,z) rotations[entity]={x=x,y=y,z=z} end
-SetEntityCoordsNoOffset=function(entity,x,y,z) positions[entity]=vec3(x,y,z) end
-SetIkTarget=function(ped,part,entity,bone,x,y,z)
- targets[part]={entity=entity,pos=vec3(x,y,z)}
-end
-local posed=assert(build(11,1,data(7)))
-assert(armsEnabled,'arm IK must be enabled before applying targets')
-local actualHand=GetPedBoneCoords(1,57005,0,0,0)
-local origin=positions[posed.tool]
-local g=configuredPose.rightGrip
-local p=math.rad(-20)
--- At heading zero the source +X points north and +Z points up/back.
-local gx=origin.x-g.y
-local gy=origin.y+math.cos(p)*g.x-math.sin(p)*g.z
-local gz=origin.z+math.sin(p)*g.x+math.cos(p)*g.z
-assert(close(gx,actualHand.x) and close(gy,actualHand.y) and close(gz,actualHand.z),'prop grip must follow actual palm even if IK does not move it')
-assert(targets[3].entity==posed.tool and targets[4].entity==0,'both arms must target actual grip positions')
-assert(close(rotations[posed.tool].z,90) and close(rotations[posed.tool].y,20),'carry gun must point forward and down')
-posed.aiming=true;posed.pitch=10;posed.yaw=0;api.pose(posed)
-assert(close(rotations[posed.tool].z,90) and close(rotations[posed.tool].y,-10),'spray gun must point forward and up with camera pitch')
-assert(close(targets[4].pos.z,-.13),'right grip must use spray chest-relative target')
-api.stop(11);assert(created==deleted,'IK mode must clean up the gun')
-
-
-print('PASS: hose renderers, carry/spray states, forward world-space gun pose, both IK arm targets, muzzle and cleanup')
+-- The integrated custom clips must take over from all experimental IK.
+local gun=Config.Wash.tools.gun
+assert(gun.pose==nil)
+assert(gun.anim.dict=='crimson_wash_custom' and gun.anim.clip=='carry')
+assert(gun.aimAnim.dict=='crimson_wash_custom' and gun.aimAnim.clip=='spray')
+assert(gun.hand.bone==57005 and close(gun.hand.pos.x,.085) and close(gun.hand.rot.x,90))
+assert(not src:find('SetIkTarget',1,true) and not src:find('SetPedCanArmIk',1,true),'runtime IK must be removed')
+assert(not src:find('GiveWeaponToPed',1,true),'integration must not grant weapons')
+print('PASS: hose renderers, carry/spray states, custom carry/spray clip bindings and no IK/weapon grant, muzzle and cleanup')
