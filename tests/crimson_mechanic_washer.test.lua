@@ -121,8 +121,8 @@ api.stop(11);assert(created==deleted,'rubber-mode cleanup must remove gun')
 -- The integrated custom clips must take over from all experimental IK.
 local gun=Config.Wash.tools.gun
 assert(gun.pose==nil)
-assert(gun.anim.dict=='crimson_wash_custom_v2' and gun.anim.clip=='carry')
-assert(gun.aimAnim.dict=='crimson_wash_custom_v2' and gun.aimAnim.clip=='spray')
+assert(gun.anim.dict=='crimson_wash_custom_v3' and gun.anim.clip=='carry')
+assert(gun.aimAnim.dict=='crimson_wash_custom_v3' and gun.aimAnim.clip=='spray')
 assert(gun.hand.bone==57005 and close(gun.hand.pos.x,.085) and close(gun.hand.rot.x,-90) and close(gun.hand.pos.y,.025) and close(gun.hand.pos.z,-.040))
 assert(not src:find('SetIkTarget',1,true) and not src:find('SetPedCanArmIk',1,true),'runtime IK must be removed')
 assert(not src:find('GiveWeaponToPed',1,true),'integration must not grant weapons')

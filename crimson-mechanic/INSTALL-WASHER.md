@@ -82,3 +82,11 @@ The user supplied the CodeWalker-compiled `crimson_wash_custom_v2.ycd`. It is in
 Both animation references now use `crimson_wash_custom_v2`. The V2 hand attachment is position (0.085, 0.025, -0.040), rotation (-90, 0, 0), bone 57005/order 2. V1's attachment values are incompatible with the revised right-palm orientation. Update the config and YCD together. Remove the old stream file from an existing installation rather than merging folders blindly, and remove any manually added custom_washer_config.lua override that references V1.
 
 The V2 source corrects mirrored right-finger bend direction and includes explicit forearm/hand position channels. Source importer round-trip checks passed, along with integration/muzzle/hose/cleanup tests. **These are not live FiveM animation or skinning tests.** Confirm carry and spray poses on the supplied male freemode skeleton, hand contact, sponge transitions and remote-player appearance before treating the refinement as complete. Mechanics/server billing/UI and WaveShield remain unchanged.
+
+## Forward-clearance animation V3 integration (1.4.2)
+
+The user compiled and supplied `crimson_wash_custom_v3.ycd`. It replaces V2 in the stream folder and both carry/spray config references. The compiled file is copied byte-for-byte; RSC7 version 46, decompression and both clip names were checked. The rigid attachment values remain bone 57005, position (0.085, 0.025, -0.040), rotation (-90, 0, 0), order 2.
+
+V3 source advances the gun and both hands together by 9cm in carry / 8cm in spray, with small thumb/finger curl refinements. Source reach/position and importer round-trip checks passed. **Actual clearance against the user's character/clothing and final hand contact are still pending a live FiveM test.** No claim of confirmed in-game correction is made.
+
+Cancel washing before updating, preserve customized settings in a backup, remove the old `crimson_wash_custom.ycd` / `crimson_wash_custom_v2.ycd` files, and update both gun animation references to `crimson_wash_custom_v3`. Avoid old override files pointing to previous dictionaries. Existing hose, mechanic/server/UI files and WaveShield behavior are unchanged by this revision.
