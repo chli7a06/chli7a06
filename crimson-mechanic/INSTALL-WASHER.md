@@ -1,6 +1,19 @@
 # Crimson pressure-washer integration
 
-# Current update: 1.4.15 / forearm roll distribution (V8)
+# Current update: 1.4.16 / support hand 1 cm right (V9)
+
+The left support-palm target moves 1 cm towards the character's right in both
+carry and spray: gun-local Y changes from 0.075 to 0.065. Hand orientation,
+finger curls and the V8 forearm-roll distribution are retained. The arm solve
+updates the elbow/forearm to reach the new target. Non-left channels are checked
+against V8 and remain within 1e-5. Imported grip and twist bounds still pass.
+
+Install the full resource or replace the V8 YCD with the included
+`crimson_wash_custom_v9.ycd` and update both gun dictionaries to V9. Restart and
+reconnect. The final contact on the actual ped still needs an in-game check.
+
+
+# Previous update: 1.4.15 / forearm roll distribution (V8)
 
 V7's low hand/forearm bend metric missed a large axial rotation at the elbow,
 which moved deformation into the forearm. V8 restores the minimal-rotation main

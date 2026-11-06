@@ -1,0 +1,31 @@
+{
+  "middle_joint_distances_to_collar_axis_m": {
+    "carry": {
+      "1": 0.04096240748040773,
+      "2": 0.022856316634864968,
+      "3": 0.01940472307262701,
+      "4": 0.0311533415139066
+    },
+    "spray": {
+      "1": 0.04096276373533712,
+      "2": 0.022856836111322762,
+      "3": 0.01940506887463073,
+      "4": 0.031153393362638313
+    }
+  },
+  "wrist_angles": {
+    "carry": {
+      "bend_degrees": 18.677910436397738,
+      "elbow_axial_degrees": -5.867388182614874,
+      "roll_helper_degrees": 19.864240695679857,
+      "hand_axial_degrees": 39.72846594922884
+    },
+    "spray": {
+      "bend_degrees": 14.181640448234305,
+      "elbow_axial_degrees": -16.683988273988906,
+      "roll_helper_degrees": 23.145079049431562,
+      "hand_axial_degrees": 46.29014872420067
+    }
+  },
+  "live_fivem_tested": false
+}
