@@ -7,7 +7,7 @@ lua54 'yes'
 name 'crimson-mechanic'
 author 'mm3'
 description 'Mechanic job: placeable benches, job-locked tuning, customer request tickets, stance'
-version '1.4.7'
+version '1.4.8'
 
 shared_scripts {
     '@ox_lib/init.lua',

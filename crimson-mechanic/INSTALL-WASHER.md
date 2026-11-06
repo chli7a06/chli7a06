@@ -1,6 +1,30 @@
 # Crimson pressure-washer integration
 
-# Current update: 1.4.7 / nonblocking input and visible spray
+# Current update: 1.4.8 / motion stability
+
+Carry/spray tasks start only when the pose changes. The task controller allows
+700 ms for blending before checking playback, ignores transient false playback
+reports, and recovers persistently interrupted tasks no more often than once
+per 1200 ms. Carry/spray transitions use the secondary slot's crossfade without
+stopping the previous animation first. Stage-end and sponge-idle cleanup remain.
+
+Body heading is limited to 120 degrees/second with a three-degree resting
+deadband, instead of a per-frame step. Spray steering uses the camera heading
+rather than the animated muzzle-to-target direction, removing that body/muzzle
+feedback path at close range. The actual jet still points at the aim target.
+
+Replace the resource after backing up customized settings, restart and reconnect.
+For a manual merge, install `client/wash.lua`; gun config and all streamed assets
+are unchanged. Water/foam rendering, input and replication from 1.4.7 are retained.
+
+Mocked tests cover delayed/transient animation playback reports, pose crossfades,
+bounded interruption recovery and equal heading speed at 30/144 fps. Existing
+wash-progress, spray/spectator/cleanup tests and Lua parsing also pass. A live
+FiveM check is still needed to confirm whether this resolves the reported jitter
+with the user's other resources and actual ped animation runtime.
+
+
+# Previous update: 1.4.7 / nonblocking input and visible spray
 
 LMB now has a physical mouse-button binding, with enabled/disabled attack controls
 24 and 257 as additional input sources. Releasing the button or ending the wash

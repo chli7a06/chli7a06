@@ -173,6 +173,32 @@ local function washAnimation(tool, pressing)
     return pressing and tool.aimAnim or ((pressing or tool.hose) and tool.anim or nil)
 end
 
+-- A task may not report "playing" until its blend-in has completed. Reissuing
+-- it every frame keeps resetting that blend and makes the arms snap/vibrate.
+local function updateWashAnimation(state, ped, anim, now)
+    if state.anim ~= anim then
+        if anim then
+            -- Let the secondary animation slot crossfade; stopping the old task
+            -- first briefly exposes the default unarmed arm pose.
+            TaskPlayAnim(ped, anim.dict, anim.clip, 4.0, -4.0, -1, 49, 0.0, false, false, false)
+        elseif state.anim then
+            StopAnimTask(ped, state.anim.dict, state.anim.clip, 1.0)
+        end
+        state.anim, state.lastPlay, state.nextCheck, state.missingSince = anim, now, now + 700, nil
+        return
+    end
+    if not anim or now < state.nextCheck then return end
+    state.nextCheck = now + 300
+    if IsEntityPlayingAnim(ped, anim.dict, anim.clip, 3) then
+        state.missingSince = nil
+    elseif not state.missingSince then
+        state.missingSince = now
+    elseif now - state.missingSince >= 600 and now - state.lastPlay >= 1200 then
+        TaskPlayAnim(ped, anim.dict, anim.clip, 4.0, -4.0, -1, 49, 0.0, false, false, false)
+        state.lastPlay, state.nextCheck, state.missingSince = now, now + 700, nil
+    end
+end
+
 --- Effect APIs take a ped-local offset. Convert the model's actual muzzle
 --- into ped space; keep the original hand offset as a fallback for other tools.
 local function nozzleOffset(ped, visual)
@@ -605,11 +631,13 @@ local function aimAt(ped)
 end
 
 --- Turns the ped toward a heading a bit per frame (snapping it every frame made it flicker).
-local function turnTo(ped, heading)
+local function turnTo(ped, heading, dt)
     local current = GetEntityHeading(ped)
     local diff = (heading - current + 180.0) % 360.0 - 180.0
-    if math.abs(diff) < 2.0 then return current end
-    local step = math.max(-12.0, math.min(12.0, diff * 0.35))
+    if math.abs(diff) <= 3.0 then return current end
+    -- Degrees per second rather than per frame, with a small resting deadband.
+    local limit = 120.0 * math.max(0.0, math.min(0.05, (dt or 16.0) / 1000))
+    local step = math.min(math.abs(diff) - 2.0, limit) * (diff < 0 and -1 or 1)
     SetEntityHeading(ped, current + step)
     return current + step
 end
@@ -682,7 +710,7 @@ local function runStage(session, stage, index)
     if tool.aimAnim then animations[#animations+1] = tool.aimAnim end
     if tool.sideAnim then animations[#animations+1] = tool.sideAnim end
     for _, anim in ipairs(animations) do lib.requestAnimDict(anim.dict, 2000) end
-    local playing -- anim currently looping
+    local animationState = {}
     local progress = { front = 0, left = 0, right = 0, rear = 0 }
     local from = session.dirt * (index == 1 and 1.0 or W.stages[index - 1].dirt)
     local to = session.dirt * stage.dirt
@@ -723,7 +751,9 @@ local function runStage(session, stage, index)
             local dir, at, entity, distance = aimAt(ped)
             if dir then
                 local heading = GetHeadingFromVector_2d(dir.x, dir.y)
-                local facing = turnTo(ped, heading)
+                -- The muzzle moves with the hand. Steering the body from that
+                -- moving muzzle's aim creates a feedback loop at close range.
+                local facing = turnTo(ped, GetGameplayCamRot(2).z, dt)
                 -- the jet points at the crosshair even while the ped is still turning
                 jet = { pitch = math.deg(math.asin(dir.z)), yaw = (heading - facing + 180.0) % 360.0 - 180.0, distance = distance }
                 if at and entity == veh then zone = sideOf(veh, at) end
@@ -734,7 +764,7 @@ local function runStage(session, stage, index)
                 zone = z
                 local c = GetEntityCoords(veh)
                 local p = GetEntityCoords(ped)
-                turnTo(ped, GetHeadingFromVector_2d(c.x - p.x, c.y - p.y))
+                turnTo(ped, GetHeadingFromVector_2d(c.x - p.x, c.y - p.y), dt)
             end
             -- sides face the player: wipe like a window
             if (z == 'left' or z == 'right') and tool.sideAnim then anim = tool.sideAnim end
@@ -742,11 +772,7 @@ local function runStage(session, stage, index)
         if zone then progress[zone] = math.min(stage.zoneTime, progress[zone] + dt) end
 
         -- animation + jet on/off
-        if anim ~= playing or (anim and not IsEntityPlayingAnim(ped, anim.dict, anim.clip, 3)) then
-            if playing then StopAnimTask(ped, playing.dict, playing.clip, 1.0) end
-            if anim then TaskPlayAnim(ped, anim.dict, anim.clip, 4.0, -4.0, -1, 49, 0.0, false, false, false) end
-            playing = anim
-        end
+        updateWashAnimation(animationState, ped, anim, now)
         local own = visuals[cache.serverId]
         if own and own.visual then setJet(own.visual, jet and stage.fx, jet and jet.pitch, jet and jet.yaw, jet and jet.distance) end
         -- others see the jet through the state bag (throttled)
@@ -774,7 +800,7 @@ local function runStage(session, stage, index)
         Wait(0)
     end
 
-    if playing then StopAnimTask(cache.ped, playing.dict, playing.clip, 1.0) end
+    if animationState.anim then StopAnimTask(cache.ped, animationState.anim.dict, animationState.anim.clip, 1.0) end
     for _, anim in ipairs(animations) do RemoveAnimDict(anim.dict) end
     return outcome, reason
 end

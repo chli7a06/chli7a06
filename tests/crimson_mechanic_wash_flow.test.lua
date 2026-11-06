@@ -29,6 +29,7 @@ GetSelectedPedWeapon=function() return 0 end
 ShowHudComponentThisFrame=function() end
 GetHeadingFromVector_2d=function() return 0 end
 GetEntityHeading=function() return 0 end
+GetGameplayCamRot=function() return vec3(0,0,0) end
 IsEntityPlayingAnim=function() return true end
 TaskPlayAnim=function() end
 StopAnimTask=function() end
