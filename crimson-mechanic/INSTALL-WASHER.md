@@ -1,6 +1,20 @@
 # Crimson pressure-washer integration
 
-# Current update: 1.4.4 / V5
+# Current update: 1.4.5 / V6
+
+The left support hand rolls inward by 15 degrees around the collar axis in carry
+and spray. Its position rotates about the same collar pivot to preserve finger
+contact. The right-hand pose, gun model, length and muzzle `(0.760, 0, 0.041)`
+remain as in V5. The gun dictionary is now `crimson_wash_custom_v6`.
+
+Back up custom settings, cancel washing and replace this resource. If merging a
+custom config, update both gun animation dictionaries to V6 and replace the old
+V5 YCD with the included V6 YCD. Restart `crimson-mechanic` and reconnect.
+No asset conversion is required. Automated import/compiled-channel/grip checks
+pass; the final wrist appearance still needs a live FiveM check.
+
+
+# Previous update: 1.4.4 / V5
 
 Left-hand support is realigned around the front collar in carry and spray.
 The lance is 8 cm shorter than V4 (23 cm shorter than the original), with the
