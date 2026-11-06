@@ -5,18 +5,33 @@ let now = 0;
 const listeners = {};
 let watchdog;
 const instances = [];
+const reports = [];
 class Audio {
-    constructor(src) { this.src = src; this.paused = true; this.plays = 0; instances.push(this); }
-    play() { this.paused = false; this.plays++; return Promise.resolve(); }
+    constructor(src) { this.src = src; this.paused = true; this.plays = 0; this.events = {}; instances.push(this); }
+    play() {
+        this.plays++;
+        if (Audio.blockNext) {
+            Audio.blockNext = false;
+            return { catch: fn => fn({ name: 'NotAllowedError' }) };
+        }
+        this.paused = false;
+        if (this.events.playing) this.events.playing();
+        return Promise.resolve();
+    }
+    addEventListener(name, fn) { this.events[name] = fn; }
     pause() { this.paused = true; }
     removeAttribute(name) { if (name === 'src') this.src = ''; }
     load() {}
 }
-vm.runInNewContext(fs.readFileSync('crimson-mechanic/web/wash-audio.js', 'utf8'), {
+const context = vm.createContext({
     Audio, Date: { now: () => now },
     window: { addEventListener: (name, fn) => { listeners[name] = fn; } },
     setInterval: fn => { watchdog = fn; },
+    GetParentResourceName: () => 'crimson-mechanic',
+    fetch: (_, request) => { reports.push(JSON.parse(request.body)); return { catch() {} }; },
 });
+vm.runInContext('Object.hasOwn = undefined;', context);
+vm.runInContext(fs.readFileSync('crimson-mechanic/web/wash-audio.js', 'utf8'), context);
 const send = streams => listeners.message({ data: { action: 'washAudio', streams } });
 send([{ id: '11', kind: 'water', volume: .65 }, { id: '22', kind: 'foam', volume: .2 }]);
 assert.equal(instances.length, 2);
@@ -42,4 +57,11 @@ assert.ok(instances.at(-1).paused, 'lost heartbeat must not leave a stuck sound 
 send([{ id: '11', kind: 'water', volume: .5 }]);
 listeners.pagehide();
 assert.ok(instances.at(-1).paused);
-console.log('PASS: water/foam audio loops, owner/spectator mixing, stage changes, release and missing-heartbeat cleanup');
+assert.ok(reports.some(r => r.status === 'ready') && reports.some(r => r.status === 'playing'));
+Audio.blockNext = true;
+send([{ id: '11', kind: 'water', volume: .5 }]);
+assert.ok(reports.some(r => r.status === 'error' && r.code === 'blocked'), 'autoplay rejection must be reported to Lua');
+const failed = instances.at(-1); failed.error = { code: 4 }; failed.events.error(); failed.events.error();
+assert.equal(reports.filter(r => r.code === 'file').length, 1, 'file errors must report once instead of failing silently');
+send([]);
+console.log('PASS: legacy CEF without Object.hasOwn, playback/error reports, audio stages, volume updates and lifecycle cleanup');

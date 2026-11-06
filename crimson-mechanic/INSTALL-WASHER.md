@@ -1,6 +1,31 @@
 # Crimson pressure-washer integration
 
-# Current update: 1.4.10 / independent spray audio and emitter-axis correction
+# Current update: 1.4.11 / legacy NUI audio compatibility
+
+Replaces `Object.hasOwn` with the older-CEF-compatible
+`Object.prototype.hasOwnProperty.call`. With the newer method unavailable, the
+previous audio message handler throws before constructing any audio player.
+This failure was reproduced in Chromium with `Object.hasOwn` disabled.
+
+The revised player was tested in Chromium against the actual packaged OGG files,
+with autoplay enabled as in the game host: water and foam load/decode, playback
+time advances, a stage change stops the preceding loop, and release stops both.
+This verifies browser playback, not the user's physical audio output or FiveM
+CEF configuration.
+
+Playback rejection and media errors are no longer silently swallowed: they send
+one status callback identifying blocked playback, unavailable files or decoding.
+If the audio UI never reports readiness while spraying, the client displays a
+single installation/reconnect notification after three seconds. There is no
+routine F8 output. A volume of zero keeps audio disabled.
+
+Install the complete resource and reconnect, including `web/wash-audio.js` and
+the new Lua NUI callback. All previous car-body foam/wetness, spray direction,
+hand pose and motion behavior are retained. If sound is still absent, report the
+exact on-screen audio notification; no unrelated anticheat change is required.
+
+
+# Previous update: 1.4.10 / independent spray audio and emitter-axis correction
 
 Water and foam now have their own packaged looping audio, driven by desired
 spray state rather than particle handles. The owner hears the active stage;

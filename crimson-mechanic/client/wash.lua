@@ -9,6 +9,7 @@ local L = Lang.wash
 local STATE_KEY = 'crimsonWash'
 local REMOTE_RANGE = Config.Wash.effectDistance or 100.0
 local usedPtfxAssets = {}
+local audioUiReady,audioErrorShown=false,false
 local ZONES = { 'front', 'left', 'right', 'rear' }
 local UNARMED = `WEAPON_UNARMED`
 
@@ -452,6 +453,7 @@ local function washAudioStreams()
     if c.enabled==false then return {} end
     local range=math.max(1.0,c.distance or 24.0)
     local volume=math.max(0.0,math.min(1.0,c.volume or .65))
+    if volume<=0 then return {} end
     local listener=GetEntityCoords(cache.ped)
     local streams={}
     for serverId,entry in pairs(visuals) do
@@ -473,10 +475,18 @@ end
 
 CreateThread(function()
     local active=false
+    local waitingSince
     while true do
         Wait(100)
         local streams=washAudioStreams()
         if #streams>0 or active then SendNUIMessage({action='washAudio',streams=streams}) end
+        if #streams>0 and not audioUiReady then
+            waitingSince=waitingSince or GetGameTimer()
+            if not audioErrorShown and GetGameTimer()-waitingSince>3000 then
+                audioErrorShown=true
+                notify('Son lavage : interface audio non chargée. Installe la ressource complète puis reconnecte-toi.','error')
+            end
+        else waitingSince=nil end
         active=#streams>0
     end
 end)
@@ -1141,6 +1151,21 @@ if W.debug then
         print(('model = %q, hidden = %s,'):format(gun.model, tostring(gun.hidden == true)))
     end, false)
 end
+
+RegisterNUICallback('washAudioStatus',function(data,cb)
+    if type(data)=='table' and (data.status=='ready' or data.status=='playing' or data.status=='error') then audioUiReady=true end
+    if type(data)=='table' and data.status=='error' and not audioErrorShown then
+        audioErrorShown=true
+        local messages={
+            file='Son lavage : fichier audio indisponible. Installe la ressource complète puis reconnecte-toi.',
+            decode='Son lavage : NUI ne peut pas décoder le fichier audio.',
+            blocked='Son lavage : la lecture audio est bloquée par NUI.',
+            play='Son lavage : le navigateur NUI ne peut pas lancer la lecture.',
+        }
+        notify(messages[data.code] or messages.play,'error')
+    end
+    cb({ok=true})
+end)
 
 AddEventHandler('onResourceStop', function(resource)
     if resource ~= cache.resource then return end
