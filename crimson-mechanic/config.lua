@@ -98,6 +98,7 @@ Config.Wash = {
     nozzleBone = 28422,
     nozzle = vec3(0.0, 0.05, 0.0),
     effectDistance = 100.0, -- all nearby viewers rebuild jets from replicated player state
+    sprayAudio = { enabled = true, volume = 0.65, distance = 24.0 },
     surface = { enabled = true, maxPatches = 48, patchSize = 0.6, rinseRadius = 0.75, sampleMs = 180, distance = 65.0 },
     visualSpray = {
         enabled = true, distance = 100.0, continuous = false,
@@ -105,9 +106,9 @@ Config.Wash = {
         foam = { colour = vec3(250, 250, 245), alpha = 220, width = 0.014, spread = 0.035 },
     },
     effects = {
-        water = { asset = 'scr_carwash', name = 'ent_amb_car_wash_jet', rot = vec3(0.0, 0.0, 0.0), scale = 0.55, alpha = 1.0, colour = vec3(1.0, 1.0, 1.0) },
+        water = { asset = 'scr_carwash', name = 'ent_amb_car_wash_jet', rot = vec3(-90.0, 0.0, 0.0), scale = 0.55, alpha = 1.0, colour = vec3(1.0, 1.0, 1.0) },
         -- Dedicated car-wash soap particles rather than extinguisher powder.
-        foam  = { asset = 'scr_carwash', name = 'ent_amb_car_wash_jet_soap', rot = vec3(0.0, 0.0, 0.0), scale = 0.75, alpha = 1.0, colour = vec3(1.0, 1.0, 1.0) },
+        foam  = { asset = 'scr_carwash', name = 'ent_amb_car_wash_jet_soap', rot = vec3(-90.0, 0.0, 0.0), scale = 0.75, alpha = 1.0, colour = vec3(1.0, 1.0, 1.0) },
     },
     -- true: /washfx, /washhand, /washtip and /washmodel tune the gun live (they print the config line)
     debug = false,

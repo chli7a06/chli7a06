@@ -7,7 +7,7 @@ lua54 'yes'
 name 'crimson-mechanic'
 author 'mm3'
 description 'Mechanic job: placeable benches, job-locked tuning, customer request tickets, stance'
-version '1.4.9'
+version '1.4.10'
 
 shared_scripts {
     '@ox_lib/init.lua',
@@ -47,6 +47,9 @@ files {
     'web/icons.js',
     'web/wash.css',
     'web/wash.js',
+    'web/wash-audio.js',
+    'web/audio/wash_water.ogg',
+    'web/audio/wash_foam.ogg',
     'textures/wash_foam.png',
     'textures/wash_water.png',
     'web/hud-medium.ttf',

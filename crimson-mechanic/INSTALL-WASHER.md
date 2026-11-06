@@ -1,6 +1,35 @@
 # Crimson pressure-washer integration
 
-# Current update: 1.4.9 / bodywork foam, wetness and straight spray
+# Current update: 1.4.10 / independent spray audio and emitter-axis correction
+
+Water and foam now have their own packaged looping audio, driven by desired
+spray state rather than particle handles. The owner hears the active stage;
+nearby viewers hear it with distance attenuation (24 m default). At most four
+streams play per viewer. Releasing LMB, changing stages, losing the visual or
+stopping the resource stops the matching sound. NUI also stops audio when its
+client heartbeat is absent for 750 ms.
+
+The included OGG files are original synthetic pressure-spray/foam sound effects,
+not recordings extracted from GTA. They are reproducible using
+`scripts/build_wash_audio.py`. `Config.Wash.sprayAudio` controls volume/range.
+
+The `scr_carwash` water and soap emitters now include -90 degrees X rotation to
+map their local +Z emission into the barrel's forward direction. The existing
+physical barrel slope, impact test, bodywork foam/wetness and motion fixes remain.
+
+Install the complete resource, including the manifest, updated config, HTML,
+`web/wash-audio.js` and both `web/audio/*.ogg` files. Restart and reconnect so
+NUI loads the new audio code. When merging custom config, include `sprayAudio`
+and the changed `effects.water.rot` / `effects.foam.rot` values.
+
+Mocked tests cover owner/spectator audio selection, attenuation, start/stop,
+no restart on volume updates, stage switching, lost-heartbeat cleanup, and the
+emitter-axis calculation. Both OGG files decode as non-silent four-second loops.
+Lua/JS and existing wash tests pass. Actual CEF playback, perceived sound quality
+and particle direction still need a live check on the user's server.
+
+
+# Previous update: 1.4.9 / bodywork foam, wetness and straight spray
 
 Foam now accumulates as transparent bubble-textured patches at the actual vehicle
 impact points. It remains during release/scrubbing. Water rinses nearby foam

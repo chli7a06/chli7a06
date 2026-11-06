@@ -446,6 +446,41 @@ local function drawRubberHose(v)
     end
 end
 
+-- The same desired spray state drives audio even when native PTFX is absent.
+local function washAudioStreams()
+    local c=W.sprayAudio or {}
+    if c.enabled==false then return {} end
+    local range=math.max(1.0,c.distance or 24.0)
+    local volume=math.max(0.0,math.min(1.0,c.volume or .65))
+    local listener=GetEntityCoords(cache.ped)
+    local streams={}
+    for serverId,entry in pairs(visuals) do
+        local v=entry.visual
+        if v and not v.destroyed and v.aiming and (v.jetKey=='water' or v.jetKey=='foam')
+            and v.tool and DoesEntityExist(v.tool) then
+            local distance=#(GetEntityCoords(v.tool)-listener)
+            local own=serverId==cache.serverId
+            if own or distance<range then
+                streams[#streams+1]={id=tostring(serverId),kind=v.jetKey,
+                    volume=volume*(own and 1.0 or (1-distance/range)^2)}
+            end
+        end
+    end
+    table.sort(streams,function(a,b) return a.volume>b.volume end)
+    while #streams>4 do table.remove(streams) end
+    return streams
+end
+
+CreateThread(function()
+    local active=false
+    while true do
+        Wait(100)
+        local streams=washAudioStreams()
+        if #streams>0 or active then SendNUIMessage({action='washAudio',streams=streams}) end
+        active=#streams>0
+    end
+end)
+
 -- Keep particles at the muzzle and adjust hose slack as the player moves.
 CreateThread(function()
     while true do
@@ -1109,6 +1144,7 @@ end
 
 AddEventHandler('onResourceStop', function(resource)
     if resource ~= cache.resource then return end
+    SendNUIMessage({action='washAudio',streams={}})
     hidePrompt()
     if washing then
         hud(nil)

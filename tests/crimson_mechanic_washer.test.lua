@@ -75,7 +75,7 @@ SetParticleFxLoopedOffsets=function(_,x,y,z,rx,ry,rz) offsets={pos=vec3(x,y,z),r
 local f=assert(io.open('crimson-mechanic/client/wash.lua'));local src=f:read('*a');f:close()
 src=src:gsub('`[^`]+`','0')
 src=src:sub(1,assert(src:find('%-%- Dirt level while being washed'))-1)
-local api=assert(load(src..'\nreturn {refresh=refreshVisual,stop=stopVisual,nozzle=nozzleOffset,jet=setJet,visuals=visuals,destroy=destroyVisual,updateHose=updateHose,drawHose=drawRubberHose,animation=washAnimation,spray=drawSpray,geometry=jetGeometry}'))()
+local api=assert(load(src..'\nreturn {refresh=refreshVisual,stop=stopVisual,nozzle=nozzleOffset,jet=setJet,visuals=visuals,destroy=destroyVisual,updateHose=updateHose,drawHose=drawRubberHose,animation=washAnimation,spray=drawSpray,geometry=jetGeometry,audio=washAudioStreams}'))()
 local function data(id,tool) return {id=id,tool=tool or 'gun',ax=10,ay=0,az=2,len=12} end
 local function build(serverId,ped,d)
  state[serverId]=d;api.refresh(serverId,d,ped);threads[#threads]()
@@ -92,6 +92,15 @@ assert(fxSettings[own.fx].alpha==1 and fxSettings[own.fx].distance==100)
 local remote=assert(build(22,2,data(2)))
 api.jet(remote,'foam',0,0);assert(remoteFx.ped==remote.tool and close(remoteFx.pos.x,.760),'spectator particle must attach to its own gun copy')
 assert(fxSettings[remote.fx].colour.x==1 and fxSettings[remote.fx].distance==100)
+-- Car-wash PTFX emit along their local +Z; rotate that into the lance's +X/-Z.
+local rx,rz=math.rad(offsets.rot.x),math.rad(offsets.rot.z)
+local emitterX,emitterY,emitterZ=math.sin(rz)*math.sin(rx),-math.cos(rz)*math.sin(rx),math.cos(rx)
+local slope=Config.Wash.tools.gun.muzzleDirection
+local slopeLength=math.sqrt(slope.x*slope.x+slope.z*slope.z)
+assert(math.abs(emitterX-slope.x/slopeLength)<.0001 and math.abs(emitterY)<.0001
+ and math.abs(emitterZ-slope.z/slopeLength)<.0001,'native water/soap must point out of the barrel, never into the sky')
+local audible=api.audio();assert(#audible==2 and audible[1].id=='11' and audible[1].volume>audible[2].volume)
+assert(audible[1].kind=='water' and audible[2].kind=='foam','owner and spectator must hear their active stages')
 -- Stopping and restarting a jet changes effect exactly once, not once per frame.
 local steady=fxCreated;api.jet(remote,'foam',15,25);assert(fxCreated==steady)
 -- A gun rotated 90 degrees needs its particle rotated back in gun space.
@@ -99,6 +108,7 @@ toolAngles[remote.tool]=math.pi/2
 api.jet(remote,'foam',0,0);assert(close(offsets.rot.z,-90),'world aim must be converted into gun-local rotation')
 toolAngles[remote.tool]=nil
 api.jet(remote,nil);assert(not remote.fx and not remote.aiming)
+assert(#api.audio()==1,'release must remove the remote audio stream')
 api.jet(remote,'water',0,0);assert(fxCreated==steady+1)
 -- Failed handles must not be treated as active effects or retried every frame.
 local startFx=StartParticleFxLoopedOnEntity
