@@ -1,6 +1,24 @@
 # Crimson pressure-washer integration
 
-# Current update: 1.4.3 / V4
+# Current update: 1.4.4 / V5
+
+Left-hand support is realigned around the front collar in carry and spray.
+The lance is 8 cm shorter than V4 (23 cm shorter than the original), with the
+same-size grip and bottle. Use dictionary `crimson_wash_custom_v5` and muzzle
+`(0.760, 0, 0.041)` together with the included compiled YDR/YCD.
+
+Back up custom settings, cancel washing and replace this resource. If merging a
+custom config, update `Config.Wash.tools.gun`. Remove old V4 YCD overrides, restart
+`crimson-mechanic` and reconnect. No Blender or CodeWalker conversion is needed.
+
+Both compiled binaries were reread successfully. Wrist import/export and curled
+left-finger/collar checks pass for carry and spray, along with resource integration
+checks. Actual finger skin/contact on the live ped still needs a FiveM test.
+The right-hand pose, hose code, mechanic/server/UI files and WaveShield include
+are unchanged from V4.
+
+
+# Previous update: 1.4.3 / V4
 
 This package includes the compiled V4 carry/spray clips and a washer with its long
 lance shortened by 15 cm. Grip and bottle dimensions are retained. The config
