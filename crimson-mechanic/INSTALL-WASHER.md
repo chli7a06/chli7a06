@@ -1,6 +1,27 @@
 # Crimson pressure-washer integration
 
-# Current update: 1.4.14 / neutral left support wrist (V7)
+# Current update: 1.4.15 / forearm roll distribution (V8)
+
+V7's low hand/forearm bend metric missed a large axial rotation at the elbow,
+which moved deformation into the forearm. V8 restores the minimal-rotation main
+forearm orientation, changes to a neutral side grip, and adds native
+`RB_L_ForeArmRoll` (tag 61007) as an animated mid-forearm twist bone. It carries
+half the hand's axial rotation so the skinned arm does not carry it all at one
+joint. Both clips now have 47 tracks, including this new roll channel.
+
+Imported skeleton checks measure elbow axial rotation -6.2/-17.0 degrees in
+carry/spray, with roll-helper rotation 19.5/22.4 degrees and hand bend 18.2/13.6
+degrees. Checks constrain elbow rotation and twist distribution as well as finger
+contact. Compiled binary reread passes; unrelated channels remain within 1e-5
+of V7. These checks still cannot replace a live test of the actual ped skin mesh.
+
+Install the complete resource or replace the V7 binary with the included
+`crimson_wash_custom_v8.ycd` and update both gun animation dictionaries to V8.
+Restart and reconnect. Right hand, gun model, attachment, stream direction,
+water/foam layers and inline audio are retained.
+
+
+# Previous update: 1.4.14 / neutral left support wrist (V7)
 
 The left support hand uses an oblique grip aligned with its forearm, rather than
 pointing across the barrel and bending sharply at the wrist. Forearm roll is

@@ -124,8 +124,8 @@ Config.Wash = {
             muzzle = vec3(0.760, 0.0, 0.041), -- model-space tip, shared by local/remote jets and aiming
             -- Rigid attachment derived from the authored male freemode clips.
             hand = { bone = 57005, pos = vec3(0.085, 0.025, -0.040), rot = vec3(-90.0, 0.0, 0.0), rotOrder = 2 },
-            anim = { dict = 'crimson_wash_custom_v7', clip = 'carry' },
-            aimAnim = { dict = 'crimson_wash_custom_v7', clip = 'spray' },
+            anim = { dict = 'crimson_wash_custom_v8', clip = 'carry' },
+            aimAnim = { dict = 'crimson_wash_custom_v8', clip = 'spray' },
         },
         sponge = {
             model = 'prop_sponge_01',
