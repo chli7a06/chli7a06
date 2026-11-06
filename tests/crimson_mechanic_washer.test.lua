@@ -75,7 +75,7 @@ SetParticleFxLoopedOffsets=function(_,x,y,z,rx,ry,rz) offsets={pos=vec3(x,y,z),r
 local f=assert(io.open('crimson-mechanic/client/wash.lua'));local src=f:read('*a');f:close()
 src=src:gsub('`[^`]+`','0')
 src=src:sub(1,assert(src:find('%-%- Dirt level while being washed'))-1)
-local api=assert(load(src..'\nreturn {refresh=refreshVisual,stop=stopVisual,nozzle=nozzleOffset,jet=setJet,visuals=visuals,destroy=destroyVisual,updateHose=updateHose,drawHose=drawRubberHose,animation=washAnimation,spray=drawSpray}'))()
+local api=assert(load(src..'\nreturn {refresh=refreshVisual,stop=stopVisual,nozzle=nozzleOffset,jet=setJet,visuals=visuals,destroy=destroyVisual,updateHose=updateHose,drawHose=drawRubberHose,animation=washAnimation,spray=drawSpray,geometry=jetGeometry}'))()
 local function data(id,tool) return {id=id,tool=tool or 'gun',ax=10,ay=0,az=2,len=12} end
 local function build(serverId,ped,d)
  state[serverId]=d;api.refresh(serverId,d,ped);threads[#threads]()
@@ -141,7 +141,17 @@ DrawPoly=function(...)
  colours[a[10]]=true
 end
 api.spray(v);assert(sprayPolys>0 and colours[185],'water must be visible without a particle handle')
-for _,a in ipairs(vertices) do for i=2,8,3 do assert(a[i]<=2.501,'visible stream must stop at the replicated impact distance') end end
+local muzzle,axis=api.geometry(v)
+for _,a in ipairs(vertices) do
+ for i=1,7,3 do
+  local along=(a[i]-muzzle.x)*axis.x+(a[i+1]-muzzle.y)*axis.y+(a[i+2]-muzzle.z)*axis.z
+  assert(along>=-.002 and along<=2.502,'visible stream must stop at the actual gun-axis impact distance')
+ end
+end
+assert(axis.x>.99 and axis.z<0,'stream must follow the slightly descending barrel, not the camera')
+toolAngles[v.tool]=math.pi/2;local _,turned=api.geometry(v)
+assert(math.abs(turned.x)<.001 and turned.y>.99,'stream must turn with the physical gun')
+toolAngles[v.tool]=nil
 sprayPolys=0;api.jet(v,'foam',0,0,2.5);api.spray(v)
 assert(sprayPolys>0 and colours[250],'foam must have a distinct white spray')
 api.jet(v,nil);sprayPolys=0;api.spray(v);assert(sprayPolys==0,'release must stop the visible spray immediately')

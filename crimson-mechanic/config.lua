@@ -98,15 +98,16 @@ Config.Wash = {
     nozzleBone = 28422,
     nozzle = vec3(0.0, 0.05, 0.0),
     effectDistance = 100.0, -- all nearby viewers rebuild jets from replicated player state
+    surface = { enabled = true, maxPatches = 48, patchSize = 0.6, rinseRadius = 0.75, sampleMs = 180, distance = 65.0 },
     visualSpray = {
-        enabled = true, distance = 100.0,
+        enabled = true, distance = 100.0, continuous = false,
         water = { colour = vec3(185, 220, 255), alpha = 190, width = 0.007, spread = 0.018 },
         foam = { colour = vec3(250, 250, 245), alpha = 220, width = 0.014, spread = 0.035 },
     },
     effects = {
-        water = { asset = 'core', name = 'water_cannon_jet', rot = vec3(0.0, 0.0, 0.0), scale = 0.40, alpha = 1.0, colour = vec3(0.75, 0.9, 1.0) },
-        -- the user preferred this over scr_carwash / ent_amb_car_wash_jet_soap
-        foam  = { asset = 'core', name = 'weap_extinguisher', rot = vec3(0.0, 0.0, 0.0), scale = 0.80, alpha = 1.0, colour = vec3(1.0, 1.0, 1.0) },
+        water = { asset = 'scr_carwash', name = 'ent_amb_car_wash_jet', rot = vec3(0.0, 0.0, 0.0), scale = 0.55, alpha = 1.0, colour = vec3(1.0, 1.0, 1.0) },
+        -- Dedicated car-wash soap particles rather than extinguisher powder.
+        foam  = { asset = 'scr_carwash', name = 'ent_amb_car_wash_jet_soap', rot = vec3(0.0, 0.0, 0.0), scale = 0.75, alpha = 1.0, colour = vec3(1.0, 1.0, 1.0) },
     },
     -- true: /washfx, /washhand, /washtip and /washmodel tune the gun live (they print the config line)
     debug = false,
@@ -118,6 +119,7 @@ Config.Wash = {
     tools = {
         gun = {
             model = 'crimson_pressure_washer', hose = true, hidden = false,
+            muzzleDirection = vec3(1.0, 0.0, -0.08), -- follows the front barrel
             muzzle = vec3(0.760, 0.0, 0.041), -- model-space tip, shared by local/remote jets and aiming
             -- Rigid attachment derived from the authored male freemode clips.
             hand = { bone = 57005, pos = vec3(0.085, 0.025, -0.040), rot = vec3(-90.0, 0.0, 0.0), rotOrder = 2 },

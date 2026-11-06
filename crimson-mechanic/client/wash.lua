@@ -4,6 +4,7 @@
 -- Gun, hose and jet are local props/effects on every client, rebuilt from the washer's
 -- 'crimsonWash' state bag (same idea as ox_fuel's hose), so nothing networked is spawned.
 local W = Config.Wash
+local Surface = CrimsonWashSurface
 local L = Lang.wash
 local STATE_KEY = 'crimsonWash'
 local REMOTE_RANGE = Config.Wash.effectDistance or 100.0
@@ -62,6 +63,7 @@ local function destroyVisual(v)
     if not v or v.destroyed then return end
     v.destroyed = true
     stopJet(v)
+    if Surface then Surface.clear(v) else v.surface = nil end
     if v.rope and DoesRopeExist(v.rope) then DeleteRope(v.rope) end
     if v.tool and DoesEntityExist(v.tool) then DeleteEntity(v.tool) end
     if v.anchor and DoesEntityExist(v.anchor) then DeleteEntity(v.anchor) end
@@ -218,7 +220,29 @@ end
 
 --- Every viewer owns a local copy of the gun. Attach particles to that copy,
 --- never to somebody else's network ped or a stationary world emitter.
---- Convert the camera aim into gun-local rotation so the animated muzzle follows.
+--- Keep emitter rotation aligned with the physical front barrel.
+local function jetGeometry(v)
+    local tool=W.tools[v.toolKey]
+    if not tool or not tool.muzzle or not v.tool or not DoesEntityExist(v.tool) then return end
+    local m,d=tool.muzzle,tool.muzzleDirection or vec3(1,0,0)
+    local start=GetOffsetFromEntityInWorldCoords(v.tool,m.x,m.y,m.z)
+    local tip=GetOffsetFromEntityInWorldCoords(v.tool,m.x+d.x,m.y+d.y,m.z+d.z)
+    local dx,dy,dz=tip.x-start.x,tip.y-start.y,tip.z-start.z
+    local length=math.sqrt(dx*dx+dy*dy+dz*dz)
+    if length<.001 then return end
+    local direction=vec3(dx/length,dy/length,dz/length)
+    local side=GetOffsetFromEntityInWorldCoords(v.tool,m.x,m.y+1,m.z)
+    local sx,sy,sz=side.x-start.x,side.y-start.y,side.z-start.z
+    local dot=sx*direction.x+sy*direction.y+sz*direction.z
+    sx,sy,sz=sx-dot*direction.x,sy-dot*direction.y,sz-dot*direction.z
+    local sideLength=math.sqrt(sx*sx+sy*sy+sz*sz)
+    if sideLength<.001 then return end
+    local right=vec3(sx/sideLength,sy/sideLength,sz/sideLength)
+    local up=vec3(direction.y*right.z-direction.z*right.y,
+        direction.z*right.x-direction.x*right.z,direction.x*right.y-direction.y*right.x)
+    return start,direction,right,up
+end
+
 local function jetTransform(v)
     if not v.tool or not DoesEntityExist(v.tool) then return end
     local tool, effect = W.tools[v.toolKey], W.effects[v.fxKey or v.jetKey]
@@ -229,13 +253,11 @@ local function jetTransform(v)
         local world = GetOffsetFromEntityInWorldCoords(v.ped, n.x, n.y, n.z)
         muzzle = GetOffsetFromEntityGivenWorldCoords(v.tool, world.x, world.y, world.z)
     end
-    local pitch = math.rad(v.pitch or 0.0)
-    local heading = math.rad(GetEntityHeading(v.ped) + (v.yaw or 0.0))
+    local _, worldDirection = jetGeometry(v)
+    if not worldDirection then return end
     local origin = GetOffsetFromEntityInWorldCoords(v.tool, 0.0, 0.0, 0.0)
     local direction = GetOffsetFromEntityGivenWorldCoords(v.tool,
-        origin.x - math.sin(heading) * math.cos(pitch),
-        origin.y + math.cos(heading) * math.cos(pitch),
-        origin.z + math.sin(pitch))
+        origin.x + worldDirection.x, origin.y + worldDirection.y, origin.z + worldDirection.z)
     local c = effect.rot
     return muzzle, vec3(math.deg(math.asin(math.max(-1.0, math.min(1.0, direction.z)))) + c.x,
         c.y, math.deg(math.atan(-direction.x, direction.y)) + c.z)
@@ -304,15 +326,10 @@ local function drawSpray(v)
     if not v.tool or not DoesEntityExist(v.tool) then return end
     local style = config[v.jetKey]
     if not style then return end
-    local n = nozzleOffset(v.ped, v)
-    local start = GetOffsetFromEntityInWorldCoords(v.ped, n.x, n.y, n.z)
+    local start, direction, right, up = jetGeometry(v)
+    if not start then return end
     local viewDistance = #(GetEntityCoords(cache.ped) - start)
     if viewDistance > (config.distance or REMOTE_RANGE) then return end
-    local pitch = math.rad(v.pitch or 0)
-    local heading = math.rad(GetEntityHeading(v.ped) + (v.yaw or 0))
-    local cp, sp, ch, sh = math.cos(pitch), math.sin(pitch), math.cos(heading), math.sin(heading)
-    local direction = vec3(-sh * cp, ch * cp, sp)
-    local right, up = vec3(ch, sh, 0), vec3(sh * sp, -ch * sp, cp)
     local length = math.max(.05, math.min(W.reach, v.jetDistance or W.reach))
     local time = GetGameTimer() / 1000
     local colour, width, spread = style.colour, style.width, style.spread
@@ -334,7 +351,7 @@ local function drawSpray(v)
         DrawPoly(s.x,s.y,s.z,r.x,r.y,r.z,p.x,p.y,p.z,colour.x,colour.y,colour.z,alpha)
     end
     local far = viewDistance > 25
-    local streams, segments, drops = far and 2 or 5, far and 2 or 4, far and 6 or 14
+    local streams, segments, drops = config.continuous == true and (far and 2 or 5) or 0, far and 2 or 4, far and 6 or 14
     for lane = 1, streams do
         local angle = lane * 2.399963
         for segment = 0, segments - 1 do
@@ -436,6 +453,7 @@ CreateThread(function()
         for _, entry in pairs(visuals) do
             local v = entry.visual
             if v and not v.destroyed and DoesEntityExist(v.ped) then
+                if v.surface and Surface then activeJet = true; Surface.draw(v) end
                 if v.aiming then activeJet = true; drawSpray(v) end
                 if v.fx then activeJet = true; aimJet(v) end
                 if v.rope then activeHose = true; updateHose(v) end
@@ -471,7 +489,10 @@ local function refreshVisual(serverId, data, ped)
         entry = nil
     end
     if entry then
-        if entry.visual then setJet(entry.visual, jetOf(data)) end
+        if entry.visual then
+            setJet(entry.visual, jetOf(data))
+            if Surface then Surface.apply(entry.visual, data.surface) end
+        end
         return
     end
 
@@ -485,7 +506,10 @@ local function refreshVisual(serverId, data, ped)
         if not visual then visuals[serverId] = nil; return end
         entry.visual = visual
         local current = Player(serverId).state[STATE_KEY]
-        if validState(current) then setJet(visual, jetOf(current)) end
+        if validState(current) then
+            setJet(visual, jetOf(current))
+            if Surface then Surface.apply(visual, current.surface) end
+        end
     end)
 end
 
@@ -573,6 +597,7 @@ local function publish(session, stage, jet)
         id = session.id, tool = stage.tool,
         fx = jet and stage.fx or false, pitch = jet and jet.pitch or 0.0, yaw = jet and jet.yaw or 0.0,
         distance = jet and jet.distance or W.reach,
+        surface = Surface and Surface.snapshot(session) or nil,
         ax = session.anchor.x, ay = session.anchor.y, az = session.anchor.z, len = session.length,
     }, true)
 end
@@ -600,34 +625,20 @@ local function sideOf(veh, coords)
     return zone, math.sqrt(dx * dx + dy * dy)
 end
 
-local function camDirection()
-    local rot = GetGameplayCamRot(2)
-    local x, z = math.rad(rot.x), math.rad(rot.z)
-    return vec3(-math.sin(z) * math.abs(math.cos(x)), math.cos(z) * math.abs(math.cos(x)), math.sin(x))
-end
-
---- Jet follows the crosshair: returns the jet direction, and where / what it lands on.
---- One ray from the camera, world + vehicles only (hitting our own gun or hose made the aim jump).
+--- Cast from the actual muzzle along the barrel; ignore our own local props.
 local function aimAt(ped)
-    local n = nozzleOffset(ped)
-    local origin = GetOffsetFromEntityInWorldCoords(ped, n.x, n.y, n.z)
-    local camCoords = GetGameplayCamCoord()
-    local camDir = camDirection()
-    local far = camCoords + camDir * (W.reach + 8.0)
-    local handle = StartExpensiveSynchronousShapeTestLosProbe(camCoords.x, camCoords.y, camCoords.z, far.x, far.y, far.z, 1 | 2, ped, 7)
-    local _, hit, at, _, entity = GetShapeTestResult(handle)
-    hit = hit == 1 or hit == true
-
-    -- anything between the camera and the player doesn't count
-    if hit and #(at - camCoords) < #(origin - camCoords) + 0.3 then hit = false end
-    local target = hit and at or far
-
-    local dir = target - origin
-    local len = #dir
-    if len < 0.01 then return end
-    dir = dir / len
-    if not hit or len > W.reach then return dir, nil, nil, W.reach end
-    return dir, at, entity, len
+    local own=visuals[cache.serverId]
+    local origin,dir
+    if own and own.visual then origin,dir=jetGeometry(own.visual) end
+    if not origin then return end
+    -- The stream and hit test share the physical lance axis, not a camera ray
+    -- that can point sideways relative to a close-up animated gun.
+    local far=origin+dir*W.reach
+    local handle=StartExpensiveSynchronousShapeTestLosProbe(origin.x,origin.y,origin.z,far.x,far.y,far.z,1|2,ped,7)
+    local _,hit,at,surfaceNormal,entity=GetShapeTestResult(handle)
+    if hit~=1 and hit~=true then return dir,nil,nil,W.reach end
+    local length=#(at-origin)
+    return dir,at,entity,math.max(.05,math.min(W.reach,length)),surfaceNormal
 end
 
 --- Turns the ped toward a heading a bit per frame (snapping it every frame made it flicker).
@@ -747,16 +758,18 @@ local function runStage(session, stage, index)
         -- the hose is gripped the whole time; the sponge only moves while scrubbing
         local anim = washAnimation(tool, pressing)
         if pressing and stage.fx then
-            ShowHudComponentThisFrame(14)
-            local dir, at, entity, distance = aimAt(ped)
+            local dir, at, entity, distance, surfaceNormal = aimAt(ped)
             if dir then
                 local heading = GetHeadingFromVector_2d(dir.x, dir.y)
                 -- The muzzle moves with the hand. Steering the body from that
                 -- moving muzzle's aim creates a feedback loop at close range.
                 local facing = turnTo(ped, GetGameplayCamRot(2).z, dt)
-                -- the jet points at the crosshair even while the ped is still turning
+                -- Replicate the current physical stream direction for observers.
                 jet = { pitch = math.deg(math.asin(dir.z)), yaw = (heading - facing + 180.0) % 360.0 - 180.0, distance = distance }
-                if at and entity == veh then zone = sideOf(veh, at) end
+                if at and entity == veh then
+                    zone = sideOf(veh, at)
+                    if Surface then Surface.hit(session, stage.fx, at, surfaceNormal, now) end
+                end
             end
         elseif pressing then
             local z, gap = sideOf(veh, GetEntityCoords(ped))
@@ -774,9 +787,12 @@ local function runStage(session, stage, index)
         -- animation + jet on/off
         updateWashAnimation(animationState, ped, anim, now)
         local own = visuals[cache.serverId]
-        if own and own.visual then setJet(own.visual, jet and stage.fx, jet and jet.pitch, jet and jet.yaw, jet and jet.distance) end
+        if own and own.visual then
+            setJet(own.visual, jet and stage.fx, jet and jet.pitch, jet and jet.yaw, jet and jet.distance)
+            if Surface then Surface.apply(own.visual, Surface.snapshot(session)) end
+        end
         -- others see the jet through the state bag (throttled)
-        local jetKey = jet and ('%d:%d:%d'):format(math.floor(jet.pitch / 5), math.floor(jet.yaw / 10), math.floor((jet.distance or W.reach) * 4)) or false
+        local jetKey = jet and ('%d:%d:%d:%d'):format(math.floor(jet.pitch / 5), math.floor(jet.yaw / 10), math.floor((jet.distance or W.reach) * 4), session.surfaceRevision or 0) or false
         if jetKey ~= synced and now - lastSync > 250 then
             synced, lastSync = jetKey, now
             publish(session, stage, jet)
@@ -821,6 +837,7 @@ local function startWash(shop, index)
     local session = {
         id = sessionCount,
         vehicle = veh,
+        netId = NetworkGetNetworkIdFromEntity(veh),
         vehicleCoords = GetEntityCoords(veh),
         anchor = anchor,
         length = math.min(W.hose.maxLength, #(anchor - bay) + W.hose.slack),
