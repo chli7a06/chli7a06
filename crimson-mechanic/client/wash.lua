@@ -6,7 +6,8 @@
 local W = Config.Wash
 local L = Lang.wash
 local STATE_KEY = 'crimsonWash'
-local REMOTE_RANGE = 60.0
+local REMOTE_RANGE = Config.Wash.effectDistance or 100.0
+local usedPtfxAssets = {}
 local ZONES = { 'front', 'left', 'right', 'rear' }
 local UNARMED = `WEAPON_UNARMED`
 
@@ -50,10 +51,12 @@ end
 -- ------------------------------------------------------------
 
 local function stopJet(v)
-    if v and v.fx then
-        StopParticleFxLooped(v.fx, false)
-        v.fx, v.fxKey = nil, nil
-    end
+    if not v then return end
+    if v.fx then StopParticleFxLooped(v.fx, false) end
+    v.fx, v.fxKey, v.jetKey, v.loadingFx, v.retryFxAt = nil, nil, nil, nil, nil
+    v.aiming = false
+    -- A pending asset request must never revive a released or replaced jet.
+    v.jetRevision = (v.jetRevision or 0) + 1
 end
 
 local function destroyVisual(v)
@@ -188,52 +191,83 @@ local function nozzleOffset(ped, visual)
     return GetOffsetFromEntityGivenWorldCoords(ped, hand.x, hand.y, hand.z) + W.nozzle
 end
 
---- Other players' jets are drawn at world coords (an effect looped on a remote ped is only
---- seen by its owner), so the nozzle position and rotation are worked out here.
-local function jetWorld(v)
-    local n, c = nozzleOffset(v.ped, v), W.effects[v.fxKey].rot
-    local pos = GetOffsetFromEntityInWorldCoords(v.ped, n.x, n.y, n.z)
-    return pos, vec3(v.pitch + c.x, c.y, GetEntityHeading(v.ped) + v.yaw + c.z)
+--- Every viewer owns a local copy of the gun. Attach particles to that copy,
+--- never to somebody else's network ped or a stationary world emitter.
+--- Convert the camera aim into gun-local rotation so the animated muzzle follows.
+local function jetTransform(v)
+    if not v.tool or not DoesEntityExist(v.tool) then return end
+    local tool, effect = W.tools[v.toolKey], W.effects[v.fxKey or v.jetKey]
+    if not effect then return end
+    local muzzle = tool and tool.muzzle
+    if not muzzle then
+        local n = nozzleOffset(v.ped, v)
+        local world = GetOffsetFromEntityInWorldCoords(v.ped, n.x, n.y, n.z)
+        muzzle = GetOffsetFromEntityGivenWorldCoords(v.tool, world.x, world.y, world.z)
+    end
+    local pitch = math.rad(v.pitch or 0.0)
+    local heading = math.rad(GetEntityHeading(v.ped) + (v.yaw or 0.0))
+    local origin = GetOffsetFromEntityInWorldCoords(v.tool, 0.0, 0.0, 0.0)
+    local direction = GetOffsetFromEntityGivenWorldCoords(v.tool,
+        origin.x - math.sin(heading) * math.cos(pitch),
+        origin.y + math.cos(heading) * math.cos(pitch),
+        origin.z + math.sin(pitch))
+    local c = effect.rot
+    return muzzle, vec3(math.deg(math.asin(math.max(-1.0, math.min(1.0, direction.z)))) + c.x,
+        c.y, math.deg(math.atan(-direction.x, direction.y)) + c.z)
 end
 
---- Points the jet: pitch = up/down, yaw = left/right of where the ped faces (degrees).
---- Also moves it to the hand, so it is called every frame while a jet is on (see below).
 local function aimJet(v, pitch, yaw)
     if not v or not v.fx then return end
     v.pitch, v.yaw = pitch or v.pitch or 0.0, yaw or v.yaw or 0.0
-    if v.remote then
-        local pos, rot = jetWorld(v)
-        SetParticleFxLoopedOffsets(v.fx, pos.x, pos.y, pos.z, rot.x, rot.y, rot.z)
-        return
-    end
-    local n, c = nozzleOffset(v.ped, v), W.effects[v.fxKey].rot
-    SetParticleFxLoopedOffsets(v.fx, n.x, n.y, n.z, v.pitch + c.x, c.y, v.yaw + c.z)
+    local pos, rot = jetTransform(v)
+    if pos then SetParticleFxLoopedOffsets(v.fx, pos.x, pos.y, pos.z, rot.x, rot.y, rot.z) end
 end
 
---- Jet on (fx = key in Config.Wash.effects) or off (fx = nil).
+--- Replicated state selects water/foam; each client renders exactly one local jet.
 local function setJet(v, fx, pitch, yaw)
     if not v or v.destroyed or not DoesEntityExist(v.ped) then return end
-    v.aiming, v.pitch, v.yaw = fx ~= nil, pitch or 0.0, yaw or 0.0
-    if v.fxKey ~= fx then stopJet(v) end
     local effect = fx and W.effects[fx]
-    if not effect then return end
-    if not v.fx then
-        local loaded = pcall(lib.requestNamedPtfxAsset, effect.asset, 5000)
-        if not loaded or not HasNamedPtfxAssetLoaded(effect.asset) or v.destroyed or not DoesEntityExist(v.ped) then return end
-        if v.remote then
-            v.fxKey, v.pitch, v.yaw = fx, pitch or 0.0, yaw or 0.0
-            local pos, rot = jetWorld(v)
-            UseParticleFxAssetNextCall(effect.asset)
-            v.fx = StartParticleFxLoopedAtCoord(effect.name, pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, effect.scale, false, false, false, false)
-        else
-            local n = nozzleOffset(v.ped, v)
-            UseParticleFxAssetNextCall(effect.asset)
-            v.fx = StartParticleFxLoopedOnEntity(effect.name, v.ped, n.x, n.y, n.z, effect.rot.x, effect.rot.y, effect.rot.z, effect.scale, false, false, false)
-        end
-        v.fxKey = fx
-        RemoveNamedPtfxAsset(effect.asset)
+    fx = effect and fx or nil
+    if v.jetKey ~= fx then
+        stopJet(v)
+        v.jetKey = fx
     end
-    aimJet(v, pitch or 0.0, yaw or 0.0)
+    v.aiming, v.pitch, v.yaw = fx ~= nil, pitch or 0.0, yaw or 0.0
+    if not effect then return end
+    if v.fx and not DoesParticleFxLoopedExist(v.fx) then v.fx, v.fxKey = nil, nil end
+    if not v.fx then
+        if v.loadingFx or (v.retryFxAt and GetGameTimer() < v.retryFxAt) then return end
+        local revision = v.jetRevision or 0
+        v.loadingFx = revision
+        local loaded = pcall(lib.requestNamedPtfxAsset, effect.asset, 5000)
+        local ready = loaded and HasNamedPtfxAssetLoaded(effect.asset)
+        if ready then usedPtfxAssets[effect.asset] = true end
+        if v.loadingFx == revision then v.loadingFx = nil end
+        if v.destroyed or v.jetRevision ~= revision or v.jetKey ~= fx then return end
+        if not ready
+            or not DoesEntityExist(v.ped) or not DoesEntityExist(v.tool) then
+            v.retryFxAt = GetGameTimer() + 1000
+            return
+        end
+        local pos, rot = jetTransform(v)
+        if not pos then return end
+        UseParticleFxAssetNextCall(effect.asset)
+        local handle = StartParticleFxLoopedOnEntity(effect.name, v.tool,
+            pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, effect.scale, false, false, false)
+        if not handle or handle == 0 or not DoesParticleFxLoopedExist(handle) then
+            v.retryFxAt = GetGameTimer() + 1000
+            return
+        end
+        v.fx, v.fxKey, v.retryFxAt = handle, fx, nil
+        SetParticleFxLoopedAlpha(handle, effect.alpha or 1.0)
+        if effect.colour then
+            SetParticleFxLoopedColour(handle, effect.colour.x, effect.colour.y, effect.colour.z, false)
+        end
+        SetParticleFxLoopedFarClipDist(handle, REMOTE_RANGE)
+        -- Hold the shared dictionary until resource stop. Releasing it here can
+        -- interfere with other water/foam emitters created by this same client.
+    end
+    aimJet(v) -- keep the newest aim if another state update arrived during loading
 end
 
 
@@ -343,7 +377,8 @@ end
 
 local function refreshVisual(serverId, data, ped)
     local entry = visuals[serverId]
-    if entry and (entry.id ~= data.id or entry.tool ~= data.tool) then
+    if entry and (entry.id ~= data.id or entry.tool ~= data.tool
+        or (entry.visual and (entry.visual.ped ~= ped or not DoesEntityExist(entry.visual.tool)))) then
         stopVisual(serverId)
         entry = nil
     end
@@ -963,6 +998,7 @@ AddEventHandler('onResourceStop', function(resource)
         LocalPlayer.state:set(STATE_KEY, nil, true)
     end
     for serverId in pairs(visuals) do stopVisual(serverId) end
+    for asset in pairs(usedPtfxAssets) do RemoveNamedPtfxAsset(asset) end
 end)
 
 -- A wash cut short by a resource restart survives in the state bag: clear it.

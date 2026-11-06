@@ -11,7 +11,8 @@ dofile('crimson-mechanic/config.lua')
 Config.Wash.hose.renderer='native' -- Retain fallback coverage before exercising rubber renderer.
 assert(Config.Wash.tools.gun.model=='crimson_pressure_washer' and not Config.Wash.tools.gun.hidden)
 local threads={};CreateThread=function(fn) threads[#threads+1]=fn end
-AddStateBagChangeHandler=function() end
+local stateHandlers={}
+AddStateBagChangeHandler=function(key,_,fn) stateHandlers[key]=fn end
 joaat=function(name) return name end
 local clock=0;GetGameTimer=function() return clock end
 Wait=function(ms) clock=clock+ms end
@@ -22,8 +23,14 @@ local state={}
 Player=function(id) return {state={crimsonWash=state[id]}} end
 GetEntityCoords=function(e) return positions[e] end
 DoesEntityExist=function(e) return entities[e]==true end
-GetOffsetFromEntityInWorldCoords=function(e,x,y,z) return positions[e]+vec3(x,y,z) end
-GetOffsetFromEntityGivenWorldCoords=function(e,x,y,z) return vec3(x,y,z)-positions[e] end
+local toolAngles={}
+GetOffsetFromEntityInWorldCoords=function(e,x,y,z)
+ local a=toolAngles[e] or 0;return positions[e]+vec3(x*math.cos(a)-y*math.sin(a),x*math.sin(a)+y*math.cos(a),z)
+end
+GetOffsetFromEntityGivenWorldCoords=function(e,x,y,z)
+ local a=toolAngles[e] or 0;local d=vec3(x,y,z)-positions[e]
+ return vec3(d.x*math.cos(a)+d.y*math.sin(a),-d.x*math.sin(a)+d.y*math.cos(a),d.z)
+end
 GetPedBoneCoords=function(e) return positions[e]+vec3(0,.1,0) end
 GetPedBoneIndex=function() return 1 end
 GetEntityHeading=function() return 0 end
@@ -54,11 +61,17 @@ AttachEntitiesToRope=function(_,_,_,x,y,z) lastTip=vec3(x,y,z) end
 UseParticleFxAssetNextCall=function() end
 RemoveNamedPtfxAsset=function() end
 local localFx,remoteFx,fxCreated
+local fxLive, fxSettings = {}, {}
 fxCreated=0
-StartParticleFxLoopedOnEntity=function(_,ped,x,y,z) localFx={ped=ped,pos=vec3(x,y,z)};fxCreated=fxCreated+1;return fxCreated end
-StartParticleFxLoopedAtCoord=function(_,x,y,z) remoteFx=vec3(x,y,z);fxCreated=fxCreated+1;return fxCreated end
-StopParticleFxLooped=function() end
-SetParticleFxLoopedOffsets=function() end
+StartParticleFxLoopedOnEntity=function(_,ped,x,y,z,rx,ry,rz) localFx={ped=ped,pos=vec3(x,y,z),rot=vec3(rx,ry,rz)};remoteFx=localFx;fxCreated=fxCreated+1;fxLive[fxCreated]=true;return fxCreated end
+StartParticleFxLoopedAtCoord=function() error('all viewers must attach particles to their local gun copy') end
+StopParticleFxLooped=function(h) fxLive[h]=nil end
+DoesParticleFxLoopedExist=function(h) return fxLive[h]==true end
+SetParticleFxLoopedAlpha=function(h,a) fxSettings[h]={alpha=a} end
+SetParticleFxLoopedColour=function(h,r,g,b) fxSettings[h].colour=vec3(r,g,b) end
+SetParticleFxLoopedFarClipDist=function(h,d) fxSettings[h].distance=d end
+local offsets
+SetParticleFxLoopedOffsets=function(_,x,y,z,rx,ry,rz) offsets={pos=vec3(x,y,z),rot=vec3(rx,ry,rz)} end
 local f=assert(io.open('crimson-mechanic/client/wash.lua'));local src=f:read('*a');f:close()
 src=src:gsub('`[^`]+`','0')
 src=src:sub(1,assert(src:find('%-%- Dirt level while being washed'))-1)
@@ -74,9 +87,30 @@ assert(lastHoseLength < 12 and lastHoseLength > 10,'visible hose length must not
 local previous=lastHoseLength;positions[own.tool]=vec3(1,0,0);api.updateHose(own);assert(lastHoseLength<previous,'hose must follow changing endpoint distance');positions[own.tool]=vec3(0,0,0);api.updateHose(own)
 assert(close(lastTip.x,-.07) and close(lastTip.z,-.18),'hose must attach to model connector')
 local n=api.nozzle(1);assert(close(n.x,.760) and close(n.z,.041),'own nozzle must originate at model tip')
-api.jet(own,'water',0,0);assert(close(localFx.pos.x,.760),'local particle must use model tip')
+api.jet(own,'water',0,0);assert(localFx.ped==own.tool and close(localFx.pos.x,.760),'local particle must attach to gun muzzle')
+assert(fxSettings[own.fx].alpha==1 and fxSettings[own.fx].distance==100)
 local remote=assert(build(22,2,data(2)))
-api.jet(remote,'foam',0,0);assert(close(remoteFx.x,20.760),'remote particle must use world-space model tip')
+api.jet(remote,'foam',0,0);assert(remoteFx.ped==remote.tool and close(remoteFx.pos.x,.760),'spectator particle must attach to its own gun copy')
+assert(fxSettings[remote.fx].colour.x==1 and fxSettings[remote.fx].distance==100)
+-- Stopping and restarting a jet changes effect exactly once, not once per frame.
+local steady=fxCreated;api.jet(remote,'foam',15,25);assert(fxCreated==steady)
+-- A gun rotated 90 degrees needs its particle rotated back in gun space.
+toolAngles[remote.tool]=math.pi/2
+api.jet(remote,'foam',0,0);assert(close(offsets.rot.z,-90),'world aim must be converted into gun-local rotation')
+toolAngles[remote.tool]=nil
+api.jet(remote,nil);assert(not remote.fx and not remote.aiming)
+api.jet(remote,'water',0,0);assert(fxCreated==steady+1)
+-- Failed handles must not be treated as active effects or retried every frame.
+local startFx=StartParticleFxLoopedOnEntity
+api.jet(remote,nil);StartParticleFxLoopedOnEntity=function() return 0 end
+api.jet(remote,'water',0,0);assert(not remote.fx and remote.retryFxAt)
+StartParticleFxLoopedOnEntity=startFx;steady=fxCreated
+api.jet(remote,'water',0,0);assert(fxCreated==steady)
+clock=clock+1001;api.jet(remote,'water',0,0);assert(remote.fx and fxCreated==steady+1)
+-- A streamed player's replacement ped must receive a fresh prop/effect copy.
+positions[3]=vec3(21,0,0);entities[3]=true
+state[22]=data(2);api.refresh(22,state[22],3);threads[#threads]()
+remote=api.visuals[22].visual;assert(remote.ped==3)
 local r0=ropeDeleted
 local sponge=assert(build(11,1,data(1,'sponge')))
 assert(not sponge.rope and ropeDeleted==r0+1,'sponge transition must remove gun hose')
@@ -93,8 +127,23 @@ build(11,1,data(4));assert(not api.visuals[11]);assert(created-deleted==2,'only 
 Wait=function(ms) clock=clock+ms end
 -- A cancelled effect load must not spawn particles on a retired visual.
 local v=assert(build(11,1,data(5)));local fx0=fxCreated
+-- Releasing spray while its dictionary loads must also cancel it without retiring the prop.
+lib.requestNamedPtfxAsset=function() coroutine.yield() end
+local loading=coroutine.create(function() api.jet(v,'water',0,0) end)
+assert(coroutine.resume(loading));local waiting=fxCreated
+api.jet(v,'water',0,0);assert(fxCreated==waiting,'do not duplicate pending loads')
+api.jet(v,nil);assert(coroutine.resume(loading));assert(not v.fx and fxCreated==waiting)
 lib.requestNamedPtfxAsset=function() api.stop(11) end
 api.jet(v,'water',0,0);assert(fxCreated==fx0)
+-- Real replicated-state callback starts and stops the spectator's jet.
+GetPlayerFromStateBagName=function() return 2 end
+GetPlayerServerId=function() return 22 end
+GetPlayerPed=function() return 3 end
+state[22]=data(2);state[22].fx='foam';state[22].pitch=10;state[22].yaw=15
+stateHandlers.crimsonWash('player:22',nil,state[22])
+assert(remote.fxKey=='foam' and remote.aiming and localFx.ped==remote.tool)
+state[22].fx=false;stateHandlers.crimsonWash('player:22',nil,state[22])
+assert(not remote.fx and not remote.aiming)
 api.stop(22);local d0=deleted;api.destroy(v);assert(deleted==d0,'cleanup must be idempotent')
 assert(created==deleted,'all test-created props must be removed')
 -- Smooth black hose must not create a braided native rope or an anchor prop.
@@ -126,4 +175,4 @@ assert(gun.aimAnim.dict=='crimson_wash_custom_v6' and gun.aimAnim.clip=='spray')
 assert(gun.hand.bone==57005 and close(gun.hand.pos.x,.085) and close(gun.hand.rot.x,-90) and close(gun.hand.pos.y,.025) and close(gun.hand.pos.z,-.040))
 assert(not src:find('SetIkTarget',1,true) and not src:find('SetPedCanArmIk',1,true),'runtime IK must be removed')
 assert(not src:find('GiveWeaponToPed',1,true),'integration must not grant weapons')
-print('PASS: hose renderers, carry/spray states, custom carry/spray clip bindings and no IK/weapon grant, muzzle and cleanup')
+print('PASS: local/spectator jets, replicated start/stop, aim transforms, failed-handle retry, load cancellation, hose and cleanup')

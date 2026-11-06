@@ -97,10 +97,11 @@ Config.Wash = {
     -- Debug: /washfx x y z rx ry rz scale
     nozzleBone = 28422,
     nozzle = vec3(0.0, 0.05, 0.0),
+    effectDistance = 100.0, -- all nearby viewers rebuild jets from replicated player state
     effects = {
-        water = { asset = 'core', name = 'water_cannon_jet', rot = vec3(0.0, 0.0, 0.0), scale = 0.25 },
+        water = { asset = 'core', name = 'water_cannon_jet', rot = vec3(0.0, 0.0, 0.0), scale = 0.40, alpha = 1.0, colour = vec3(0.75, 0.9, 1.0) },
         -- the user preferred this over scr_carwash / ent_amb_car_wash_jet_soap
-        foam  = { asset = 'core', name = 'weap_extinguisher', rot = vec3(0.0, 0.0, 0.0), scale = 0.6 },
+        foam  = { asset = 'core', name = 'weap_extinguisher', rot = vec3(0.0, 0.0, 0.0), scale = 0.80, alpha = 1.0, colour = vec3(1.0, 1.0, 1.0) },
     },
     -- true: /washfx, /washhand, /washtip and /washmodel tune the gun live (they print the config line)
     debug = false,

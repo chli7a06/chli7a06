@@ -1,6 +1,33 @@
 # Crimson pressure-washer integration
 
-# Current update: 1.4.5 / V6
+# Current update: 1.4.6 / shared water and foam jets
+
+Water and foam particles now attach to each viewer's local washer prop, using
+its physical muzzle and a world-aim-to-gun-local rotation conversion. This
+replaces the different owner-ped/spectator-world emitter paths. Existing player
+state bags replicate effect type, aim and release; each nearby client creates
+one emitter. Late/returning viewers are rebuilt by the existing state poll.
+If a player's ped is replaced, their prop/effect copy is rebuilt as well.
+
+Water scale is 0.40, foam scale 0.80, with full alpha and explicit water/white
+foam colours. Both configured particle names were checked against the GTA data
+dump. `Config.Wash.effectDistance` defaults to 100 metres for nearby viewers and
+particle far clipping; entities still have to be streamed by FiveM/OneSync.
+Shared effect dictionaries remain loaded until resource stop. Failed handles
+retry with a delay; pending asset loads are cancelled on release/replacement.
+
+Replace the resource after backing up custom config, or merge `client/wash.lua`,
+`Config.Wash.effects`, and `Config.Wash.effectDistance`. Restart and reconnect.
+The V6 hand pose, shortened model, muzzle and hose are retained. Keep WaveShield.
+
+Mocked checks cover owner/spectator gun attachment, replicated start/stop,
+rotated-tool aiming, missing-handle retry and cancellation during loading.
+Lua and web syntax checks pass. Actual particle visibility/shape and multiplayer
+rendering still need a live test: with two nearby players, compare rinse and foam,
+release LMB, move out of range and back, and stop the wash to check cleanup.
+
+
+# Previous update: 1.4.5 / V6
 
 The left support hand rolls inward by 15 degrees around the collar axis in carry
 and spray. Its position rotates about the same collar pivot to preserve finger
