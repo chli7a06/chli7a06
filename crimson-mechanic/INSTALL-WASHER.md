@@ -1,6 +1,27 @@
 # Crimson pressure-washer integration
 
-# Current update: 1.4.12 / audio integrated with the wash HUD
+# Current update: 1.4.13 / inline PCM audio
+
+The HUD bundle now contains both four-second mono 22050 Hz, 16-bit PCM WAV loops
+as data URLs. Normal playback does not request `audio/*.ogg` or any other audio
+file URL, removing the external-path/OGG-source dependency behind the reported
+media-source error. `web/audio/*.wav` are build inputs; the client receives their
+bytes inside `web/wash.js`. Existing OGG files remain only as legacy fallback.
+
+Rebuild original synthetic loops with `scripts/build_wash_audio.py`, then run
+`scripts/bundle_wash_audio.py`. The bundler validates WAV format and sample count
+before embedding. Install the full updated resource and reconnect so NUI reloads
+`web/wash.js`. Browser decoding errors for inline sources now report as decoding
+errors rather than suggesting a missing external audio file.
+
+Chromium playback tests deliberately return 404 for every external audio path.
+Both inline loops loaded and advanced playback time, stage changes and release
+worked, callbacks reported playing, and zero audio-file network requests occurred.
+Legacy-JavaScript, singleton/lifecycle and existing wash checks pass. This verifies
+browser decoding/playback; actual FiveM/device sound output still needs a live test.
+
+
+# Previous update: 1.4.12 / audio integrated with the wash HUD
 
 The audio player is bundled into the already-loaded `web/wash.js` HUD entry
 point, rather than requiring a separate HTML script tag. `wash-audio.js` remains

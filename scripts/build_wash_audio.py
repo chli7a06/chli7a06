@@ -44,4 +44,6 @@ for name, signal in [('water', water), ('foam', foam)]:
             audio.writeframes(pcm.tobytes())
         subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(source), '-c:a', 'libvorbis', '-q:a', '4',
                         str(OUT / f'wash_{name}.ogg')], check=True)
+        subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(source), '-ar', '22050', '-c:a', 'pcm_s16le',
+                        str(OUT / f'wash_{name}.wav')], check=True)
 print('Created seamless synthetic water/foam spray loops')

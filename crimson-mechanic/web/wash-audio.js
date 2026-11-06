@@ -1,7 +1,7 @@
 // Dedicated wash loops: independent of particle rendering and HUD visibility.
 (() => {
     if (window.CrimsonWashAudioLoaded) return;
-    const files = { water: 'audio/wash_water.ogg', foam: 'audio/wash_foam.ogg' };
+    const files = window.CrimsonWashAudioData || { water: 'audio/wash_water.ogg', foam: 'audio/wash_foam.ogg' };
     const playing = new Map();
     let lastMessage = 0;
     const reportedErrors = new Set();
@@ -61,7 +61,8 @@
                 playing.set(id, entry);
                 audio.addEventListener('error', () => {
                     if (playing.get(id) !== entry) return;
-                    reportError(audio.error && audio.error.code === 3 ? 'decode' : 'file');
+                    const embedded = files[stream.kind].indexOf('data:audio/wav;') === 0;
+                    reportError(embedded || (audio.error && audio.error.code === 3) ? 'decode' : 'file');
                 });
                 audio.addEventListener('playing', () => {
                     if (playing.get(id) === entry && !entry.confirmed) {

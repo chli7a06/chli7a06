@@ -42,8 +42,15 @@ const send = streams => listeners.message({ data: { action: 'washAudio', resourc
 send([{ id: '11', kind: 'water', volume: .65 }, { id: '22', kind: 'foam', volume: .2 }]);
 assert.equal(instances.length, 2);
 assert.ok(instances.every(a => a.loop && !a.paused && a.plays === 1));
-assert.equal(instances[0].src, 'audio/wash_water.ogg');
-assert.equal(instances[1].src, 'audio/wash_foam.ogg');
+for (const audio of instances) {
+    assert.ok(audio.src.startsWith('data:audio/wav;base64,'), 'playback must not fetch a resource audio URL');
+    const bytes = Buffer.from(audio.src.split(',')[1], 'base64');
+    assert.equal(bytes.toString('ascii', 0, 4), 'RIFF');
+    assert.equal(bytes.toString('ascii', 8, 12), 'WAVE');
+    assert.ok(bytes.length > 170000);
+}
+assert.ok(instances[0].src !== instances[1].src, 'water and foam must have distinct embedded loops');
+const foamSource = instances[1].src;
 now = 100;
 send([{ id: '11', kind: 'water', volume: .4 }, { id: '22', kind: 'foam', volume: .1 }]);
 assert.equal(instances.length, 2, 'heartbeats must not restart playback');
@@ -52,7 +59,7 @@ assert.equal(instances[0].volume, .4);
 send([{ id: '11', kind: 'foam', volume: .5 }]);
 assert.ok(instances[0].paused && instances[1].paused);
 assert.equal(instances.length, 3);
-assert.equal(instances[2].src, 'audio/wash_foam.ogg');
+assert.ok(instances[2].src === foamSource, 'stage change must select the foam loop');
 send([]);
 assert.ok(instances.every(a => a.paused), 'release/cleanup must stop all missing streams');
 send([{ id: '33', kind: 'http://untrusted', volume: 1 }]);
@@ -68,6 +75,6 @@ Audio.blockNext = true;
 send([{ id: '11', kind: 'water', volume: .5 }]);
 assert.ok(reports.some(r => r.status === 'error' && r.code === 'blocked'), 'autoplay rejection must be reported to Lua');
 const failed = instances.at(-1); failed.error = { code: 4 }; failed.events.error(); failed.events.error();
-assert.equal(reports.filter(r => r.code === 'file').length, 1, 'file errors must report once instead of failing silently');
+assert.equal(reports.filter(r => r.code === 'decode').length, 1, 'inline decoding errors must report once instead of failing silently');
 send([]);
 console.log('PASS: bundled HUD audio without GetParentResourceName/Object.hasOwn, renamed-resource handshake, no duplicate players and cleanup');
