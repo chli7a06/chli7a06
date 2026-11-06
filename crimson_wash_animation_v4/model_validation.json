@@ -1,0 +1,11 @@
+{
+  "lance_shortening_m": 0.15,
+  "before_x_max_m": 0.9922135472297668,
+  "after_x_max_m": 0.8422135710716248,
+  "muzzle": [
+    0.84,
+    0.0,
+    0.041
+  ],
+  "grip_and_hose_connection_unchanged": true
+}

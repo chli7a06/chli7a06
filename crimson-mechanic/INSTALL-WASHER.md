@@ -1,5 +1,27 @@
 # Crimson pressure-washer integration
 
+# Current update: 1.4.3 / V4
+
+This package includes the compiled V4 carry/spray clips and a washer with its long
+lance shortened by 15 cm. Grip and bottle dimensions are retained. The config
+uses dictionary `crimson_wash_custom_v4` and muzzle `(0.840, 0, 0.041)`; install
+the model and gun config together. No XML conversion is needed.
+
+Cancel washing, back up your resource/config, then replace it with this folder.
+If merging into customized settings, copy only `Config.Wash.tools.gun` from the
+new config. Remove any old V1/V2/V3 YCD from this resource and keep the V4 YCD.
+Restart `crimson-mechanic`, reconnect and compare lowered carry / LMB spray to
+the reference. Keep WaveShield's existing resource include. Do not run the old
+standalone `crimson_lavage` resource alongside this one: it streams the same prop.
+
+CodeWalker compilation/reread, numeric channel checks, official Sollumz wrist
+roundtrip, Lua parsing and mocked muzzle/hose/cleanup checks pass. FiveM skinning,
+hand contact and the final visual match still need a live test. The mechanic,
+server billing, UI and hose code are unchanged by V4. Earlier update notes below
+describe previous releases; use the current dictionary and muzzle above.
+
+## Previous integration notes
+
 This package integrates the user's compiled pressure washer into the existing manual wash workflow. It retains the existing WaveShield include and ox_lib, oxmysql and qbx_core dependencies.
 
 ## Installation
