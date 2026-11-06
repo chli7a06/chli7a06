@@ -14,6 +14,7 @@ local UNARMED = `WEAPON_UNARMED`
 local points = {}
 local prompt, promptText = nil, nil
 local washing = false
+local sprayHeld = false
 local sessionCount = 0
 local visuals = {} -- [serverId] = { id, tool, visual, loading }
 
@@ -53,10 +54,8 @@ end
 local function stopJet(v)
     if not v then return end
     if v.fx then StopParticleFxLooped(v.fx, false) end
-    v.fx, v.fxKey, v.jetKey, v.loadingFx, v.retryFxAt = nil, nil, nil, nil, nil
-    v.aiming = false
-    -- A pending asset request must never revive a released or replaced jet.
-    v.jetRevision = (v.jetRevision or 0) + 1
+    v.fx, v.fxKey, v.jetKey, v.retryFxAt = nil, nil, nil, nil
+    v.aiming, v.assetRequestedAt, v.jetDistance = false, nil, nil
 end
 
 local function destroyVisual(v)
@@ -224,7 +223,7 @@ local function aimJet(v, pitch, yaw)
 end
 
 --- Replicated state selects water/foam; each client renders exactly one local jet.
-local function setJet(v, fx, pitch, yaw)
+local function setJet(v, fx, pitch, yaw, distance)
     if not v or v.destroyed or not DoesEntityExist(v.ped) then return end
     local effect = fx and W.effects[fx]
     fx = effect and fx or nil
@@ -233,22 +232,22 @@ local function setJet(v, fx, pitch, yaw)
         v.jetKey = fx
     end
     v.aiming, v.pitch, v.yaw = fx ~= nil, pitch or 0.0, yaw or 0.0
+    v.jetDistance = math.max(0.05, math.min(W.reach, tonumber(distance) or W.reach))
     if not effect then return end
     if v.fx and not DoesParticleFxLoopedExist(v.fx) then v.fx, v.fxKey = nil, nil end
     if not v.fx then
-        if v.loadingFx or (v.retryFxAt and GetGameTimer() < v.retryFxAt) then return end
-        local revision = v.jetRevision or 0
-        v.loadingFx = revision
-        local loaded = pcall(lib.requestNamedPtfxAsset, effect.asset, 5000)
-        local ready = loaded and HasNamedPtfxAssetLoaded(effect.asset)
-        if ready then usedPtfxAssets[effect.asset] = true end
-        if v.loadingFx == revision then v.loadingFx = nil end
-        if v.destroyed or v.jetRevision ~= revision or v.jetKey ~= fx then return end
-        if not ready
-            or not DoesEntityExist(v.ped) or not DoesEntityExist(v.tool) then
-            v.retryFxAt = GetGameTimer() + 1000
+        if v.retryFxAt and GetGameTimer() < v.retryFxAt then return end
+        -- Loading assets must never suspend input, progress, or state replication.
+        if not HasNamedPtfxAssetLoaded(effect.asset) then
+            local now = GetGameTimer()
+            if not v.assetRequestedAt or now - v.assetRequestedAt > 500 then
+                v.assetRequestedAt = now
+                usedPtfxAssets[effect.asset] = true
+                pcall(RequestNamedPtfxAsset, effect.asset)
+            end
             return
         end
+        usedPtfxAssets[effect.asset] = true
         local pos, rot = jetTransform(v)
         if not pos then return end
         UseParticleFxAssetNextCall(effect.asset)
@@ -267,9 +266,71 @@ local function setJet(v, fx, pitch, yaw)
         -- Hold the shared dictionary until resource stop. Releasing it here can
         -- interfere with other water/foam emitters created by this same client.
     end
-    aimJet(v) -- keep the newest aim if another state update arrived during loading
+    aimJet(v)
 end
 
+
+-- A small animated stream and moving droplets provide visible water/foam even
+-- if GTA refuses a particle emitter. All viewers draw it from the same state.
+local function drawSpray(v)
+    local config = W.visualSpray
+    if not config or config.enabled == false or not v.aiming or v.destroyed then return end
+    if not v.tool or not DoesEntityExist(v.tool) then return end
+    local style = config[v.jetKey]
+    if not style then return end
+    local n = nozzleOffset(v.ped, v)
+    local start = GetOffsetFromEntityInWorldCoords(v.ped, n.x, n.y, n.z)
+    local viewDistance = #(GetEntityCoords(cache.ped) - start)
+    if viewDistance > (config.distance or REMOTE_RANGE) then return end
+    local pitch = math.rad(v.pitch or 0)
+    local heading = math.rad(GetEntityHeading(v.ped) + (v.yaw or 0))
+    local cp, sp, ch, sh = math.cos(pitch), math.sin(pitch), math.cos(heading), math.sin(heading)
+    local direction = vec3(-sh * cp, ch * cp, sp)
+    local right, up = vec3(ch, sh, 0), vec3(sh * sp, -ch * sp, cp)
+    local length = math.max(.05, math.min(W.reach, v.jetDistance or W.reach))
+    local time = GetGameTimer() / 1000
+    local colour, width, spread = style.colour, style.width, style.spread
+    local function point(t, angle, radius)
+        local lateral, vertical = math.cos(angle) * radius, math.sin(angle) * radius
+        return vec3(start.x + direction.x * length * t + right.x * lateral + up.x * vertical,
+            start.y + direction.y * length * t + right.y * lateral + up.y * vertical,
+            start.z + direction.z * length * t + up.z * vertical - .012 * t * t)
+    end
+    local function ribbon(a, b, axis, radius, alpha)
+        local p = vec3(a.x + axis.x * radius, a.y + axis.y * radius, a.z + axis.z * radius)
+        local q = vec3(a.x - axis.x * radius, a.y - axis.y * radius, a.z - axis.z * radius)
+        local r = vec3(b.x - axis.x * radius, b.y - axis.y * radius, b.z - axis.z * radius)
+        local s = vec3(b.x + axis.x * radius, b.y + axis.y * radius, b.z + axis.z * radius)
+        -- Double sided: the stream must also be visible from the spectator's side.
+        DrawPoly(p.x,p.y,p.z,q.x,q.y,q.z,r.x,r.y,r.z,colour.x,colour.y,colour.z,alpha)
+        DrawPoly(p.x,p.y,p.z,r.x,r.y,r.z,s.x,s.y,s.z,colour.x,colour.y,colour.z,alpha)
+        DrawPoly(r.x,r.y,r.z,q.x,q.y,q.z,p.x,p.y,p.z,colour.x,colour.y,colour.z,alpha)
+        DrawPoly(s.x,s.y,s.z,r.x,r.y,r.z,p.x,p.y,p.z,colour.x,colour.y,colour.z,alpha)
+    end
+    local far = viewDistance > 25
+    local streams, segments, drops = far and 2 or 5, far and 2 or 4, far and 6 or 14
+    for lane = 1, streams do
+        local angle = lane * 2.399963
+        for segment = 0, segments - 1 do
+            local t, u = segment / segments, (segment + 1) / segments
+            local a = point(t, angle, lane == 1 and 0 or spread * length * t)
+            local b = point(u, angle, lane == 1 and 0 or spread * length * u)
+            local alpha = math.floor(style.alpha * (lane == 1 and .7 or .25) * (1 - .5 * u))
+            ribbon(a, b, right, width, alpha)
+            ribbon(a, b, up, width, alpha)
+        end
+    end
+    for i = 1, drops do
+        local t = (time * 2.8 + i * .618034) % 1
+        local angle = i * 2.399963 + time * .4
+        local radius = spread * length * t * (.4 + .6 * math.abs(math.sin(i * 4.7)))
+        local a = point(t, angle, radius)
+        local b = point(math.max(0, t - .012), angle, radius)
+        local size = width * (.5 + t)
+        ribbon(a, b, right, size, style.alpha)
+        ribbon(a, b, up, size, style.alpha)
+    end
+end
 
 -- The Blender hose is a static curved mesh. Its binary YDR cannot be
 -- stretched by a rope native. Draw a round rubber tube along a live curve
@@ -349,6 +410,7 @@ CreateThread(function()
         for _, entry in pairs(visuals) do
             local v = entry.visual
             if v and not v.destroyed and DoesEntityExist(v.ped) then
+                if v.aiming then activeJet = true; drawSpray(v) end
                 if v.fx then activeJet = true; aimJet(v) end
                 if v.rope then activeHose = true; updateHose(v) end
                 if v.hoseMesh then activeHose = true; drawRubberHose(v) end
@@ -365,7 +427,7 @@ local function validState(data)
 end
 
 local function jetOf(data)
-    return type(data.fx) == 'string' and data.fx or nil, tonumber(data.pitch) or 0.0, tonumber(data.yaw) or 0.0
+    return type(data.fx) == 'string' and data.fx or nil, tonumber(data.pitch) or 0.0, tonumber(data.yaw) or 0.0, tonumber(data.distance) or W.reach
 end
 
 local function stopVisual(serverId)
@@ -484,6 +546,7 @@ local function publish(session, stage, jet)
     LocalPlayer.state:set(STATE_KEY, {
         id = session.id, tool = stage.tool,
         fx = jet and stage.fx or false, pitch = jet and jet.pitch or 0.0, yaw = jet and jet.yaw or 0.0,
+        distance = jet and jet.distance or W.reach,
         ax = session.anchor.x, ay = session.anchor.y, az = session.anchor.z, len = session.length,
     }, true)
 end
@@ -537,8 +600,8 @@ local function aimAt(ped)
     local len = #dir
     if len < 0.01 then return end
     dir = dir / len
-    if not hit or len > W.reach then return dir end
-    return dir, at, entity
+    if not hit or len > W.reach then return dir, nil, nil, W.reach end
+    return dir, at, entity, len
 end
 
 --- Turns the ped toward a heading a bit per frame (snapping it every frame made it flicker).
@@ -550,6 +613,17 @@ local function turnTo(ped, heading)
     SetEntityHeading(ped, current + step)
     return current + step
 end
+
+-- Read both attack controls as well as a physical mouse binding. Other resources
+-- can change the enabled/disabled input state after our per-frame controls run.
+local function sprayPressed()
+    return sprayHeld or IsDisabledControlPressed(0, 24) or IsControlPressed(0, 24)
+        or IsDisabledControlPressed(0, 257) or IsControlPressed(0, 257)
+end
+
+RegisterCommand('+crimsonWashSpray', function() if washing then sprayHeld = true end end, false)
+RegisterCommand('-crimsonWashSpray', function() sprayHeld = false end, false)
+RegisterKeyMapping('+crimsonWashSpray', 'Crimson Wash: spray', 'MOUSE_BUTTON', 'MOUSE_LEFT')
 
 local function disableControls()
     DisableControlAction(0, 21, true)  -- sprint
@@ -640,18 +714,18 @@ local function runStage(session, stage, index)
             stretched = d > session.length
         end
 
-        local pressing = IsDisabledControlPressed(0, 24) and not stretched
+        local pressing = sprayPressed() and not stretched
         local zone, jet
         -- the hose is gripped the whole time; the sponge only moves while scrubbing
         local anim = washAnimation(tool, pressing)
         if pressing and stage.fx then
             ShowHudComponentThisFrame(14)
-            local dir, at, entity = aimAt(ped)
+            local dir, at, entity, distance = aimAt(ped)
             if dir then
                 local heading = GetHeadingFromVector_2d(dir.x, dir.y)
                 local facing = turnTo(ped, heading)
                 -- the jet points at the crosshair even while the ped is still turning
-                jet = { pitch = math.deg(math.asin(dir.z)), yaw = (heading - facing + 180.0) % 360.0 - 180.0 }
+                jet = { pitch = math.deg(math.asin(dir.z)), yaw = (heading - facing + 180.0) % 360.0 - 180.0, distance = distance }
                 if at and entity == veh then zone = sideOf(veh, at) end
             end
         elseif pressing then
@@ -674,9 +748,9 @@ local function runStage(session, stage, index)
             playing = anim
         end
         local own = visuals[cache.serverId]
-        if own and own.visual then setJet(own.visual, jet and stage.fx, jet and jet.pitch, jet and jet.yaw) end
+        if own and own.visual then setJet(own.visual, jet and stage.fx, jet and jet.pitch, jet and jet.yaw, jet and jet.distance) end
         -- others see the jet through the state bag (throttled)
-        local jetKey = jet and ('%d:%d'):format(math.floor(jet.pitch / 5), math.floor(jet.yaw / 10)) or false
+        local jetKey = jet and ('%d:%d:%d'):format(math.floor(jet.pitch / 5), math.floor(jet.yaw / 10), math.floor((jet.distance or W.reach) * 4)) or false
         if jetKey ~= synced and now - lastSync > 250 then
             synced, lastSync = jetKey, now
             publish(session, stage, jet)
@@ -706,6 +780,7 @@ local function runStage(session, stage, index)
 end
 
 local function startWash(shop, index)
+    sprayHeld = false
     local station = shop.washes[index]
     local bay = vec3(station.x, station.y, station.z)
     -- the radius is only the prompt area; the car can be anywhere in the bay
@@ -855,7 +930,7 @@ local function nearby(self)
                 ClearPedTasks(cache.ped)
                 TriggerServerEvent('crimson-mechanic:server:washCancel')
             end
-            washing = false
+            washing, sprayHeld = false, false
         end)
     end
 end

@@ -98,6 +98,11 @@ Config.Wash = {
     nozzleBone = 28422,
     nozzle = vec3(0.0, 0.05, 0.0),
     effectDistance = 100.0, -- all nearby viewers rebuild jets from replicated player state
+    visualSpray = {
+        enabled = true, distance = 100.0,
+        water = { colour = vec3(185, 220, 255), alpha = 190, width = 0.007, spread = 0.018 },
+        foam = { colour = vec3(250, 250, 245), alpha = 220, width = 0.014, spread = 0.035 },
+    },
     effects = {
         water = { asset = 'core', name = 'water_cannon_jet', rot = vec3(0.0, 0.0, 0.0), scale = 0.40, alpha = 1.0, colour = vec3(0.75, 0.9, 1.0) },
         -- the user preferred this over scr_carwash / ent_amb_car_wash_jet_soap

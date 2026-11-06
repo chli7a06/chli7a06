@@ -75,7 +75,7 @@ SetParticleFxLoopedOffsets=function(_,x,y,z,rx,ry,rz) offsets={pos=vec3(x,y,z),r
 local f=assert(io.open('crimson-mechanic/client/wash.lua'));local src=f:read('*a');f:close()
 src=src:gsub('`[^`]+`','0')
 src=src:sub(1,assert(src:find('%-%- Dirt level while being washed'))-1)
-local api=assert(load(src..'\nreturn {refresh=refreshVisual,stop=stopVisual,nozzle=nozzleOffset,jet=setJet,visuals=visuals,destroy=destroyVisual,updateHose=updateHose,drawHose=drawRubberHose,animation=washAnimation}'))()
+local api=assert(load(src..'\nreturn {refresh=refreshVisual,stop=stopVisual,nozzle=nozzleOffset,jet=setJet,visuals=visuals,destroy=destroyVisual,updateHose=updateHose,drawHose=drawRubberHose,animation=washAnimation,spray=drawSpray}'))()
 local function data(id,tool) return {id=id,tool=tool or 'gun',ax=10,ay=0,az=2,len=12} end
 local function build(serverId,ped,d)
  state[serverId]=d;api.refresh(serverId,d,ped);threads[#threads]()
@@ -125,23 +125,36 @@ lib.requestModel=function() end
 Wait=function(ms) clock=clock+ms;api.stop(11) end
 build(11,1,data(4));assert(not api.visuals[11]);assert(created-deleted==2,'only remote gun and anchor may remain')
 Wait=function(ms) clock=clock+ms end
--- A cancelled effect load must not spawn particles on a retired visual.
+-- Asset loading is nonblocking, and visible spray does not depend on PTFX success.
 local v=assert(build(11,1,data(5)));local fx0=fxCreated
--- Releasing spray while its dictionary loads must also cancel it without retiring the prop.
-lib.requestNamedPtfxAsset=function() coroutine.yield() end
-local loading=coroutine.create(function() api.jet(v,'water',0,0) end)
-assert(coroutine.resume(loading));local waiting=fxCreated
-api.jet(v,'water',0,0);assert(fxCreated==waiting,'do not duplicate pending loads')
-api.jet(v,nil);assert(coroutine.resume(loading));assert(not v.fx and fxCreated==waiting)
-lib.requestNamedPtfxAsset=function() api.stop(11) end
-api.jet(v,'water',0,0);assert(fxCreated==fx0)
+local requests=0
+HasNamedPtfxAssetLoaded=function() return false end
+RequestNamedPtfxAsset=function() requests=requests+1 end
+lib.requestNamedPtfxAsset=function() error('the wash loop must not wait in ox_lib') end
+api.jet(v,'water',0,0,2.5);assert(v.aiming and not v.fx and requests==1)
+api.jet(v,'water',0,0,2.5);assert(requests==1,'do not request every frame')
+local sprayPolys, vertices, colours=0,{},{}
+DrawPoly=function(...)
+ local a={...};sprayPolys=sprayPolys+1;vertices[#vertices+1]=a
+ for i=1,9 do assert(a[i]==a[i] and math.abs(a[i])<10000) end
+ assert(a[13]>0 and a[13]<=255)
+ colours[a[10]]=true
+end
+api.spray(v);assert(sprayPolys>0 and colours[185],'water must be visible without a particle handle')
+for _,a in ipairs(vertices) do for i=2,8,3 do assert(a[i]<=2.501,'visible stream must stop at the replicated impact distance') end end
+sprayPolys=0;api.jet(v,'foam',0,0,2.5);api.spray(v)
+assert(sprayPolys>0 and colours[250],'foam must have a distinct white spray')
+api.jet(v,nil);sprayPolys=0;api.spray(v);assert(sprayPolys==0,'release must stop the visible spray immediately')
+HasNamedPtfxAssetLoaded=function() return true end
+api.stop(11);api.jet(v,'water',0,0);assert(fxCreated==fx0,'retired visual must not start particles')
 -- Real replicated-state callback starts and stops the spectator's jet.
 GetPlayerFromStateBagName=function() return 2 end
 GetPlayerServerId=function() return 22 end
 GetPlayerPed=function() return 3 end
-state[22]=data(2);state[22].fx='foam';state[22].pitch=10;state[22].yaw=15
+state[22]=data(2);state[22].fx='foam';state[22].pitch=10;state[22].yaw=15;state[22].distance=1.8
 stateHandlers.crimsonWash('player:22',nil,state[22])
-assert(remote.fxKey=='foam' and remote.aiming and localFx.ped==remote.tool)
+assert(remote.fxKey=='foam' and remote.aiming and localFx.ped==remote.tool and close(remote.jetDistance,1.8))
+sprayPolys=0;api.spray(remote);assert(sprayPolys>0,'spectators must also draw the visible spray')
 state[22].fx=false;stateHandlers.crimsonWash('player:22',nil,state[22])
 assert(not remote.fx and not remote.aiming)
 api.stop(22);local d0=deleted;api.destroy(v);assert(deleted==d0,'cleanup must be idempotent')
@@ -175,4 +188,4 @@ assert(gun.aimAnim.dict=='crimson_wash_custom_v6' and gun.aimAnim.clip=='spray')
 assert(gun.hand.bone==57005 and close(gun.hand.pos.x,.085) and close(gun.hand.rot.x,-90) and close(gun.hand.pos.y,.025) and close(gun.hand.pos.z,-.040))
 assert(not src:find('SetIkTarget',1,true) and not src:find('SetPedCanArmIk',1,true),'runtime IK must be removed')
 assert(not src:find('GiveWeaponToPed',1,true),'integration must not grant weapons')
-print('PASS: local/spectator jets, replicated start/stop, aim transforms, failed-handle retry, load cancellation, hose and cleanup')
+print('PASS: local/spectator jets, replicated start/stop, aim transforms, failed-handle retry, nonblocking loads, visible water/foam without PTFX, hose and cleanup')

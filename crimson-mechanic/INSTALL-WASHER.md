@@ -1,6 +1,34 @@
 # Crimson pressure-washer integration
 
-# Current update: 1.4.6 / shared water and foam jets
+# Current update: 1.4.7 / nonblocking input and visible spray
+
+LMB now has a physical mouse-button binding, with enabled/disabled attack controls
+24 and 257 as additional input sources. Releasing the button or ending the wash
+clears the held state. The HUD still shows LMB; no weapon is equipped or fired.
+Particle dictionaries are requested without yielding the wash loop, so an absent
+particle asset cannot freeze progress or replicated start/stop updates.
+
+`Config.Wash.visualSpray` adds animated translucent water streams/droplets and a
+wider white foam spray. These are drawn independently of native particle handles
+on each viewer, from the same muzzle and replicated aim/impact distance. They stop
+on release, sponge stages, cancellation or cleanup. Far viewers use reduced mesh
+detail; the configured render distance is 100 m. GTA particle effects remain as
+an additional layer when available. The custom renderer is a visual approximation,
+not a simulated fluid or a foam coating accumulating on the vehicle.
+
+Replace the resource, restart and reconnect. For customized configs, merge the
+new `visualSpray` settings and install the new `client/wash.lua`. The V6 hand pose
+and V5 gun length/muzzle are retained. Keep the WaveShield include.
+
+Mocked tests run the actual rinse/foam stage through input, aim, progress and
+replicated state while particle loading is unavailable. They also test direct
+water/foam rendering without a particle handle, distance clipping, spectator
+rendering, release, pose bindings, hose creation and cleanup. Lua syntax passes.
+A live test is still required: hold LMB while aiming at the car, verify progress
+and visible spray, and ask a second nearby player to check water/foam and release.
+
+
+# Previous update: 1.4.6 / shared water and foam jets
 
 Water and foam particles now attach to each viewer's local washer prop, using
 its physical muzzle and a world-aim-to-gun-local rotation conversion. This
