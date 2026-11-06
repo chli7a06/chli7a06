@@ -1,0 +1,13 @@
+{
+  "compiled_ycd_roundtrip": true,
+  "clips": [
+    "carry",
+    "spray"
+  ],
+  "tracks_per_clip": 46,
+  "max_channel_error": 3.319999999917833e-07,
+  "max_unrelated_channel_delta_from_v6": 1.4000000003733248e-07,
+  "compiled_model_shortening_m": 0.23000005,
+  "embedded_textures": 5,
+  "live_fivem_tested": false
+}

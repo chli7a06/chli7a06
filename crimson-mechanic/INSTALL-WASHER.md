@@ -1,6 +1,27 @@
 # Crimson pressure-washer integration
 
-# Current update: 1.4.13 / inline PCM audio
+# Current update: 1.4.14 / neutral left support wrist (V7)
+
+The left support hand uses an oblique grip aligned with its forearm, rather than
+pointing across the barrel and bending sharply at the wrist. Forearm roll is
+aligned with the palm so the wrist does not carry that axial twist. The support
+palm shifts slightly below/around the collar. Carry/spray remain separate clips.
+
+V6 carry's forearm/hand-axis bend measured about 77 degrees. V7 importer checks
+measure 8.8 degrees in carry and 12.5 in spray, with matching forearm/palm roll.
+Finger joint/collar contact checks and binary channel roundtrip pass. Comparing
+compiled channels to V6 confirms only left upper-arm/forearm/hand tracks change;
+other channel differences remain below 1e-5. This is skeleton validation, not a
+live skinned-ped appearance test.
+
+Install the complete resource or replace the old V6 YCD with the supplied
+`stream/crimson_wash_custom_v7.ycd` and change both gun dictionaries to
+`crimson_wash_custom_v7`. Restart and reconnect. The right hand, attachment,
+gun model/length, physical stream direction, surface foam, audio and runtime
+motion controller are retained. Test the left-hand appearance on the actual ped.
+
+
+# Previous update: 1.4.13 / inline PCM audio
 
 The HUD bundle now contains both four-second mono 22050 Hz, 16-bit PCM WAV loops
 as data URLs. Normal playback does not request `audio/*.ogg` or any other audio
