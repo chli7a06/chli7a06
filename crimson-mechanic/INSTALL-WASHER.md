@@ -1,6 +1,31 @@
 # Crimson pressure-washer integration
 
-# Current update: 1.4.11 / legacy NUI audio compatibility
+# Current update: 1.4.12 / audio integrated with the wash HUD
+
+The audio player is bundled into the already-loaded `web/wash.js` HUD entry
+point, rather than requiring a separate HTML script tag. `wash-audio.js` remains
+its editable source; regenerate the bundle with `scripts/bundle_wash_audio.py`.
+A singleton guard avoids duplicate players if an older HTML file loads both.
+
+Lua supplies `GetCurrentResourceName()` with audio updates. The browser uses it
+for the status callback even when `GetParentResourceName` is unavailable, and
+retries the readiness report if the callback is not ready during initial load.
+The earlier "interface non chargée" notification indicated an absent response,
+not proof that a particular file was missing; its text now reflects that.
+
+A Chromium test without `GetParentResourceName` or `Object.hasOwn`, using renamed
+resource callbacks and legacy HTML with both script tags, confirmed readiness,
+water/foam playback and release cleanup, with only one player per source.
+This does not verify sound output on the user's FiveM client.
+
+Install the complete resource, especially the updated `web/wash.js`, Lua file
+and audio assets. Restart and reconnect to reload NUI. Existing visual spray,
+vehicle foam/wetness, emitter direction and animation behavior are unchanged.
+If playback is still unavailable, the on-screen error should distinguish media
+loading/decoding or blocked playback from a missing UI response.
+
+
+# Previous update: 1.4.11 / legacy NUI audio compatibility
 
 Replaces `Object.hasOwn` with the older-CEF-compatible
 `Object.prototype.hasOwnProperty.call`. With the newer method unavailable, the

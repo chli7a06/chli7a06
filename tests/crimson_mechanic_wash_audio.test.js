@@ -27,12 +27,18 @@ const context = vm.createContext({
     Audio, Date: { now: () => now },
     window: { addEventListener: (name, fn) => { listeners[name] = fn; } },
     setInterval: fn => { watchdog = fn; },
-    GetParentResourceName: () => 'crimson-mechanic',
-    fetch: (_, request) => { reports.push(JSON.parse(request.body)); return { catch() {} }; },
+    document: { getElementById: () => null },
+    fetch: (url, request) => { assert.equal(url, 'https://renamed-mechanic/washAudioStatus'); reports.push(JSON.parse(request.body)); return Promise.resolve({ ok: true }); },
 });
 vm.runInContext('Object.hasOwn = undefined;', context);
-vm.runInContext(fs.readFileSync('crimson-mechanic/web/wash-audio.js', 'utf8'), context);
-const send = streams => listeners.message({ data: { action: 'washAudio', streams } });
+const audioSource = fs.readFileSync('crimson-mechanic/web/wash-audio.js', 'utf8');
+const bundle = fs.readFileSync('crimson-mechanic/web/wash.js', 'utf8');
+assert.ok(bundle.includes(audioSource.trim()));
+vm.runInContext(bundle, context);
+const messageHandler = listeners.message;
+vm.runInContext(audioSource, context);
+assert.equal(listeners.message, messageHandler, 'legacy HTML loading both files must not create duplicate audio handlers');
+const send = streams => listeners.message({ data: { action: 'washAudio', resource: 'renamed-mechanic', streams } });
 send([{ id: '11', kind: 'water', volume: .65 }, { id: '22', kind: 'foam', volume: .2 }]);
 assert.equal(instances.length, 2);
 assert.ok(instances.every(a => a.loop && !a.paused && a.plays === 1));
@@ -64,4 +70,4 @@ assert.ok(reports.some(r => r.status === 'error' && r.code === 'blocked'), 'auto
 const failed = instances.at(-1); failed.error = { code: 4 }; failed.events.error(); failed.events.error();
 assert.equal(reports.filter(r => r.code === 'file').length, 1, 'file errors must report once instead of failing silently');
 send([]);
-console.log('PASS: legacy CEF without Object.hasOwn, playback/error reports, audio stages, volume updates and lifecycle cleanup');
+console.log('PASS: bundled HUD audio without GetParentResourceName/Object.hasOwn, renamed-resource handshake, no duplicate players and cleanup');

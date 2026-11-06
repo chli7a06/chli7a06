@@ -1,15 +1,23 @@
 // Dedicated wash loops: independent of particle rendering and HUD visibility.
 (() => {
+    if (window.CrimsonWashAudioLoaded) return;
     const files = { water: 'audio/wash_water.ogg', foam: 'audio/wash_foam.ogg' };
     const playing = new Map();
     let lastMessage = 0;
     const reportedErrors = new Set();
+    let resource = typeof GetParentResourceName === 'function' ? GetParentResourceName() : null;
+    let readyConfirmed = false;
+    let lastReadyAttempt = -Infinity;
     const report = (status, code) => {
-        if (typeof GetParentResourceName !== 'function') return;
-        fetch(`https://${GetParentResourceName()}/washAudioStatus`, {
+        if (!resource || typeof fetch !== 'function') return;
+        if (status === 'ready') {
+            if (readyConfirmed || Date.now() - lastReadyAttempt < 1000) return;
+            lastReadyAttempt = Date.now();
+        }
+        fetch(`https://${resource}/washAudioStatus`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status, code: code || '' }),
-        }).catch(() => {});
+        }).then(response => { if (status === 'ready' && response.ok) readyConfirmed = true; }).catch(() => {});
     };
     const reportError = code => {
         if (reportedErrors.has(code)) return;
@@ -29,6 +37,10 @@
 
     window.addEventListener('message', ({ data }) => {
         if (!data || data.action !== 'washAudio') return;
+        // The Lua sender supplies the exact resource name, including renamed
+        // installs and CEF builds without GetParentResourceName.
+        if (typeof data.resource === 'string' && /^[a-zA-Z0-9_.-]{1,96}$/.test(data.resource)) resource = data.resource;
+        report('ready');
         lastMessage = Date.now();
         const seen = new Set();
         for (const stream of (Array.isArray(data.streams) ? data.streams : []).slice(0, 4)) {
@@ -77,5 +89,6 @@
     // No heartbeat after a cancelled/failed client loop must leave an audio loop.
     setInterval(() => { if (Date.now() - lastMessage > 750) stopAll(); }, 250);
     window.addEventListener('pagehide', stopAll);
+    window.CrimsonWashAudioLoaded = true;
     report('ready');
 })();

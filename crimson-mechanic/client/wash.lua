@@ -479,12 +479,12 @@ CreateThread(function()
     while true do
         Wait(100)
         local streams=washAudioStreams()
-        if #streams>0 or active then SendNUIMessage({action='washAudio',streams=streams}) end
+        if #streams>0 or active then SendNUIMessage({action='washAudio',resource=GetCurrentResourceName(),streams=streams}) end
         if #streams>0 and not audioUiReady then
             waitingSince=waitingSince or GetGameTimer()
             if not audioErrorShown and GetGameTimer()-waitingSince>3000 then
                 audioErrorShown=true
-                notify('Son lavage : interface audio non chargée. Installe la ressource complète puis reconnecte-toi.','error')
+                notify("Son lavage : aucune réponse de l'interface audio. Reconnecte-toi après la mise à jour complète.",'error')
             end
         else waitingSince=nil end
         active=#streams>0
